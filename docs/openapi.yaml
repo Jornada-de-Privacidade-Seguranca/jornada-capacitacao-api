@@ -1,0 +1,226 @@
+openapi: 3.1.0
+info:
+  title: Jornada de Capacitacao API
+  version: 0.1.0
+  description: API REST inicial para a Jornada de Capacitacao para Privacidade e Seguranca.
+servers:
+  - url: http://localhost:8000/api
+    description: Ambiente local via Docker
+tags:
+  - name: Health
+    description: Endpoints de disponibilidade da API
+  - name: Competencies
+    description: Exemplo removivel de CRUD usando MVC, Services e Repositories
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Verifica se a API esta disponivel
+      operationId: getHealth
+      responses:
+        "200":
+          description: API disponivel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    service: jornada-capacitacao-api
+  /competencies:
+    get:
+      tags:
+        - Competencies
+      summary: Lista competencias
+      operationId: listCompetencies
+      responses:
+        "200":
+          description: Lista de competencias cadastradas
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Competency"
+    post:
+      tags:
+        - Competencies
+      summary: Cria uma competencia
+      operationId: createCompetency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompetencyPayload"
+            examples:
+              privacy:
+                value:
+                  name: Privacidade de dados
+                  description: Conceitos essenciais de protecao de dados pessoais.
+      responses:
+        "201":
+          description: Competencia criada
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Competency"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+  /competencies/{id}:
+    parameters:
+      - $ref: "#/components/parameters/CompetencyId"
+    get:
+      tags:
+        - Competencies
+      summary: Busca uma competencia por ID
+      operationId: getCompetency
+      responses:
+        "200":
+          description: Competencia encontrada
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Competency"
+        "404":
+          description: Competencia nao encontrada
+    put:
+      tags:
+        - Competencies
+      summary: Atualiza uma competencia
+      operationId: updateCompetency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompetencyPayload"
+      responses:
+        "200":
+          description: Competencia atualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Competency"
+        "404":
+          description: Competencia nao encontrada
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+    delete:
+      tags:
+        - Competencies
+      summary: Remove uma competencia
+      operationId: deleteCompetency
+      responses:
+        "204":
+          description: Competencia removida
+        "404":
+          description: Competencia nao encontrada
+components:
+  parameters:
+    CompetencyId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+      properties:
+        status:
+          type: string
+          example: ok
+        service:
+          type: string
+          example: jornada-capacitacao-api
+    Competency:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Privacidade de dados
+        description:
+          type:
+            - string
+            - "null"
+          example: Conceitos essenciais de protecao de dados pessoais.
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-06-05T14:00:00.000000Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-06-05T14:00:00.000000Z"
+    CompetencyPayload:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: Privacidade de dados
+        description:
+          type:
+            - string
+            - "null"
+          example: Conceitos essenciais de protecao de dados pessoais.
+    ValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          example: The name field is required.
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
