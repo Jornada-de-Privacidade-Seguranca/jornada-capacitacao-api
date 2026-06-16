@@ -15,3 +15,4 @@
 - Nao executar comandos destrutivos.
 - Nao remover arquivos do frontend sem autorizacao.
 - Nao modificar a arquitetura do frontend; integrar via API somente quando necessario.
+- Antes de alterar qualquer endpoint, leia docs/api-contract.md. Todo código de API deve seguir obrigatoriamente o contrato descrito nesse documento.
