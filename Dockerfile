@@ -7,6 +7,7 @@ RUN apt-get update \
         git \
         libicu-dev \
         libpq-dev \
+        libsqlite3-dev \
         libzip-dev \
         unzip \
         zip \
