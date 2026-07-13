@@ -10,6 +10,7 @@
 - Toda nova entidade deve ter migration, model, repository interface, repository implementation, service, controller, form requests quando houver entrada de dados e testes basicos.
 - Registrar bindings de repositories em `app/Providers/RepositoryServiceProvider.php`.
 - Manter `docs/openapi.yaml` atualizado quando endpoints publicos forem criados ou alterados.
+- Apos realizar qualquer tarefa que crie ou altere uma funcionalidade, criar ou atualizar testes automatizados para cobrir a feature afetada seguindo as regras de `Tests.MD`.
 - Nao commitar `.env`.
 - Nao alterar banco de producao.
 - Nao executar comandos destrutivos.
