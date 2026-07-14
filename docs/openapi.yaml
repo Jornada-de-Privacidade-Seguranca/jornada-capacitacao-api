@@ -4,13 +4,15 @@ info:
   version: 0.1.0
   description: API REST inicial para a Jornada de Capacitacao para Privacidade e Seguranca.
 servers:
-  - url: http://localhost:8000/api
+  - url: http://localhost:8030/api
     description: Ambiente local via Docker
 tags:
   - name: Health
     description: Endpoints de disponibilidade da API
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
+  - name: Template
+    description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
 paths:
   /health:
     get:
@@ -30,6 +32,78 @@ paths:
                   value:
                     status: ok
                     service: jornada-capacitacao-api
+  /template-example:
+    get:
+      tags:
+        - Template
+      summary: Demonstra um endpoint usando MVC, Service, Repository, Resource e ApiResponse
+      description: Rota de teste para visualizar no Swagger como um endpoint deve ser construido no projeto.
+      operationId: getTemplateExample
+      parameters:
+        - name: context
+          in: query
+          required: false
+          description: Texto opcional usado apenas para mostrar entrada validada pela FormRequest.
+          schema:
+            type: string
+            maxLength: 80
+          example: swagger
+        - name: include_steps
+          in: query
+          required: false
+          description: Quando true, retorna as camadas do exemplo.
+          schema:
+            type: boolean
+            default: true
+          example: true
+      responses:
+        "200":
+          description: Exemplo retornado com contrato padrao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateExampleSuccessResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Template endpoint retrieved successfully.
+                    data:
+                      route_name: template-example
+                      description: Exemplo executavel de endpoint seguindo MVC + Services + Repositories.
+                      request_context: swagger
+                      layers:
+                        - layer: request
+                          responsibility: Validar entrada HTTP.
+                          put_here: Regras de campos, tipos, obrigatoriedade e mensagens de validacao.
+                        - layer: controller
+                          responsibility: Receber a request e devolver a response padronizada.
+                          put_here: Apenas chamadas para Services, Resources e ApiResponse.
+                        - layer: service
+                          responsibility: Orquestrar regra de negocio.
+                          put_here: Fluxos, validacoes de dominio, decisoes e chamadas para repositories.
+                        - layer: repository
+                          responsibility: Encapsular acesso a dados.
+                          put_here: Queries, Eloquent, filtros de persistencia e integracoes de leitura/escrita.
+                        - layer: resource
+                          responsibility: Formatar a entidade ou DTO para JSON.
+                          put_here: Apenas campos de saida em snake_case, sem montar o contrato completo.
+                      repository_note: Esta repository retorna dados estaticos para demonstrar a arquitetura sem depender do banco.
+        "422":
+          description: Erro de validacao no contrato padrao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidBoolean:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      include_steps:
+                        - The include steps field must be true or false.
+                    code: VALIDATION_ERROR
   /competencies:
     get:
       tags:
@@ -170,6 +244,88 @@ components:
         service:
           type: string
           example: jornada-capacitacao-api
+    TemplateExampleSuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Template endpoint retrieved successfully.
+        data:
+          $ref: "#/components/schemas/TemplateExample"
+    TemplateExample:
+      type: object
+      required:
+        - route_name
+        - description
+        - request_context
+        - layers
+        - repository_note
+      properties:
+        route_name:
+          type: string
+          example: template-example
+        description:
+          type: string
+          example: Exemplo executavel de endpoint seguindo MVC + Services + Repositories.
+        request_context:
+          type: string
+          example: swagger
+        layers:
+          type: array
+          items:
+            $ref: "#/components/schemas/TemplateExampleLayer"
+        repository_note:
+          type: string
+          example: Esta repository retorna dados estaticos para demonstrar a arquitetura sem depender do banco.
+    TemplateExampleLayer:
+      type: object
+      required:
+        - layer
+        - responsibility
+        - put_here
+      properties:
+        layer:
+          type: string
+          example: service
+        responsibility:
+          type: string
+          example: Orquestrar regra de negocio.
+        put_here:
+          type: string
+          example: Fluxos, validacoes de dominio, decisoes e chamadas para repositories.
+    StandardValidationError:
+      type: object
+      required:
+        - success
+        - message
+        - errors
+        - code
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Validation error.
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            include_steps:
+              - The include steps field must be true or false.
+        code:
+          type: string
+          example: VALIDATION_ERROR
     Competency:
       type: object
       required:
