@@ -5,8 +5,8 @@ Backend REST em Laravel para a Jornada de Capacitacao para Privacidade e Seguran
 ## Requisitos
 
 - Docker com Docker Compose.
-- Portas locais livres: `8000` para API e `5432` para PostgreSQL.
-- Porta local livre `8080` para a documentacao Swagger.
+- Portas locais livres: `8030` para API e `5432` para PostgreSQL.
+- Porta local livre `8031` para a documentacao Swagger.
 
 ## Setup local
 
@@ -18,13 +18,13 @@ docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate
 ```
 
-A API ficara disponivel em `http://localhost:8000`.
-A documentacao Swagger ficara disponivel em `http://localhost:8080`.
+A API ficara disponivel em `http://localhost:8030`.
+A documentacao Swagger ficara disponivel em `http://localhost:8031`.
 
 ## Teste inicial
 
 ```bash
-curl http://localhost:8000/api/health
+curl http://localhost:8030/api/health
 ```
 
 Resposta esperada:
@@ -51,7 +51,7 @@ A especificacao OpenAPI fica em `docs/openapi.yaml`.
 Com os containers ativos, acesse:
 
 ```text
-http://localhost:8080
+http://localhost:8031
 ```
 
 O Swagger UI carrega a documentacao dos endpoints iniciais:
@@ -64,7 +64,7 @@ O Swagger UI carrega a documentacao dos endpoints iniciais:
 No frontend Next, configure:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_API_URL=http://localhost:8030/api
 ```
 
 O helper `src/lib/api.ts` chama `GET ${NEXT_PUBLIC_API_URL}/health`.
