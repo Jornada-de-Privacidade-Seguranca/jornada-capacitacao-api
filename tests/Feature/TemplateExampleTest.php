@@ -34,12 +34,40 @@ class TemplateExampleTest extends TestCase
             ]);
     }
 
+    public function test_template_example_rejects_context_greater_than_eighty_characters(): void
+    {
+        $context = str_repeat('a', 81);
+
+        $this->getJson("/api/template-example?context={$context}")
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Validation error.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'errors' => [
+                    'context',
+                ],
+                'code',
+            ]);
+    }
+
+    public function test_template_example_can_hide_layers(): void
+    {
+        $this->getJson('/api/template-example?context=swagger&include_steps=false')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.request_context', 'swagger')
+            ->assertJsonCount(0, 'data.layers');
+    }
+
     public function test_template_example_allows_swagger_origin(): void
     {
         $this
-            ->withHeader('Origin', 'http://localhost:8080')
+            ->withHeader('Origin', 'http://localhost:8031')
             ->getJson('/api/template-example?context=swagger&include_steps=true')
             ->assertOk()
-            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:8080');
+            ->assertHeader('Access-Control-Allow-Origin', 'http://localhost:8031');
     }
 }
