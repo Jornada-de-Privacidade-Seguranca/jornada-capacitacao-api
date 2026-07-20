@@ -19,10 +19,11 @@ class CompetencyTest extends TestCase
 
         $response
             ->assertCreated()
+            ->assertJsonPath('success', true)
             ->assertJsonPath('data.name', 'Privacidade de dados');
 
-        $this->assertDatabaseHas('competencies', [
-            'name' => 'Privacidade de dados',
+        $this->assertDatabaseHas('TB_COMPETENCIAS', [
+            'NO_COMPETENCIAS_PT' => 'Privacidade de dados',
         ]);
     }
 
@@ -32,6 +33,19 @@ class CompetencyTest extends TestCase
 
         $this->getJson('/api/competencies')
             ->assertOk()
+            ->assertJsonPath('success', true)
             ->assertJsonCount(2, 'data');
+    }
+
+    public function test_it_rejects_invalid_competency_payload_with_standard_contract(): void
+    {
+        $this->postJson('/api/competencies', [
+            'name' => '',
+        ])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Validation error.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonStructure(['errors' => ['name']]);
     }
 }
