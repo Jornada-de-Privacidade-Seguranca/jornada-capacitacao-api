@@ -19,7 +19,7 @@ class CompetencyService
 
     public function create(array $data): Competency
     {
-        return $this->competencyRepository->create($data);
+        return $this->competencyRepository->create($this->mapPayloadToColumns($data));
     }
 
     public function find(int $id): Competency
@@ -29,11 +29,26 @@ class CompetencyService
 
     public function update(int $id, array $data): Competency
     {
-        return $this->competencyRepository->update($id, $data);
+        return $this->competencyRepository->update($id, $this->mapPayloadToColumns($data));
     }
 
     public function delete(int $id): void
     {
         $this->competencyRepository->delete($id);
+    }
+
+    private function mapPayloadToColumns(array $data): array
+    {
+        $columns = [];
+
+        if (array_key_exists('name', $data)) {
+            $columns['NO_COMPETENCIAS_PT'] = $data['name'];
+        }
+
+        if (array_key_exists('description', $data)) {
+            $columns['DS_COMPETENCIAS_PT'] = $data['description'];
+        }
+
+        return $columns;
     }
 }

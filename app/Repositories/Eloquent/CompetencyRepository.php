@@ -11,7 +11,7 @@ class CompetencyRepository implements CompetencyRepositoryInterface
     public function all(): Collection
     {
         return Competency::query()
-            ->latest()
+            ->orderByDesc('PK_COMPETENCIAS')
             ->get();
     }
 

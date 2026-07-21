@@ -8,6 +8,8 @@ use App\Services\TemplateExampleService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
+// Controller temporario de exemplo. Deve ser removido quando o projeto nao
+// precisar mais demonstrar o contrato padrao de resposta.
 class TemplateExampleController
 {
     public function __construct(private readonly TemplateExampleService $templateExampleService)

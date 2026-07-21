@@ -116,14 +116,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - data
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Competency"
+                $ref: "#/components/schemas/CompetencyListResponse"
     post:
       tags:
         - Competencies
@@ -146,18 +139,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - data
-                properties:
-                  data:
-                    $ref: "#/components/schemas/Competency"
+                $ref: "#/components/schemas/CompetencyResponse"
         "422":
           description: Erro de validacao
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: "#/components/schemas/StandardValidationError"
   /competencies/{id}:
     parameters:
       - $ref: "#/components/parameters/CompetencyId"
@@ -172,12 +160,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - data
-                properties:
-                  data:
-                    $ref: "#/components/schemas/Competency"
+                $ref: "#/components/schemas/CompetencyResponse"
         "404":
           description: Competencia nao encontrada
     put:
@@ -197,12 +180,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - data
-                properties:
-                  data:
-                    $ref: "#/components/schemas/Competency"
+                $ref: "#/components/schemas/CompetencyResponse"
         "404":
           description: Competencia nao encontrada
         "422":
@@ -210,15 +188,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidationError"
+                $ref: "#/components/schemas/StandardValidationError"
     delete:
       tags:
         - Competencies
       summary: Remove uma competencia
       operationId: deleteCompetency
       responses:
-        "204":
+        "200":
           description: Competencia removida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptySuccessResponse"
         "404":
           description: Competencia nao encontrada
 components:
@@ -300,6 +282,54 @@ components:
         put_here:
           type: string
           example: Fluxos, validacoes de dominio, decisoes e chamadas para repositories.
+    CompetencyListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Competencies retrieved successfully.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Competency"
+    CompetencyResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Competency retrieved successfully.
+        data:
+          $ref: "#/components/schemas/Competency"
+    EmptySuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Competency deleted successfully.
+        data:
+          type: "null"
+          example: null
     StandardValidationError:
       type: object
       required:
@@ -332,8 +362,9 @@ components:
         - id
         - name
         - description
-        - created_at
-        - updated_at
+        - knowledge_area_id
+        - difficulty_id
+        - type
       properties:
         id:
           type: integer
@@ -346,14 +377,21 @@ components:
             - string
             - "null"
           example: Conceitos essenciais de protecao de dados pessoais.
-        created_at:
-          type: string
-          format: date-time
-          example: "2026-06-05T14:00:00.000000Z"
-        updated_at:
-          type: string
-          format: date-time
-          example: "2026-06-05T14:00:00.000000Z"
+        knowledge_area_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        difficulty_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        type:
+          type:
+            - integer
+            - "null"
+          example: 2
     CompetencyPayload:
       type: object
       required:
@@ -361,12 +399,13 @@ components:
       properties:
         name:
           type: string
-          maxLength: 255
+          maxLength: 100
           example: Privacidade de dados
         description:
           type:
             - string
             - "null"
+          maxLength: 500
           example: Conceitos essenciais de protecao de dados pessoais.
     ValidationError:
       type: object
