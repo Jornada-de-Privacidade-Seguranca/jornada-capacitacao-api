@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\CompetencyController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\TemplateExampleController;
+use App\Http\Controllers\Api\UserActivationController;
 use App\Http\Controllers\Api\UserRegistrationController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::apiResource('competencies', CompetencyController::class);
 
 //Rota de registro de usuario
 Route::post('/users/register', UserRegistrationController::class);
+
+// Rota temporaria para ativacao manual ate o fluxo administrativo oficial ser definido.
+Route::patch('/users/{user}/activate', UserActivationController::class);
 
 // Rota de autenticacao de usuario
 Route::post('/auth/login', LoginController::class);
