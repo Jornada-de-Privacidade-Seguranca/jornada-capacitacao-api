@@ -44,6 +44,21 @@ class UserRegistrationTest extends TestCase
         $this->assertTrue(Hash::check('SenhaSegura123', $user->DS_SENHA));
     }
 
+    public function test_it_registers_a_pending_user_account_without_profile_type(): void
+    {
+        $this->postJson('/api/auth/register', $this->validPayload())
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.profile_type_id', null)
+            ->assertJsonPath('data.email', 'maria.silva@example.com');
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'FK_TIPO_PERFIL' => null,
+            'DS_EMAIL' => 'maria.silva@example.com',
+            'ST_ATIVO' => 0,
+        ]);
+    }
+
     public function test_it_rejects_name_without_last_name(): void
     {
         $this->postJson('/api/auth/register', $this->validPayload([
@@ -53,6 +68,21 @@ class UserRegistrationTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonPath('errors.name.0', 'Informe nome e sobrenome.');
+    }
+
+    public function test_it_rejects_invalid_profile_type(): void
+    {
+        $this->postJson('/api/auth/register', $this->validPayload([
+            'profile_type_id' => 999,
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.profile_type_id.0', 'Informe um tipo de perfil valido.');
+
+        $this->assertDatabaseMissing('TB_USUARIO', [
+            'DS_EMAIL' => 'maria.silva@example.com',
+        ]);
     }
 
     public function test_it_rejects_missing_required_fields(): void

@@ -478,6 +478,7 @@ components:
           type:
             - integer
             - "null"
+          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
           example: 1
         name:
           type: string
@@ -550,6 +551,7 @@ components:
           type:
             - integer
             - "null"
+          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
           example: 1
     Competency:
       type: object

@@ -33,6 +33,8 @@ class RegisterUserRequest extends FormRequest
             'organization' => ['required', 'string', 'max:100'],
             'department' => ['required', 'string', 'max:100'],
             'registration_number' => ['required', 'string', 'max:50'],
+            // Temporarily nullable until the database script provides the required profile types.
+            // Make this field required again when that setup exists.
             'profile_type_id' => ['nullable', 'integer', Rule::exists('TB_TIPO_PERFIL', 'PK_TIPO_PERFIL')],
         ];
     }
