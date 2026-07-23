@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Health
     description: Endpoints de disponibilidade da API
+  - name: Auth
+    description: Endpoints de autenticacao
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: Template
@@ -174,6 +176,109 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Autentica um usuario
+      description: Valida e-mail e senha, bloqueia contas inativas e retorna o perfil do usuario autenticado para redirecionamento no front-end.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  password: secret123
+      responses:
+        "200":
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              examples:
+                commonUser:
+                  value:
+                    success: true
+                    message: Login realizado com sucesso.
+                    data:
+                      id: 1
+                      name: Maria Silva
+                      email: maria.silva@example.com
+                      role: common_user
+                      profile:
+                        role: common_user
+                        label: Usuario comum
+                        user_type_id: 2
+                        profile_type_id: 1
+                        profile_type_name: Aluno
+                      active_status: 1
+                administrator:
+                  value:
+                    success: true
+                    message: Login realizado com sucesso.
+                    data:
+                      id: 2
+                      name: Admin Sistema
+                      email: admin@example.com
+                      role: administrator
+                      profile:
+                        role: administrator
+                        label: Administrador
+                        user_type_id: 1
+                        profile_type_id: null
+                        profile_type_name: null
+                      active_status: 1
+        "401":
+          description: Credenciais invalidas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                invalidCredentials:
+                  value:
+                    success: false
+                    message: Usuario e/ou senha invalidos.
+                    errors: []
+                    code: INVALID_CREDENTIALS
+        "403":
+          description: Conta pendente de ativacao pelo administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                accountNotActivated:
+                  value:
+                    success: false
+                    message: Sua conta ainda nao foi ativada por um administrador do sistema.
+                    errors: []
+                    code: ACCOUNT_NOT_ACTIVATED
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Erro interno do servidor.
+                    errors: []
+                    code: INTERNAL_SERVER_ERROR
   /competencies:
     get:
       tags:
@@ -441,8 +546,11 @@ components:
           type: string
           example: An error occurred.
         errors:
-          type: object
-          additionalProperties: true
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
           example: {}
         code:
           type: string
@@ -562,6 +670,106 @@ components:
             - integer
             - "null"
           example: 1
+    LoginResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login realizado com sucesso.
+        data:
+          $ref: "#/components/schemas/AuthenticatedUser"
+    AuthenticatedUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+        - profile
+        - active_status
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Maria Silva
+        email:
+          type: string
+          format: email
+          example: maria.silva@example.com
+        role:
+          type: string
+          enum:
+            - common_user
+            - administrator
+          example: common_user
+        profile:
+          $ref: "#/components/schemas/AuthenticatedUserProfile"
+        active_status:
+          type: integer
+          description: 1 representa conta ativa.
+          example: 1
+    AuthenticatedUserProfile:
+      type: object
+      required:
+        - role
+        - label
+        - user_type_id
+        - profile_type_id
+        - profile_type_name
+      properties:
+        role:
+          type: string
+          enum:
+            - common_user
+            - administrator
+          example: common_user
+        label:
+          type: string
+          enum:
+            - Usuario comum
+            - Administrador
+          example: Usuario comum
+        user_type_id:
+          type:
+            - integer
+            - "null"
+          description: 1 representa administrador; outros valores ou nulo representam usuario comum.
+          example: 2
+        profile_type_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        profile_type_name:
+          type:
+            - string
+            - "null"
+          example: Aluno
+    LoginPayload:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: maria.silva@example.com
+        password:
+          type: string
+          format: password
+          maxLength: 100
+          example: secret123
     Competency:
       type: object
       required:

@@ -15,7 +15,15 @@ class UserRepository implements UserRepositoryInterface
     public function existsByEmail(string $email): bool
     {
         return Usuario::query()
-            ->whereRaw('LOWER(DS_EMAIL) = ?', [mb_strtolower($email)])
+            ->whereRaw('LOWER("DS_EMAIL") = ?', [strtolower($email)])
             ->exists();
+    }
+
+    public function findByEmail(string $email): ?Usuario
+    {
+        return Usuario::query()
+            ->with('profileType')
+            ->whereRaw('LOWER("DS_EMAIL") = ?', [strtolower($email)])
+            ->first();
     }
 }

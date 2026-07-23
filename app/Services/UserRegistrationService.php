@@ -6,7 +6,6 @@ use App\Exceptions\DuplicateUserRegistrationException;
 use App\Models\Usuario;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class UserRegistrationService
 {
@@ -18,7 +17,7 @@ class UserRegistrationService
 
     public function register(array $data): Usuario
     {
-        $email = Str::lower(trim($data['email']));
+        $email = strtolower(trim($data['email']));
 
         if ($this->userRepository->existsByEmail($email)) {
             throw new DuplicateUserRegistrationException();

@@ -9,4 +9,6 @@ interface UserRepositoryInterface
     public function create(array $data): Usuario;
 
     public function existsByEmail(string $email): bool;
+
+    public function findByEmail(string $email): ?Usuario;
 }
