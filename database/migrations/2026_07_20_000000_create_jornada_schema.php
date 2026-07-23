@@ -97,7 +97,7 @@ return new class extends Migration
             $table->string('NO_SETOR', 100)->nullable();
             $table->string('NU_MATRICULA', 50)->nullable();
             $table->string('DS_EMAIL', 50)->nullable();
-            $table->string('DS_SENHA', 50)->nullable();
+            $table->string('DS_SENHA')->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->integer('ST_ATIVO')->nullable();
 
