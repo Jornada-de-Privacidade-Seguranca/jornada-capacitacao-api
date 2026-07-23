@@ -30,6 +30,7 @@ class Usuario extends JornadaModel
 
     protected $casts = [
         'DH_CRIADO_EM' => 'datetime',
+        'ST_ATIVO' => 'integer',
     ];
 
     public function profileType(): BelongsTo

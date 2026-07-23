@@ -13,6 +13,8 @@ tags:
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
+  - name: Users
+    description: Endpoints de cadastro e gestao de usuarios
 paths:
   /health:
     get:
@@ -104,6 +106,74 @@ paths:
                       include_steps:
                         - The include steps field must be true or false.
                     code: VALIDATION_ERROR
+  /users/register:
+    post:
+      tags:
+        - Users
+      summary: Cadastra um usuario pendente de ativacao
+      description: Cria uma conta de usuario com status pendente de ativacao por administrador.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistrationPayload"
+            examples:
+              valid:
+                value:
+                  name: Maria Silva
+                  email: maria.silva@example.com
+                  password: secret123
+                  password_confirmation: secret123
+                  organization_company: Ministerio da Justica
+                  department: Privacidade
+                  registration_number: MJ-123
+                  profile_type_id: 1
+      responses:
+        "201":
+          description: Usuario cadastrado pendente de ativacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRegistrationResponse"
+              examples:
+                created:
+                  value:
+                    success: true
+                    message: Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.
+                    data:
+                      id: 1
+                      name: Maria Silva
+                      email: maria.silva@example.com
+                      organization_company: Ministerio da Justica
+                      department: Privacidade
+                      registration_number: MJ-123
+                      profile_type_id: 1
+                      active_status: 2
+                      account_status: pending_activation
+                      created_at: "2026-07-23 16:30:00"
+        "409":
+          description: Conta ja cadastrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                duplicate:
+                  value:
+                    success: false
+                    message: Ja existe uma conta cadastrada com este e-mail.
+                    errors:
+                      email:
+                        - Ja existe uma conta cadastrada com este e-mail.
+                    code: USER_ALREADY_EXISTS
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
   /competencies:
     get:
       tags:
@@ -356,6 +426,142 @@ components:
         code:
           type: string
           example: VALIDATION_ERROR
+    StandardError:
+      type: object
+      required:
+        - success
+        - message
+        - errors
+        - code
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: An error occurred.
+        errors:
+          type: object
+          additionalProperties: true
+          example: {}
+        code:
+          type: string
+          example: ERROR_CODE
+    UserRegistrationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.
+        data:
+          $ref: "#/components/schemas/RegisteredUser"
+    RegisteredUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - organization_company
+        - department
+        - active_status
+        - account_status
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Maria Silva
+        email:
+          type: string
+          format: email
+          example: maria.silva@example.com
+        organization_company:
+          type: string
+          example: Ministerio da Justica
+        department:
+          type: string
+          example: Privacidade
+        registration_number:
+          type:
+            - string
+            - "null"
+          example: MJ-123
+        profile_type_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        active_status:
+          type: integer
+          description: 2 representa conta inativa, pendente de ativacao por administrador.
+          example: 2
+        account_status:
+          type: string
+          enum:
+            - pending_activation
+          example: pending_activation
+        created_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 16:30:00"
+    UserRegistrationPayload:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - password_confirmation
+        - organization_company
+        - department
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          description: Nome completo, contendo nome e sobrenome.
+          example: Maria Silva
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: maria.silva@example.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          format: password
+          example: secret123
+        password_confirmation:
+          type: string
+          format: password
+          example: secret123
+        organization_company:
+          type: string
+          maxLength: 100
+          example: Ministerio da Justica
+        department:
+          type: string
+          maxLength: 100
+          example: Privacidade
+        registration_number:
+          type:
+            - string
+            - "null"
+          maxLength: 50
+          example: MJ-123
+        profile_type_id:
+          type:
+            - integer
+            - "null"
+          example: 1
     Competency:
       type: object
       required:
