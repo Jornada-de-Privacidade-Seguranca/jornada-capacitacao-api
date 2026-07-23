@@ -12,7 +12,6 @@ class UsuarioResource extends JsonResource
         return [
             'id' => $this->PK_USUARIO,
             'profile_type_id' => $this->FK_TIPO_PERFIL,
-            'user_type_id' => $this->FK_TIPO_USUARIO,
             'name' => $this->NO_USUARIO,
             'organization' => $this->NO_ORGAO_EMPRESA,
             'department' => $this->NO_SETOR,

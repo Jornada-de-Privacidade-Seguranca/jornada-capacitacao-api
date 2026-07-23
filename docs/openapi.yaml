@@ -129,7 +129,6 @@ paths:
                   department: Privacidade
                   registration_number: MAT-123
                   profile_type_id: 1
-                  user_type_id: 1
       responses:
         "201":
           description: Usuario cadastrado com ativacao pendente
@@ -145,7 +144,6 @@ paths:
                     data:
                       id: 1
                       profile_type_id: 1
-                      user_type_id: 1
                       name: Maria Silva
                       organization: Secretaria de Governo
                       department: Privacidade
@@ -465,7 +463,6 @@ components:
       required:
         - id
         - profile_type_id
-        - user_type_id
         - name
         - organization
         - department
@@ -478,11 +475,6 @@ components:
           type: integer
           example: 1
         profile_type_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-        user_type_id:
           type:
             - integer
             - "null"
@@ -555,11 +547,6 @@ components:
           maxLength: 50
           example: MAT-123
         profile_type_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-        user_type_id:
           type:
             - integer
             - "null"

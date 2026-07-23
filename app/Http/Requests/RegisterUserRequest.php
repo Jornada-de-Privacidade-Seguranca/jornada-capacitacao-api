@@ -34,7 +34,6 @@ class RegisterUserRequest extends FormRequest
             'department' => ['required', 'string', 'max:100'],
             'registration_number' => ['required', 'string', 'max:50'],
             'profile_type_id' => ['nullable', 'integer', Rule::exists('TB_TIPO_PERFIL', 'PK_TIPO_PERFIL')],
-            'user_type_id' => ['nullable', 'integer'],
         ];
     }
 
@@ -64,7 +63,6 @@ class RegisterUserRequest extends FormRequest
             'registration_number.max' => 'A matricula deve ter no maximo 50 caracteres.',
             'profile_type_id.integer' => 'O tipo de perfil deve ser um numero inteiro.',
             'profile_type_id.exists' => 'Informe um tipo de perfil valido.',
-            'user_type_id.integer' => 'O tipo de usuario deve ser um numero inteiro.',
         ];
     }
 

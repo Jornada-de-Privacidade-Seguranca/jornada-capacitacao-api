@@ -23,7 +23,6 @@ class UserRegistrationService
         try {
             return $this->usuarioRepository->create([
                 'FK_TIPO_PERFIL' => $data['profile_type_id'] ?? null,
-                'FK_TIPO_USUARIO' => $data['user_type_id'] ?? null,
                 'NO_USUARIO' => $data['name'],
                 'NO_ORGAO_EMPRESA' => $data['organization'],
                 'NO_SETOR' => $data['department'],

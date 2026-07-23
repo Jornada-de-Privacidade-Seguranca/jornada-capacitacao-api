@@ -123,7 +123,6 @@ class UserRegistrationTest extends TestCase
             'organization' => 'Secretaria de Governo',
             'department' => 'Privacidade',
             'registration_number' => 'MAT-123',
-            'user_type_id' => 1,
         ], $overrides);
     }
 }

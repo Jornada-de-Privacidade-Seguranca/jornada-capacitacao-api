@@ -13,7 +13,6 @@ class Usuario extends JornadaModel
 
     protected $fillable = [
         'FK_TIPO_PERFIL',
-        'FK_TIPO_USUARIO',
         'NO_USUARIO',
         'NO_ORGAO_EMPRESA',
         'NO_SETOR',
