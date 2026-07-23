@@ -51,6 +51,31 @@ class UserRegistrationTest extends TestCase
         $this->assertTrue(Hash::check('secret123', $user->DS_SENHA));
     }
 
+    public function test_it_accepts_maximum_length_email_and_persists_full_password_hash(): void
+    {
+        $email = str_repeat('a', 64).'@'.str_repeat('b', 32).'.io';
+
+        $this->postJson('/api/users/register', $this->validPayload([
+            'email' => $email,
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ]))
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.email', $email);
+
+        $user = Usuario::query()->where('DS_EMAIL', $email)->firstOrFail();
+
+        $this->assertSame(100, strlen($user->DS_EMAIL));
+        $this->assertGreaterThan(50, strlen($user->DS_SENHA));
+        $this->assertTrue(Hash::check('secret123', $user->DS_SENHA));
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $user->PK_USUARIO,
+            'DS_EMAIL' => $email,
+            'ST_ATIVO' => 2,
+        ]);
+    }
+
     public function test_it_rejects_name_without_last_name(): void
     {
         $this->postJson('/api/users/register', $this->validPayload(['name' => 'Maria']))
