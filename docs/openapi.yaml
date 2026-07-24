@@ -878,9 +878,9 @@ components:
         - id
         - name
         - description
+        - knowledge_domain_id
         - knowledge_area_id
         - difficulty_id
-        - type
       properties:
         id:
           type: integer
@@ -893,6 +893,11 @@ components:
             - string
             - "null"
           example: Conceitos essenciais de protecao de dados pessoais.
+        knowledge_domain_id:
+          type:
+            - integer
+            - "null"
+          example: 1
         knowledge_area_id:
           type:
             - integer
@@ -903,11 +908,6 @@ components:
             - integer
             - "null"
           example: 1
-        type:
-          type:
-            - integer
-            - "null"
-          example: 2
     CompetencyPayload:
       type: object
       required:
@@ -923,6 +923,11 @@ components:
             - "null"
           maxLength: 500
           example: Conceitos essenciais de protecao de dados pessoais.
+        knowledge_domain_id:
+          type:
+            - integer
+            - "null"
+          example: 1
     ValidationError:
       type: object
       properties:
