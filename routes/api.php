@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CompetencyController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\TemplateExampleController;
 use Illuminate\Support\Facades\Route;
 
@@ -15,3 +16,5 @@ Route::get('/template-example', TemplateExampleController::class);
 // Nao usar como endpoint real de competencias; excluir este scaffold quando as
 // rotas oficiais de competencias forem criadas.
 Route::apiResource('competencies', CompetencyController::class);
+
+Route::apiResource('journey-profiles', JourneyProfileController::class)->only(['index', 'show']);

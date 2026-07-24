@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JourneyProfile extends JornadaModel
 {
+    use HasFactory;
+
     protected $table = 'TB_PERFIS_JORNADA';
 
     protected $primaryKey = 'PK_PERFIS_JORNADA';

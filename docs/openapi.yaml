@@ -11,6 +11,8 @@ tags:
     description: Endpoints de disponibilidade da API
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
+  - name: JourneyProfiles
+    description: Consulta de tipos de jornada usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
 paths:
@@ -203,9 +205,65 @@ paths:
                 $ref: "#/components/schemas/EmptySuccessResponse"
         "404":
           description: Competencia nao encontrada
+  /journey-profiles:
+    parameters:
+      - name: page
+        in: query
+        description: Número da página
+        required: false
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+      - name: per_page
+        in: query
+        description: Quantidade de itens por página
+        required: false
+        schema:
+          type: integer
+          default: 15
+          minimum: 1
+          maximum: 100
+    get:
+      tags:
+        - JourneyProfiles
+      summary: Lista tipos de jornada
+      operationId: listJourneyProfiles
+      responses:
+        "200":
+          description: Lista de tipos de jornada cadastrados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyProfileListResponse"
+  /journey-profiles/{id}:
+    parameters:
+      - $ref: "#/components/parameters/JourneyProfileId"
+    get:
+      tags:
+        - JourneyProfiles
+      summary: Busca um tipo de jornada por ID
+      operationId: getJourneyProfile
+      responses:
+        "200":
+          description: Tipo de jornada encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyProfileResponse"
+        "404":
+          description: Tipo de jornada nao encontrado
 components:
   parameters:
     CompetencyId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+    JourneyProfileId:
       name: id
       in: path
       required: true
@@ -282,6 +340,26 @@ components:
         put_here:
           type: string
           example: Fluxos, validacoes de dominio, decisoes e chamadas para repositories.
+    PaginationMeta:
+      type: object
+      required:
+        - current_page
+        - per_page
+        - total
+        - last_page
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 100
+        last_page:
+          type: integer
+          example: 3
     CompetencyListResponse:
       type: object
       required:
@@ -407,6 +485,69 @@ components:
             - "null"
           maxLength: 500
           example: Conceitos essenciais de protecao de dados pessoais.
+    JourneyProfileListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Journey profiles retrieved successfully.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/JourneyProfile"
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: "#/components/schemas/PaginationMeta"
+
+    JourneyProfileResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Journey profiles retrieved successfully."
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/JourneyProfile'
+    JourneyProfile:
+      type: object
+      required:
+        - id
+        - description_pt
+        - description_en
+        - type
+      properties:
+        id:
+          type: integer
+          example: 1
+        description_pt:
+          type: string
+          example: "Agente Responsável pela Avaliação de Conformidade"
+        description_en:
+          type: string
+          example: "Agent Responsible for Compliance Assessment"
+        type:
+          type: integer
+          description: "1-Segurança, 2-Privacidade, 3-Misto"
+          enum: [1, 2, 3]
+          example: 1
     ValidationError:
       type: object
       properties:
