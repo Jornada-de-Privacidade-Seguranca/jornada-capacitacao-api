@@ -23,7 +23,7 @@ class AuthenticateSessionUser
             );
         }
 
-        $user = $request->user();
+        $user = $request->user()?->fresh();
 
         if ($user === null || (int) $user->ST_ATIVO !== self::STATUS_ACTIVE) {
             Auth::logout();
@@ -36,6 +36,9 @@ class AuthenticateSessionUser
                 code: 'ACCOUNT_NOT_ACTIVATED',
             );
         }
+
+        Auth::setUser($user);
+        $request->setUserResolver(fn () => $user);
 
         return $next($request);
     }

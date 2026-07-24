@@ -415,6 +415,36 @@ paths:
                           status: in_progress
                           started_at: "2026-07-24 08:00:00"
                           finished_at: null
+                          journey_profile:
+                            id: 2
+                            description_pt: Privacidade
+                            description_en: Privacy
+                            knowledge_domain:
+                              id: 1
+                              name_pt: Protecao de Dados
+                              name_en: Data Protection
+                          professional_experience:
+                            id: null
+                            description_pt: null
+                            description_en: null
+                          profile_experience:
+                            id: null
+                            description_pt: null
+                            description_en: null
+                          english_proficiency:
+                            id: null
+                            name_pt: null
+                            name_en: null
+                          higher_education_course:
+                            id: null
+                            name_pt: null
+                            name_en: null
+                            type: null
+                          postgraduate_course:
+                            id: null
+                            name_pt: null
+                            name_en: null
+                            type: null
                         latest_journey:
                           id: 4
                           user_id: 1
@@ -422,6 +452,36 @@ paths:
                           status: completed
                           started_at: "2026-07-23 08:00:00"
                           finished_at: "2026-07-23 09:00:00"
+                          journey_profile:
+                            id: 2
+                            description_pt: Privacidade
+                            description_en: Privacy
+                            knowledge_domain:
+                              id: 1
+                              name_pt: Protecao de Dados
+                              name_en: Data Protection
+                          professional_experience:
+                            id: 3
+                            description_pt: 1 ano
+                            description_en: 1 year
+                          profile_experience:
+                            id: 3
+                            description_pt: 1 ano
+                            description_en: 1 year
+                          english_proficiency:
+                            id: 1
+                            name_pt: Basico
+                            name_en: Basic
+                          higher_education_course:
+                            id: 4
+                            name_pt: Direito
+                            name_en: Law
+                            type: 1
+                          postgraduate_course:
+                            id: 5
+                            name_pt: Seguranca
+                            name_en: Security
+                            type: 2
                         recent_journeys: []
         "401":
           description: Usuario nao autenticado
