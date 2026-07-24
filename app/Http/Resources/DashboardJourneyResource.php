@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class DashboardJourneyResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->PK_JORNADA,
+            'user_id' => $this->FK_USUARIO,
+            'journey_profile_id' => $this->FK_PERFIS_JORNADA,
+            'status' => $this->DH_FIM === null ? 'in_progress' : 'completed',
+            'started_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),
+            'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
+            'journey_profile' => [
+                'id' => $this->journeyProfile?->PK_PERFIS_JORNADA,
+                'description_pt' => $this->journeyProfile?->DS_PERFIS_PT,
+                'description_en' => $this->journeyProfile?->DS_PERFIS_EN,
+                'knowledge_domain' => [
+                    'id' => $this->journeyProfile?->knowledgeDomain?->PK_DOMINIO_CONHECIMENTO,
+                    'name_pt' => $this->journeyProfile?->knowledgeDomain?->NO_DOMINIO_CONHECIMENTO_PT,
+                    'name_en' => $this->journeyProfile?->knowledgeDomain?->NO_DOMINIO_CONHECIMENTO_EN,
+                ],
+            ],
+            'professional_experience' => [
+                'id' => $this->professionalExperience?->PK_EXPERIENCIA_ATUACAO,
+                'description_pt' => $this->professionalExperience?->DS_EXPERIENCIA_ATUACAO_PT,
+                'description_en' => $this->professionalExperience?->DS_EXPERIENCIA_ATUACAO_EN,
+            ],
+            'profile_experience' => [
+                'id' => $this->profileExperience?->PK_EXPERIENCIA_ATUACAO,
+                'description_pt' => $this->profileExperience?->DS_EXPERIENCIA_ATUACAO_PT,
+                'description_en' => $this->profileExperience?->DS_EXPERIENCIA_ATUACAO_EN,
+            ],
+            'english_proficiency' => [
+                'id' => $this->englishProficiency?->PK_PROFICIENCIA_INGLES,
+                'name_pt' => $this->englishProficiency?->NO_PROFICIENCIA_INGLES_PT,
+                'name_en' => $this->englishProficiency?->NO_PROFICIENCIA_INGLES_EN,
+            ],
+            'higher_education_course' => [
+                'id' => $this->higherEducationCourse?->PK_CURSO_SUPERIOR,
+                'name_pt' => $this->higherEducationCourse?->NO_CURSO_SUPERIOR_PT,
+                'name_en' => $this->higherEducationCourse?->NO_CURSO_SUPERIOR_EN,
+                'type' => $this->higherEducationCourse?->TP_CURSO_SUPERIOR,
+            ],
+            'postgraduate_course' => [
+                'id' => $this->postgraduateCourse?->PK_POS_GRADUACAO,
+                'name_pt' => $this->postgraduateCourse?->NO_POS_GRADUACAO_PT,
+                'name_en' => $this->postgraduateCourse?->NO_POS_GRADUACAO_EN,
+                'type' => $this->postgraduateCourse?->TP_POS_GRADUACAO,
+            ],
+        ];
+    }
+}

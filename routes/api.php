@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CompetencyController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
@@ -29,5 +30,6 @@ Route::post('/users/register', UserRegistrationController::class)->middleware('t
 Route::middleware([StartSession::class])->group(function (): void {
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
     Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
+    Route::get('/dashboard', DashboardController::class)->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
 });

@@ -11,6 +11,8 @@ tags:
     description: Endpoints de disponibilidade da API
   - name: Auth
     description: Endpoints de autenticacao
+  - name: Dashboard
+    description: Endpoints de dados do painel inicial do usuario
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: Template
@@ -366,6 +368,73 @@ paths:
                     message: Sua conta ainda nao foi ativada por um administrador do sistema.
                     errors: []
                     code: ACCOUNT_NOT_ACTIVATED
+  /dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: Recupera os dados do painel do usuario autenticado
+      description: Retorna dados basicos do usuario autenticado, jornada em andamento quando houver, ultima jornada concluida e ate tres outras jornadas concluidas recentes do mesmo usuario.
+      operationId: getDashboard
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do painel recuperados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+              examples:
+                withJourneys:
+                  value:
+                    success: true
+                    message: Dados do painel recuperados com sucesso.
+                    data:
+                      user:
+                        id: 1
+                        name: Maria Silva
+                        email: maria.silva@example.com
+                        role: common_user
+                        organization: Ministerio da Justica
+                        department: Privacidade
+                        registration_number: MJ-123
+                        profile:
+                          role: common_user
+                          label: Usuario comum
+                          user_type_id: 2
+                          profile_type_id: 1
+                          profile_type_name: Aluno
+                        active_status: 1
+                        created_at: "2026-07-23 16:30:00"
+                      journeys:
+                        has_unfinished_journey: true
+                        unfinished_journey:
+                          id: 5
+                          user_id: 1
+                          journey_profile_id: 2
+                          status: in_progress
+                          started_at: "2026-07-24 08:00:00"
+                          finished_at: null
+                        latest_journey:
+                          id: 4
+                          user_id: 1
+                          journey_profile_id: 2
+                          status: completed
+                          started_at: "2026-07-23 08:00:00"
+                          finished_at: "2026-07-23 09:00:00"
+                        recent_journeys: []
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "403":
+          description: Conta da sessao atual nao esta ativa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
   /auth/logout:
     post:
       tags:
@@ -910,6 +979,142 @@ components:
             - string
             - "null"
           example: Aluno
+    DashboardResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Dados do painel recuperados com sucesso.
+        data:
+          $ref: "#/components/schemas/Dashboard"
+    Dashboard:
+      type: object
+      required:
+        - user
+        - journeys
+      properties:
+        user:
+          $ref: "#/components/schemas/DashboardUser"
+        journeys:
+          $ref: "#/components/schemas/DashboardJourneys"
+    DashboardUser:
+      allOf:
+        - $ref: "#/components/schemas/AuthenticatedUser"
+        - type: object
+          required:
+            - organization
+            - department
+            - registration_number
+            - created_at
+          properties:
+            organization:
+              type:
+                - string
+                - "null"
+              example: Ministerio da Justica
+            department:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            registration_number:
+              type:
+                - string
+                - "null"
+              example: MJ-123
+            created_at:
+              type:
+                - string
+                - "null"
+              example: "2026-07-23 16:30:00"
+    DashboardJourneys:
+      type: object
+      required:
+        - has_unfinished_journey
+        - unfinished_journey
+        - latest_journey
+        - recent_journeys
+      properties:
+        has_unfinished_journey:
+          type: boolean
+          example: true
+        unfinished_journey:
+          oneOf:
+            - $ref: "#/components/schemas/DashboardJourney"
+            - type: "null"
+        latest_journey:
+          oneOf:
+            - $ref: "#/components/schemas/DashboardJourney"
+            - type: "null"
+        recent_journeys:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/DashboardJourney"
+    DashboardJourney:
+      type: object
+      required:
+        - id
+        - user_id
+        - journey_profile_id
+        - status
+        - started_at
+        - finished_at
+      properties:
+        id:
+          type: integer
+          example: 4
+        user_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        journey_profile_id:
+          type:
+            - integer
+            - "null"
+          example: 2
+        status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+          example: completed
+        started_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 08:00:00"
+        finished_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 09:00:00"
+        journey_profile:
+          type: object
+          additionalProperties: true
+        professional_experience:
+          type: object
+          additionalProperties: true
+        profile_experience:
+          type: object
+          additionalProperties: true
+        english_proficiency:
+          type: object
+          additionalProperties: true
+        higher_education_course:
+          type: object
+          additionalProperties: true
+        postgraduate_course:
+          type: object
+          additionalProperties: true
     LoginPayload:
       type: object
       required:
