@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -12,10 +13,15 @@ class JourneyProfile extends JornadaModel
     protected $primaryKey = 'PK_PERFIS_JORNADA';
 
     protected $fillable = [
+        'FK_DOMINIO_CONHECIMENTO',
         'DS_PERFIS_PT',
         'DS_PERFIS_EN',
-        'TP_PERFIS',
     ];
+
+    public function knowledgeDomain(): BelongsTo
+    {
+        return $this->belongsTo(KnowledgeDomain::class, 'FK_DOMINIO_CONHECIMENTO', 'PK_DOMINIO_CONHECIMENTO');
+    }
 
     public function competencies(): BelongsToMany
     {

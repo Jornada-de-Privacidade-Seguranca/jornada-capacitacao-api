@@ -20,6 +20,7 @@ class StoreCompetencyRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:500'],
+            'knowledge_domain_id' => ['nullable', 'integer', 'exists:TB_DOMINIO_CONHECIMENTO,PK_DOMINIO_CONHECIMENTO'],
         ];
     }
 

@@ -15,6 +15,7 @@ class Competency extends JornadaModel
     protected $primaryKey = 'PK_COMPETENCIAS';
 
     protected $fillable = [
+        'FK_DOMINIO_CONHECIMENTO',
         'FK_AREA_CONHECIMENTO',
         'FK_DIFICULDADE',
         'NO_ORIGEM_COMPETENCIAS_PT',
@@ -23,8 +24,12 @@ class Competency extends JornadaModel
         'NO_COMPETENCIAS_EN',
         'DS_COMPETENCIAS_PT',
         'DS_COMPETENCIAS_EN',
-        'TP_COMPETENCIAS',
     ];
+
+    public function knowledgeDomain(): BelongsTo
+    {
+        return $this->belongsTo(KnowledgeDomain::class, 'FK_DOMINIO_CONHECIMENTO', 'PK_DOMINIO_CONHECIMENTO');
+    }
 
     public function knowledgeArea(): BelongsTo
     {
