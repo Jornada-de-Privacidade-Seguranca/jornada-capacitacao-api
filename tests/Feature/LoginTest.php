@@ -43,6 +43,13 @@ class LoginTest extends TestCase
             ->assertJsonPath('data.profile.profile_type_id', $profileType->PK_TIPO_PERFIL)
             ->assertJsonPath('data.profile.profile_type_name', 'Aluno')
             ->assertJsonMissingPath('data.DS_SENHA');
+
+        $this->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Usuario autenticado recuperado com sucesso.')
+            ->assertJsonPath('data.email', 'maria.silva@example.com')
+            ->assertJsonPath('data.role', 'common_user');
     }
 
     public function test_it_returns_administrator_profile_for_admin_user(): void
@@ -83,6 +90,21 @@ class LoginTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Usuario e/ou senha invalidos.')
             ->assertJsonPath('code', 'INVALID_CREDENTIALS')
+            ->assertJsonPath('errors', []);
+
+        $this->getJson('/api/me')
+            ->assertUnauthorized()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'UNAUTHENTICATED');
+    }
+
+    public function test_it_rejects_authenticated_user_endpoint_without_session(): void
+    {
+        $this->getJson('/api/me')
+            ->assertUnauthorized()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Usuario nao autenticado.')
+            ->assertJsonPath('code', 'UNAUTHENTICATED')
             ->assertJsonPath('errors', []);
     }
 

@@ -2,17 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Usuario extends JornadaModel
+class Usuario extends JornadaModel implements AuthenticatableContract
 {
+    use Authenticatable;
+
     protected $table = 'TB_USUARIO';
 
     protected $primaryKey = 'PK_USUARIO';
 
     protected $fillable = [
         'FK_TIPO_PERFIL',
+        'FK_TIPO_USUARIO',
         'NO_USUARIO',
         'NO_ORGAO_EMPRESA',
         'NO_SETOR',
@@ -31,6 +36,16 @@ class Usuario extends JornadaModel
         'DH_CRIADO_EM' => 'datetime',
         'ST_ATIVO' => 'integer',
     ];
+
+    public function getAuthPasswordName(): string
+    {
+        return 'DS_SENHA';
+    }
+
+    public function getAuthPassword(): string
+    {
+        return (string) $this->DS_SENHA;
+    }
 
     public function profileType(): BelongsTo
     {

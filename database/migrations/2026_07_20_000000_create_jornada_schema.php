@@ -109,6 +109,7 @@ return new class extends Migration
         Schema::create('TB_USUARIO', function (Blueprint $table): void {
             $table->increments('PK_USUARIO');
             $table->unsignedInteger('FK_TIPO_PERFIL')->nullable();
+            $table->integer('FK_TIPO_USUARIO')->nullable();
             $table->string('NO_USUARIO', 50)->nullable();
             $table->string('NO_ORGAO_EMPRESA', 100)->nullable();
             $table->string('NO_SETOR', 100)->nullable();

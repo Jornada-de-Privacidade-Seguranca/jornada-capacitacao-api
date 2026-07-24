@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CompetencyController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\TemplateExampleController;
 use App\Http\Controllers\Api\UserActivationController;
 use App\Http\Controllers\Api\UserRegistrationController;
+use App\Http\Middleware\AuthenticateSessionUser;
+use App\Http\Middleware\EnsureUserIsAdministrator;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 // Rotas temporarias de teste/scaffold do projeto.
@@ -23,7 +27,11 @@ Route::apiResource('competencies', CompetencyController::class);
 Route::post('/users/register', UserRegistrationController::class);
 
 // Rota temporaria para ativacao manual ate o fluxo administrativo oficial ser definido.
-Route::patch('/users/{user}/activate', UserActivationController::class);
+Route::middleware([StartSession::class, AuthenticateSessionUser::class, EnsureUserIsAdministrator::class])
+    ->patch('/users/{user}/activate', UserActivationController::class);
 
 // Rota de autenticacao de usuario
-Route::post('/auth/login', LoginController::class);
+Route::middleware([StartSession::class])->group(function (): void {
+    Route::post('/auth/login', LoginController::class);
+    Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
+});

@@ -181,8 +181,10 @@ paths:
       tags:
         - Users
       summary: Ativa temporariamente um usuario
-      description: Rota temporaria para ativacao manual de usuario ate o fluxo administrativo oficial ser definido. Atualiza o status do usuario para ativo.
+      description: Rota administrativa temporaria para ativacao manual de usuario ate o fluxo administrativo oficial ser definido. Exige usuario autenticado por sessao e FK_TIPO_USUARIO igual a 1.
       operationId: activateUserTemporarily
+      security:
+        - sessionAuth: []
       parameters:
         - name: user
           in: path
@@ -212,6 +214,32 @@ paths:
                       profile_type_name: Aluno
                       active_status: 1
                       account_status: active
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Usuario autenticado sem permissao administrativa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                adminRequired:
+                  value:
+                    success: false
+                    message: Permissao administrativa obrigatoria.
+                    errors: []
+                    code: ADMIN_PERMISSION_REQUIRED
         "404":
           description: Usuario nao encontrado
           content:
@@ -230,7 +258,7 @@ paths:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas e retorna o perfil do usuario autenticado para redirecionamento no front-end.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end.
       operationId: loginUser
       requestBody:
         required: true
@@ -328,6 +356,52 @@ paths:
                     message: Erro interno do servidor.
                     errors: []
                     code: INTERNAL_SERVER_ERROR
+  /me:
+    get:
+      tags:
+        - Auth
+      summary: Recupera o usuario autenticado
+      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente.
+      operationId: getAuthenticatedUser
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Usuario autenticado recuperado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticatedUserResponse"
+              examples:
+                commonUser:
+                  value:
+                    success: true
+                    message: Usuario autenticado recuperado com sucesso.
+                    data:
+                      id: 1
+                      name: Maria Silva
+                      email: maria.silva@example.com
+                      role: common_user
+                      profile:
+                        role: common_user
+                        label: Usuario comum
+                        user_type_id: 2
+                        profile_type_id: 1
+                        profile_type_name: Aluno
+                      active_status: 1
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
   /competencies:
     get:
       tags:
@@ -428,6 +502,12 @@ paths:
         "404":
           description: Competencia nao encontrada
 components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: jornada_session
+      description: Cookie de sessao HttpOnly emitido pelo backend apos login.
   parameters:
     CompetencyId:
       name: id
@@ -785,6 +865,21 @@ components:
         message:
           type: string
           example: Login realizado com sucesso.
+        data:
+          $ref: "#/components/schemas/AuthenticatedUser"
+    AuthenticatedUserResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Usuario autenticado recuperado com sucesso.
         data:
           $ref: "#/components/schemas/AuthenticatedUser"
     AuthenticatedUser:

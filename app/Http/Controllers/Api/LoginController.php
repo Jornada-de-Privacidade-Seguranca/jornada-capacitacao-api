@@ -10,6 +10,7 @@ use App\Services\LoginService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Throwable;
 
 class LoginController
@@ -41,6 +42,9 @@ class LoginController
                 code: 'INTERNAL_SERVER_ERROR',
             );
         }
+
+        Auth::login($user);
+        $request->session()->regenerate();
 
         return ApiResponse::success(
             data: (new AuthenticatedUserResource($user))->resolve(),
