@@ -20,6 +20,9 @@ class DashboardRepository implements DashboardRepositoryInterface
     {
         return $this->baseJourneyQuery($userId)
             ->whereNotNull('DH_FIM')
+            ->reorder()
+            ->orderByDesc('DH_FIM')
+            ->orderByDesc('PK_JORNADA')
             ->first();
     }
 
@@ -30,6 +33,9 @@ class DashboardRepository implements DashboardRepositoryInterface
             ->when($exceptJourneyId !== null, function (Builder $query) use ($exceptJourneyId): void {
                 $query->where('PK_JORNADA', '<>', $exceptJourneyId);
             })
+            ->reorder()
+            ->orderByDesc('DH_FIM')
+            ->orderByDesc('PK_JORNADA')
             ->limit($limit)
             ->get();
     }

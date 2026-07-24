@@ -1067,6 +1067,12 @@ components:
         - status
         - started_at
         - finished_at
+        - journey_profile
+        - professional_experience
+        - profile_experience
+        - english_proficiency
+        - higher_education_course
+        - postgraduate_course
       properties:
         id:
           type: integer
@@ -1099,22 +1105,171 @@ components:
           example: "2026-07-23 09:00:00"
         journey_profile:
           type: object
-          additionalProperties: true
+          required:
+            - id
+            - description_pt
+            - description_en
+            - knowledge_domain
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 2
+            description_pt:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            description_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
+            knowledge_domain:
+              type: object
+              required:
+                - id
+                - name_pt
+                - name_en
+              properties:
+                id:
+                  type:
+                    - integer
+                    - "null"
+                  example: 1
+                name_pt:
+                  type:
+                    - string
+                    - "null"
+                  example: Protecao de Dados
+                name_en:
+                  type:
+                    - string
+                    - "null"
+                  example: Data Protection
         professional_experience:
           type: object
-          additionalProperties: true
+          required:
+            - id
+            - description_pt
+            - description_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 3
+            description_pt:
+              type:
+                - string
+                - "null"
+              example: 1 ano
+            description_en:
+              type:
+                - string
+                - "null"
+              example: 1 year
         profile_experience:
           type: object
-          additionalProperties: true
+          required:
+            - id
+            - description_pt
+            - description_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 3
+            description_pt:
+              type:
+                - string
+                - "null"
+              example: 1 ano
+            description_en:
+              type:
+                - string
+                - "null"
+              example: 1 year
         english_proficiency:
           type: object
-          additionalProperties: true
+          required:
+            - id
+            - name_pt
+            - name_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Basico
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Basic
         higher_education_course:
           type: object
-          additionalProperties: true
+          required:
+            - id
+            - name_pt
+            - name_en
+            - type
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 4
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Direito
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Law
+            type:
+              type:
+                - integer
+                - "null"
+              example: 1
         postgraduate_course:
           type: object
-          additionalProperties: true
+          required:
+            - id
+            - name_pt
+            - name_en
+            - type
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 5
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Seguranca
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Security
+            type:
+              type:
+                - integer
+                - "null"
+              example: 2
     LoginPayload:
       type: object
       required:

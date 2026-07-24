@@ -131,6 +131,77 @@ class DashboardTest extends TestCase
             ->assertJsonCount(0, 'data.journeys.recent_journeys');
     }
 
+    public function test_it_returns_latest_journey_by_finished_at_instead_of_created_at(): void
+    {
+        $user = $this->createActiveUser('maria.silva@example.com');
+        $journeyProfile = $this->createJourneyProfile();
+
+        $createdMoreRecently = $this->createJourney(
+            $user,
+            $journeyProfile,
+            '2026-07-10 08:00:00',
+            '2026-07-10 09:00:00',
+        );
+        $finishedMoreRecently = $this->createJourney(
+            $user,
+            $journeyProfile,
+            '2026-07-09 08:00:00',
+            '2026-07-11 09:00:00',
+        );
+
+        $this->loginAs('maria.silva@example.com');
+
+        $response = $this->getJson('/api/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.journeys.latest_journey.id', $finishedMoreRecently->PK_JORNADA);
+
+        $this->assertNotSame(
+            $createdMoreRecently->PK_JORNADA,
+            $response->json('data.journeys.latest_journey.id'),
+        );
+    }
+
+    public function test_it_orders_recent_journeys_by_finished_at_with_id_as_tiebreaker(): void
+    {
+        $user = $this->createActiveUser('maria.silva@example.com');
+        $journeyProfile = $this->createJourneyProfile();
+
+        $olderFinished = $this->createJourney(
+            $user,
+            $journeyProfile,
+            '2026-07-12 08:00:00',
+            '2026-07-10 09:00:00',
+        );
+        $latestJourney = $this->createJourney(
+            $user,
+            $journeyProfile,
+            '2026-07-08 08:00:00',
+            '2026-07-13 09:00:00',
+        );
+        $sameFinishLowerId = $this->createJourney(
+            $user,
+            $journeyProfile,
+            '2026-07-11 08:00:00',
+            '2026-07-12 09:00:00',
+        );
+        $sameFinishHigherId = $this->createJourney(
+            $user,
+            $journeyProfile,
+            '2026-07-09 08:00:00',
+            '2026-07-12 09:00:00',
+        );
+
+        $this->loginAs('maria.silva@example.com');
+
+        $this->getJson('/api/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.journeys.latest_journey.id', $latestJourney->PK_JORNADA)
+            ->assertJsonCount(3, 'data.journeys.recent_journeys')
+            ->assertJsonPath('data.journeys.recent_journeys.0.id', $sameFinishHigherId->PK_JORNADA)
+            ->assertJsonPath('data.journeys.recent_journeys.1.id', $sameFinishLowerId->PK_JORNADA)
+            ->assertJsonPath('data.journeys.recent_journeys.2.id', $olderFinished->PK_JORNADA);
+    }
+
     public function test_it_rejects_dashboard_without_authenticated_session(): void
     {
         $this->getJson('/api/dashboard')
