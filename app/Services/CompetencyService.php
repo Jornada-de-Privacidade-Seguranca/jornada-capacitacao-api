@@ -49,6 +49,10 @@ class CompetencyService
             $columns['DS_COMPETENCIAS_PT'] = $data['description'];
         }
 
+        if (array_key_exists('knowledge_domain_id', $data)) {
+            $columns['FK_DOMINIO_CONHECIMENTO'] = $data['knowledge_domain_id'];
+        }
+
         return $columns;
     }
 }

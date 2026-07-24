@@ -8,11 +8,21 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::create('TB_DOMINIO_CONHECIMENTO', function (Blueprint $table): void {
+            $table->increments('PK_DOMINIO_CONHECIMENTO');
+            $table->string('NO_DOMINIO_CONHECIMENTO_PT', 100)->nullable();
+            $table->string('NO_DOMINIO_CONHECIMENTO_EN', 100)->nullable();
+        });
+
         Schema::create('TB_PERFIS_JORNADA', function (Blueprint $table): void {
             $table->increments('PK_PERFIS_JORNADA');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
             $table->string('DS_PERFIS_PT', 1000)->nullable();
             $table->string('DS_PERFIS_EN', 1000)->nullable();
-            $table->integer('TP_PERFIS')->nullable();
+
+            $table->foreign('FK_DOMINIO_CONHECIMENTO')
+                ->references('PK_DOMINIO_CONHECIMENTO')
+                ->on('TB_DOMINIO_CONHECIMENTO');
         });
 
         Schema::create('TB_AREA_CONHECIMENTO', function (Blueprint $table): void {
@@ -23,12 +33,13 @@ return new class extends Migration
 
         Schema::create('TB_DIFICULDADE', function (Blueprint $table): void {
             $table->increments('PK_DIFICULDADE');
-            $table->string('DS_DIFICULDADE_PT', 20)->nullable();
-            $table->string('DS_DIFICULDADE_EN', 20)->nullable();
+            $table->string('NO_DIFICULDADE_PT', 20)->nullable();
+            $table->string('NO_DIFICULDADE_EN', 20)->nullable();
         });
 
         Schema::create('TB_COMPETENCIAS', function (Blueprint $table): void {
             $table->increments('PK_COMPETENCIAS');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
             $table->unsignedInteger('FK_AREA_CONHECIMENTO')->nullable();
             $table->unsignedInteger('FK_DIFICULDADE')->nullable();
             $table->string('NO_ORIGEM_COMPETENCIAS_PT', 50)->nullable();
@@ -37,10 +48,12 @@ return new class extends Migration
             $table->string('NO_COMPETENCIAS_EN', 100)->nullable();
             $table->string('DS_COMPETENCIAS_PT', 500)->nullable();
             $table->string('DS_COMPETENCIAS_EN', 500)->nullable();
-            $table->integer('TP_COMPETENCIAS')->nullable();
 
             $table->foreign('FK_AREA_CONHECIMENTO')->references('PK_AREA_CONHECIMENTO')->on('TB_AREA_CONHECIMENTO');
             $table->foreign('FK_DIFICULDADE')->references('PK_DIFICULDADE')->on('TB_DIFICULDADE');
+            $table->foreign('FK_DOMINIO_CONHECIMENTO')
+                ->references('PK_DOMINIO_CONHECIMENTO')
+                ->on('TB_DOMINIO_CONHECIMENTO');
         });
 
         Schema::create('RL_PERFIS_COMPETENCIAS', function (Blueprint $table): void {
@@ -68,7 +81,12 @@ return new class extends Migration
 
         Schema::create('TB_CERTIFICACAO_PROFISSIONAL', function (Blueprint $table): void {
             $table->increments('PK_CERTIFICACAO_PROFISSIONAL');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
             $table->string('NO_CERTIFICACAO_PROFISSIONAL', 100)->nullable();
+
+            $table->foreign('FK_DOMINIO_CONHECIMENTO')
+                ->references('PK_DOMINIO_CONHECIMENTO')
+                ->on('TB_DOMINIO_CONHECIMENTO');
         });
 
         Schema::create('TB_PROFICIENCIA_INGLES', function (Blueprint $table): void {
@@ -91,7 +109,6 @@ return new class extends Migration
         Schema::create('TB_USUARIO', function (Blueprint $table): void {
             $table->increments('PK_USUARIO');
             $table->unsignedInteger('FK_TIPO_PERFIL')->nullable();
-            $table->integer('FK_TIPO_USUARIO')->nullable();
             $table->string('NO_USUARIO', 50)->nullable();
             $table->string('NO_ORGAO_EMPRESA', 100)->nullable();
             $table->string('NO_SETOR', 100)->nullable();
@@ -162,5 +179,6 @@ return new class extends Migration
         Schema::dropIfExists('TB_DIFICULDADE');
         Schema::dropIfExists('TB_AREA_CONHECIMENTO');
         Schema::dropIfExists('TB_PERFIS_JORNADA');
+        Schema::dropIfExists('TB_DOMINIO_CONHECIMENTO');
     }
 };
