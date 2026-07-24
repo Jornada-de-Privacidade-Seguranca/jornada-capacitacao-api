@@ -33,6 +33,33 @@ class JourneyProfileTest extends TestCase
             ]);
     }
 
+    public function test_it_paginates_journey_profiles(): void
+    {
+        JourneyProfile::factory()->count(25)->create();
+
+        $this->getJson('/api/journey-profiles?page=2&per_page=8')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(8, 'data')
+            ->assertJsonPath('meta.pagination.current_page', 2)
+            ->assertJsonPath('meta.pagination.per_page', 8)
+            ->assertJsonPath('meta.pagination.total', 25)
+            ->assertJsonPath('meta.pagination.last_page', 4)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data',
+                'meta' => [
+                    'pagination' => [
+                        'current_page',
+                        'per_page',
+                        'total',
+                        'last_page',
+                    ],
+                ],
+            ]);
+    }
+
     public function test_it_shows_a_journey_profile(): void
     {
         $journeyProfile = JourneyProfile::factory()->create([
