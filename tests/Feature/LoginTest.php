@@ -52,6 +52,65 @@ class LoginTest extends TestCase
             ->assertJsonPath('data.role', 'common_user');
     }
 
+    public function test_it_rejects_session_when_authenticated_user_becomes_inactive(): void
+    {
+        $user = Usuario::create([
+            'FK_TIPO_USUARIO' => 2,
+            'NO_USUARIO' => 'Maria Silva',
+            'DS_EMAIL' => 'maria.silva@example.com',
+            'DS_SENHA' => Hash::make('secret123'),
+            'ST_ATIVO' => 1,
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'maria.silva@example.com',
+            'password' => 'secret123',
+        ])->assertOk();
+
+        $this->getJson('/api/me')->assertOk();
+
+        $user->update(['ST_ATIVO' => 2]);
+
+        $this->getJson('/api/me')
+            ->assertForbidden()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Sua conta ainda nao foi ativada por um administrador do sistema.')
+            ->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED')
+            ->assertJsonPath('errors', []);
+
+        $this->getJson('/api/me')
+            ->assertUnauthorized()
+            ->assertJsonPath('code', 'UNAUTHENTICATED');
+    }
+
+    public function test_it_invalidates_session_on_logout(): void
+    {
+        Usuario::create([
+            'FK_TIPO_USUARIO' => 2,
+            'NO_USUARIO' => 'Maria Silva',
+            'DS_EMAIL' => 'maria.silva@example.com',
+            'DS_SENHA' => Hash::make('secret123'),
+            'ST_ATIVO' => 1,
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'email' => 'maria.silva@example.com',
+            'password' => 'secret123',
+        ])->assertOk();
+
+        $this->getJson('/api/me')->assertOk();
+
+        $this->postJson('/api/auth/logout')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Logout realizado com sucesso.')
+            ->assertJsonPath('data', null);
+
+        $this->getJson('/api/me')
+            ->assertUnauthorized()
+            ->assertJsonPath('code', 'UNAUTHENTICATED');
+    }
+
     public function test_it_returns_administrator_profile_for_admin_user(): void
     {
         Usuario::create([
@@ -96,6 +155,52 @@ class LoginTest extends TestCase
             ->assertUnauthorized()
             ->assertJsonPath('success', false)
             ->assertJsonPath('code', 'UNAUTHENTICATED');
+    }
+
+    public function test_it_rate_limits_login_attempts_by_ip_and_email(): void
+    {
+        Usuario::create([
+            'NO_USUARIO' => 'Maria Silva',
+            'DS_EMAIL' => 'maria.silva@example.com',
+            'DS_SENHA' => Hash::make('secret123'),
+            'ST_ATIVO' => 1,
+        ]);
+
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->fromIp('203.0.113.10')->postJson('/api/auth/login', [
+                'email' => 'maria.silva@example.com',
+                'password' => 'wrong-password',
+            ])
+                ->assertUnauthorized()
+                ->assertJsonPath('code', 'INVALID_CREDENTIALS');
+        }
+
+        $this->fromIp('203.0.113.10')->postJson('/api/auth/login', [
+            'email' => 'maria.silva@example.com',
+            'password' => 'wrong-password',
+        ])
+            ->assertTooManyRequests()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Muitas tentativas. Tente novamente mais tarde.')
+            ->assertJsonPath('code', 'TOO_MANY_ATTEMPTS')
+            ->assertJsonPath('errors', []);
+    }
+
+    public function test_login_rate_limit_does_not_block_distinct_email_on_same_ip(): void
+    {
+        for ($attempt = 1; $attempt <= 5; $attempt++) {
+            $this->fromIp('203.0.113.11')->postJson('/api/auth/login', [
+                'email' => 'maria.silva@example.com',
+                'password' => 'wrong-password',
+            ])->assertUnauthorized();
+        }
+
+        $this->fromIp('203.0.113.11')->postJson('/api/auth/login', [
+            'email' => 'joao.souza@example.com',
+            'password' => 'wrong-password',
+        ])
+            ->assertUnauthorized()
+            ->assertJsonPath('code', 'INVALID_CREDENTIALS');
     }
 
     public function test_it_rejects_authenticated_user_endpoint_without_session(): void
@@ -165,5 +270,10 @@ class LoginTest extends TestCase
             ->assertJsonPath('message', 'Erro interno do servidor.')
             ->assertJsonPath('code', 'INTERNAL_SERVER_ERROR')
             ->assertJsonPath('errors', []);
+    }
+
+    private function fromIp(string $ip): self
+    {
+        return $this->withServerVariables(['REMOTE_ADDR' => $ip]);
     }
 }

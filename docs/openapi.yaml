@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Jornada de Capacitacao API
   version: 0.1.0
-  description: API REST inicial para a Jornada de Capacitacao para Privacidade e Seguranca.
+  description: API REST inicial para a Jornada de Capacitacao para Privacidade e Seguranca. A autenticacao usa sessao por cookie HttpOnly emitido pelo backend; clientes browser em origem diferente devem enviar credenciais nas requisicoes e usar uma origem CORS explicitamente permitida.
 servers:
   - url: http://localhost:8030/api
     description: Ambiente local via Docker
@@ -114,6 +114,7 @@ paths:
         - Users
       summary: Cadastra um usuario pendente de ativacao
       description: Cria uma conta de usuario com status pendente de ativacao por administrador.
+      x-rate-limit: 3 requisicoes por minuto por IP.
       operationId: registerUser
       requestBody:
         required: true
@@ -156,7 +157,7 @@ paths:
                       account_status: pending_activation
                       created_at: "2026-07-23 16:30:00"
         "409":
-          description: Conta ja cadastrada
+          description: Conta ja cadastrada, inclusive quando o e-mail difere apenas por maiusculas/minusculas
           content:
             application/json:
               schema:
@@ -176,13 +177,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Muitas tentativas de cadastro
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                tooManyAttempts:
+                  value:
+                    success: false
+                    message: Muitas tentativas. Tente novamente mais tarde.
+                    errors: []
+                    code: TOO_MANY_ATTEMPTS
   /auth/login:
     post:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. Em browsers, a resposta emite o cookie de sessao HttpOnly e as chamadas seguintes devem enviar credenciais.
       operationId: loginUser
+      x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
       requestBody:
         required: true
         content:
@@ -266,6 +281,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Muitas tentativas de login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                tooManyAttempts:
+                  value:
+                    success: false
+                    message: Muitas tentativas. Tente novamente mais tarde.
+                    errors: []
+                    code: TOO_MANY_ATTEMPTS
         "500":
           description: Erro interno do servidor
           content:
@@ -284,7 +312,7 @@ paths:
       tags:
         - Auth
       summary: Recupera o usuario autenticado
-      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente.
+      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
       operationId: getAuthenticatedUser
       security:
         - sessionAuth: []
@@ -325,6 +353,67 @@ paths:
                     message: Usuario nao autenticado.
                     errors: []
                     code: UNAUTHENTICATED
+        "403":
+          description: Conta da sessao atual nao esta ativa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                accountNotActivated:
+                  value:
+                    success: false
+                    message: Sua conta ainda nao foi ativada por um administrador do sistema.
+                    errors: []
+                    code: ACCOUNT_NOT_ACTIVATED
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Encerra a sessao autenticada
+      description: Invalida a sessao atual no backend e regenera o token de sessao. Depois do logout, o cookie anterior nao autentica novas chamadas para /me.
+      operationId: logoutUser
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptySuccessResponse"
+              examples:
+                loggedOut:
+                  value:
+                    success: true
+                    message: Logout realizado com sucesso.
+                    data: null
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Conta da sessao atual nao esta ativa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                accountNotActivated:
+                  value:
+                    success: false
+                    message: Sua conta ainda nao foi ativada por um administrador do sistema.
+                    errors: []
+                    code: ACCOUNT_NOT_ACTIVATED
   /competencies:
     get:
       tags:
@@ -430,7 +519,7 @@ components:
       type: apiKey
       in: cookie
       name: jornada_session
-      description: Cookie de sessao HttpOnly emitido pelo backend apos login.
+      description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
   parameters:
     CompetencyId:
       name: id

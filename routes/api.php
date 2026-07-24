@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CompetencyController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\TemplateExampleController;
 use App\Http\Controllers\Api\UserRegistrationController;
 use App\Http\Middleware\AuthenticateSessionUser;
@@ -22,10 +23,11 @@ Route::get('/template-example', TemplateExampleController::class);
 Route::apiResource('competencies', CompetencyController::class);
 
 //Rota de registro de usuario
-Route::post('/users/register', UserRegistrationController::class);
+Route::post('/users/register', UserRegistrationController::class)->middleware('throttle:registration');
 
 // Rota de autenticacao de usuario
 Route::middleware([StartSession::class])->group(function (): void {
-    Route::post('/auth/login', LoginController::class);
+    Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
     Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
+    Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
 });

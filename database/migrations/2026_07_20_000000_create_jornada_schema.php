@@ -116,13 +116,19 @@ return new class extends Migration
             $table->string('NO_ORGAO_EMPRESA', 100)->nullable();
             $table->string('NO_SETOR', 100)->nullable();
             $table->string('NU_MATRICULA', 50)->nullable();
-            $table->string('DS_EMAIL', 100)->nullable()->unique();
+            $table->string('DS_EMAIL', 100)->nullable();
             $table->string('DS_SENHA', 255)->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->integer('ST_ATIVO')->nullable();
 
             $table->foreign('FK_TIPO_PERFIL')->references('PK_TIPO_PERFIL')->on('TB_TIPO_PERFIL');
         });
+
+        $driver = DB::connection()->getDriverName();
+
+        if (in_array($driver, ['pgsql', 'sqlite'], true)) {
+            DB::statement('CREATE UNIQUE INDEX "TB_USUARIO_DS_EMAIL_LOWER_UNIQUE" ON "TB_USUARIO" (LOWER("DS_EMAIL")) WHERE "DS_EMAIL" IS NOT NULL');
+        }
 
         DB::table('TB_USUARIO')->insert([
             [

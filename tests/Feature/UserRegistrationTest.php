@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\ProfileType;
 use App\Models\Usuario;
+use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Mockery;
 use Tests\TestCase;
 
 class UserRegistrationTest extends TestCase
@@ -142,6 +145,62 @@ class UserRegistrationTest extends TestCase
             ->assertJsonPath('errors.email.0', 'Ja existe uma conta cadastrada com este e-mail.');
     }
 
+    public function test_it_rejects_existing_account_with_different_email_case(): void
+    {
+        Usuario::create([
+            'NO_USUARIO' => 'Maria Silva',
+            'DS_EMAIL' => 'usuario@email.com',
+            'DS_SENHA' => Hash::make('secret123'),
+            'ST_ATIVO' => 2,
+        ]);
+
+        $this->postJson('/api/users/register', $this->validPayload([
+            'email' => 'Usuario@Email.com',
+        ]))
+            ->assertConflict()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Ja existe uma conta cadastrada com este e-mail.')
+            ->assertJsonPath('code', 'USER_ALREADY_EXISTS')
+            ->assertJsonPath('errors.email.0', 'Ja existe uma conta cadastrada com este e-mail.');
+    }
+
+    public function test_it_returns_conflict_when_database_unique_email_constraint_is_violated(): void
+    {
+        $repository = Mockery::mock(UserRepositoryInterface::class);
+        $repository->shouldReceive('existsByEmail')->once()->andReturnFalse();
+        $repository->shouldReceive('create')->once()->andThrow(new QueryException(
+            connectionName: 'testing',
+            sql: 'insert into "TB_USUARIO" ("DS_EMAIL") values (?)',
+            bindings: ['maria.silva@example.com'],
+            previous: new \Exception('UNIQUE constraint failed: TB_USUARIO.DS_EMAIL'),
+        ));
+
+        $this->app->instance(UserRepositoryInterface::class, $repository);
+
+        $this->postJson('/api/users/register', $this->validPayload())
+            ->assertConflict()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Ja existe uma conta cadastrada com este e-mail.')
+            ->assertJsonPath('code', 'USER_ALREADY_EXISTS')
+            ->assertJsonPath('errors.email.0', 'Ja existe uma conta cadastrada com este e-mail.');
+    }
+
+    public function test_it_rate_limits_registration_attempts_by_ip(): void
+    {
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $this->fromIp('203.0.113.20')->postJson('/api/users/register', [])
+                ->assertUnprocessable()
+                ->assertJsonPath('code', 'VALIDATION_ERROR');
+        }
+
+        $this->fromIp('203.0.113.20')->postJson('/api/users/register', [])
+            ->assertTooManyRequests()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Muitas tentativas. Tente novamente mais tarde.')
+            ->assertJsonPath('code', 'TOO_MANY_ATTEMPTS')
+            ->assertJsonPath('errors', []);
+    }
+
     private function validPayload(array $overrides = []): array
     {
         return array_merge([
@@ -153,5 +212,10 @@ class UserRegistrationTest extends TestCase
             'department' => 'Privacidade',
             'registration_number' => 'MJ-123',
         ], $overrides);
+    }
+
+    private function fromIp(string $ip): self
+    {
+        return $this->withServerVariables(['REMOTE_ADDR' => $ip]);
     }
 }
