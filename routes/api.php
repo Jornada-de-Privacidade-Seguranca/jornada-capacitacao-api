@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\TemplateExampleController;
 use App\Http\Controllers\Api\UserRegistrationController;
 use App\Http\Middleware\AuthenticateSessionUser;
+use App\Http\Middleware\ValidateSessionCsrfToken;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
@@ -25,7 +26,7 @@ Route::get('/template-example', TemplateExampleController::class);
 Route::apiResource('competencies', CompetencyController::class);
 
 // Rota de autenticacao de usuario
-Route::middleware([StartSession::class])->group(function (): void {
+Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group(function (): void {
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
     Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);

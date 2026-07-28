@@ -27,7 +27,7 @@ class LoginTest extends TestCase
             'ST_ATIVO' => 1,
         ]);
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'MARIA.SILVA@example.com',
             'password' => 'secret123',
         ])
@@ -62,7 +62,7 @@ class LoginTest extends TestCase
             'ST_ATIVO' => 1,
         ]);
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'maria.silva@example.com',
             'password' => 'secret123',
         ])->assertOk();
@@ -93,14 +93,14 @@ class LoginTest extends TestCase
             'ST_ATIVO' => 1,
         ]);
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'maria.silva@example.com',
             'password' => 'secret123',
         ])->assertOk();
 
         $this->getJson('/api/me')->assertOk();
 
-        $this->postJson('/api/auth/logout')
+        $this->postJsonWithCsrf('/api/auth/logout')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Logout realizado com sucesso.')
@@ -109,6 +109,34 @@ class LoginTest extends TestCase
         $this->getJson('/api/me')
             ->assertUnauthorized()
             ->assertJsonPath('code', 'UNAUTHENTICATED');
+    }
+
+    public function test_it_rejects_logout_without_csrf_token(): void
+    {
+        Usuario::create([
+            'FK_TIPO_USUARIO' => 2,
+            'NO_USUARIO' => 'Maria Silva',
+            'DS_EMAIL' => 'maria.silva@example.com',
+            'DS_SENHA' => Hash::make('secret123'),
+            'ST_ATIVO' => 1,
+        ]);
+
+        $this->postJsonWithCsrf('/api/auth/login', [
+            'email' => 'maria.silva@example.com',
+            'password' => 'secret123',
+        ])->assertOk();
+
+        $this->getJson('/api/me')->assertOk();
+
+        $this->withoutHeader('X-CSRF-TOKEN')
+            ->postJson('/api/auth/logout')
+            ->assertStatus(419)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Token CSRF invalido.')
+            ->assertJsonPath('code', 'CSRF_TOKEN_MISMATCH')
+            ->assertJsonPath('errors', []);
+
+        $this->getJson('/api/me')->assertOk();
     }
 
     public function test_it_returns_administrator_profile_for_admin_user(): void
@@ -121,7 +149,7 @@ class LoginTest extends TestCase
             'ST_ATIVO' => 1,
         ]);
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'admin@example.com',
             'password' => 'secret123',
         ])
@@ -141,7 +169,7 @@ class LoginTest extends TestCase
             'ST_ATIVO' => 1,
         ]);
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'maria.silva@example.com',
             'password' => 'wrong-password',
         ])
@@ -167,7 +195,7 @@ class LoginTest extends TestCase
         ]);
 
         for ($attempt = 1; $attempt <= 5; $attempt++) {
-            $this->fromIp('203.0.113.10')->postJson('/api/auth/login', [
+            $this->fromIp('203.0.113.10')->postJsonWithCsrf('/api/auth/login', [
                 'email' => 'maria.silva@example.com',
                 'password' => 'wrong-password',
             ])
@@ -175,7 +203,7 @@ class LoginTest extends TestCase
                 ->assertJsonPath('code', 'INVALID_CREDENTIALS');
         }
 
-        $this->fromIp('203.0.113.10')->postJson('/api/auth/login', [
+        $this->fromIp('203.0.113.10')->postJsonWithCsrf('/api/auth/login', [
             'email' => 'maria.silva@example.com',
             'password' => 'wrong-password',
         ])
@@ -189,13 +217,13 @@ class LoginTest extends TestCase
     public function test_login_rate_limit_does_not_block_distinct_email_on_same_ip(): void
     {
         for ($attempt = 1; $attempt <= 5; $attempt++) {
-            $this->fromIp('203.0.113.11')->postJson('/api/auth/login', [
+            $this->fromIp('203.0.113.11')->postJsonWithCsrf('/api/auth/login', [
                 'email' => 'maria.silva@example.com',
                 'password' => 'wrong-password',
             ])->assertUnauthorized();
         }
 
-        $this->fromIp('203.0.113.11')->postJson('/api/auth/login', [
+        $this->fromIp('203.0.113.11')->postJsonWithCsrf('/api/auth/login', [
             'email' => 'joao.souza@example.com',
             'password' => 'wrong-password',
         ])
@@ -215,7 +243,7 @@ class LoginTest extends TestCase
 
     public function test_it_rejects_missing_required_fields(): void
     {
-        $this->postJson('/api/auth/login', [])
+        $this->postJsonWithCsrf('/api/auth/login', [])
             ->assertUnprocessable()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Validation error.')
@@ -226,7 +254,7 @@ class LoginTest extends TestCase
 
     public function test_it_rejects_invalid_payload_format(): void
     {
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'email-invalido',
             'password' => 'secret123',
         ])
@@ -245,7 +273,7 @@ class LoginTest extends TestCase
             'ST_ATIVO' => 2,
         ]);
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'maria.silva@example.com',
             'password' => 'secret123',
         ])
@@ -261,7 +289,7 @@ class LoginTest extends TestCase
         $loginService->shouldReceive('authenticate')->once()->andThrow(new Exception('Unexpected failure.'));
         $this->app->instance(LoginService::class, $loginService);
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'maria.silva@example.com',
             'password' => 'secret123',
         ])

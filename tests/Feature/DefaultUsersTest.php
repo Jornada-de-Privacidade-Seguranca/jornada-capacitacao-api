@@ -21,7 +21,7 @@ class DefaultUsersTest extends TestCase
         $this->assertSame(1, (int) $admin->ST_ATIVO);
         $this->assertTrue(Hash::check('admin123', (string) $admin->DS_SENHA));
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'admin@jornada.local',
             'password' => 'admin123',
         ])
@@ -42,7 +42,7 @@ class DefaultUsersTest extends TestCase
         $this->assertSame(1, (int) $user->ST_ATIVO);
         $this->assertTrue(Hash::check('usere123', (string) $user->DS_SENHA));
 
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => 'user@jornada.local',
             'password' => 'usere123',
         ])

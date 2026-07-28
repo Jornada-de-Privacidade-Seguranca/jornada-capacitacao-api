@@ -15,7 +15,10 @@ class AuthenticateSessionUser
 
     public function handle(Request $request, Closure $next): SymfonyResponse
     {
-        if (! Auth::check()) {
+        $guard = Auth::guard();
+        $authenticatedUser = $guard->user();
+
+        if ($authenticatedUser === null) {
             return ApiResponse::error(
                 message: 'Usuario nao autenticado.',
                 status: Response::HTTP_UNAUTHORIZED,
@@ -23,9 +26,21 @@ class AuthenticateSessionUser
             );
         }
 
-        $user = $request->user();
+        $user = $guard->getProvider()->retrieveById($authenticatedUser->getAuthIdentifier());
 
-        if ($user === null || (int) $user->ST_ATIVO !== self::STATUS_ACTIVE) {
+        if ($user === null) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return ApiResponse::error(
+                message: 'Usuario nao autenticado.',
+                status: Response::HTTP_UNAUTHORIZED,
+                code: 'UNAUTHENTICATED',
+            );
+        }
+
+        if ((int) $user->ST_ATIVO !== self::STATUS_ACTIVE) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -36,6 +51,8 @@ class AuthenticateSessionUser
                 code: 'ACCOUNT_NOT_ACTIVATED',
             );
         }
+
+        $guard->setUser($user);
 
         return $next($request);
     }

@@ -198,6 +198,8 @@ paths:
       description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. Em browsers, a resposta emite o cookie de sessao HttpOnly e as chamadas seguintes devem enviar credenciais.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
@@ -294,6 +296,19 @@ paths:
                     message: Muitas tentativas. Tente novamente mais tarde.
                     errors: []
                     code: TOO_MANY_ATTEMPTS
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfTokenMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
         "500":
           description: Erro interno do servidor
           content:
@@ -375,6 +390,8 @@ paths:
       operationId: logoutUser
       security:
         - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
       responses:
         "200":
           description: Logout realizado com sucesso
@@ -414,6 +431,19 @@ paths:
                     message: Sua conta ainda nao foi ativada por um administrador do sistema.
                     errors: []
                     code: ACCOUNT_NOT_ACTIVATED
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfTokenMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
   /competencies:
     get:
       tags:
@@ -521,6 +551,14 @@ components:
       name: jornada_session
       description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
   parameters:
+    CsrfToken:
+      name: X-CSRF-TOKEN
+      in: header
+      required: true
+      description: Valor do cookie XSRF-TOKEN emitido pela API depois de iniciar a sessao. No Swagger local, execute primeiro GET /me, copie o cookie XSRF-TOKEN no navegador e cole aqui antes de chamar endpoints POST de sessao.
+      schema:
+        type: string
+      example: test-csrf-token
     CompetencyId:
       name: id
       in: path
