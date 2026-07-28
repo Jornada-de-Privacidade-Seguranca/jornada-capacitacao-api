@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CompetencyController;
+use App\Http\Controllers\Api\CsrfTokenController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
@@ -27,6 +28,7 @@ Route::apiResource('competencies', CompetencyController::class);
 
 // Rota de autenticacao de usuario
 Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group(function (): void {
+    Route::get('/auth/csrf-token', CsrfTokenController::class);
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
     Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);

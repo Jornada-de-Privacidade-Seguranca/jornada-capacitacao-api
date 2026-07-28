@@ -190,6 +190,27 @@ paths:
                     message: Muitas tentativas. Tente novamente mais tarde.
                     errors: []
                     code: TOO_MANY_ATTEMPTS
+  /auth/csrf-token:
+    get:
+      tags:
+        - Auth
+      summary: Gera token CSRF para requisicoes de sessao
+      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout.
+      operationId: getCsrfToken
+      responses:
+        "200":
+          description: Token CSRF gerado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CsrfTokenResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Token CSRF gerado com sucesso.
+                    data:
+                      csrf_token: 6g7XqYcH5q9mKpT3nB2wR8sV1zL0aE4d
   /auth/login:
     post:
       tags:
@@ -684,6 +705,27 @@ components:
         data:
           type: "null"
           example: null
+    CsrfTokenResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Token CSRF gerado com sucesso.
+        data:
+          type: object
+          required:
+            - csrf_token
+          properties:
+            csrf_token:
+              type: string
+              example: 6g7XqYcH5q9mKpT3nB2wR8sV1zL0aE4d
     StandardValidationError:
       type: object
       required:
