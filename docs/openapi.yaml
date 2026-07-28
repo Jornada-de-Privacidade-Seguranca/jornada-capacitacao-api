@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Health
     description: Endpoints de disponibilidade da API
+  - name: Auth
+    description: Endpoints publicos de cadastro e autenticacao
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: Template
@@ -104,6 +106,72 @@ paths:
                       include_steps:
                         - The include steps field must be true or false.
                     code: VALIDATION_ERROR
+  /auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Cadastra um usuario com ativacao pendente
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistrationPayload"
+            examples:
+              valid:
+                value:
+                  name: Maria Silva
+                  email: maria.silva@example.com
+                  password: SenhaSegura123
+                  password_confirmation: SenhaSegura123
+                  organization: Secretaria de Governo
+                  department: Privacidade
+                  registration_number: MAT-123
+                  profile_type_id: 1
+      responses:
+        "201":
+          description: Usuario cadastrado com ativacao pendente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserRegistrationResponse"
+              examples:
+                created:
+                  value:
+                    success: true
+                    message: Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.
+                    data:
+                      id: 1
+                      profile_type_id: 1
+                      name: Maria Silva
+                      organization: Secretaria de Governo
+                      department: Privacidade
+                      registration_number: MAT-123
+                      email: maria.silva@example.com
+                      active: false
+                      created_at: "2026-07-23 10:00:00"
+        "409":
+          description: Conta ja cadastrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                duplicate:
+                  value:
+                    success: false
+                    message: Ja existe uma conta cadastrada com este e-mail.
+                    errors:
+                      email:
+                        - Informe outro e-mail ou solicite a ativacao da conta existente.
+                    code: ACCOUNT_ALREADY_EXISTS
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
   /competencies:
     get:
       tags:
@@ -356,6 +424,135 @@ components:
         code:
           type: string
           example: VALIDATION_ERROR
+    StandardError:
+      type: object
+      required:
+        - success
+        - message
+        - errors
+        - code
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: An error occurred.
+        errors:
+          type: object
+        code:
+          type: string
+          example: ERROR_CODE
+    UserRegistrationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.
+        data:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      required:
+        - id
+        - profile_type_id
+        - name
+        - organization
+        - department
+        - registration_number
+        - email
+        - active
+        - created_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        profile_type_id:
+          type:
+            - integer
+            - "null"
+          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
+          example: 1
+        name:
+          type: string
+          example: Maria Silva
+        organization:
+          type: string
+          example: Secretaria de Governo
+        department:
+          type: string
+          example: Privacidade
+        registration_number:
+          type: string
+          example: MAT-123
+        email:
+          type: string
+          format: email
+          example: maria.silva@example.com
+        active:
+          type: boolean
+          example: false
+        created_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 10:00:00"
+    UserRegistrationPayload:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - password_confirmation
+        - organization
+        - department
+        - registration_number
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          description: Nome completo, com pelo menos nome e sobrenome.
+          example: Maria Silva
+        email:
+          type: string
+          format: email
+          maxLength: 50
+          example: maria.silva@example.com
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          format: password
+          example: SenhaSegura123
+        password_confirmation:
+          type: string
+          format: password
+          example: SenhaSegura123
+        organization:
+          type: string
+          maxLength: 100
+          example: Secretaria de Governo
+        department:
+          type: string
+          maxLength: 100
+          example: Privacidade
+        registration_number:
+          type: string
+          maxLength: 50
+          example: MAT-123
+        profile_type_id:
+          type:
+            - integer
+            - "null"
+          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
+          example: 1
     Competency:
       type: object
       required:
