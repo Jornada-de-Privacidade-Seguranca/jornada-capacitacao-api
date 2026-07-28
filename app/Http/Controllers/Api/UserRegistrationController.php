@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Exceptions\DuplicateUserRegistrationException;
+use App\Exceptions\AccountAlreadyExistsException;
 use App\Http\Requests\RegisterUserRequest;
 use App\Http\Resources\UserRegistrationResource;
 use App\Services\UserRegistrationService;
@@ -12,6 +12,8 @@ use Illuminate\Http\Response;
 
 class UserRegistrationController
 {
+    private const SUCCESS_MESSAGE = 'Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.';
+
     public function __construct(private readonly UserRegistrationService $userRegistrationService)
     {
     }
@@ -20,20 +22,20 @@ class UserRegistrationController
     {
         try {
             $user = $this->userRegistrationService->register($request->validated());
-        } catch (DuplicateUserRegistrationException) {
+        } catch (AccountAlreadyExistsException) {
             return ApiResponse::error(
                 message: 'Ja existe uma conta cadastrada com este e-mail.',
                 status: Response::HTTP_CONFLICT,
-                code: 'USER_ALREADY_EXISTS',
+                code: 'ACCOUNT_ALREADY_EXISTS',
                 errors: [
-                    'email' => ['Ja existe uma conta cadastrada com este e-mail.'],
+                    'email' => ['Informe outro e-mail ou solicite a ativacao da conta existente.'],
                 ],
             );
         }
 
         return ApiResponse::success(
             data: (new UserRegistrationResource($user))->resolve(),
-            message: 'Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.',
+            message: self::SUCCESS_MESSAGE,
             status: Response::HTTP_CREATED,
         );
     }

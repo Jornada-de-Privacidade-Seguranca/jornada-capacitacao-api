@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Exceptions\DuplicateUserRegistrationException;
+use App\Exceptions\AccountAlreadyExistsException;
 use App\Models\Usuario;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Database\QueryException;
@@ -21,7 +21,7 @@ class UserRegistrationService
         $email = strtolower(trim($data['email']));
 
         if ($this->userRepository->existsByEmail($email)) {
-            throw new DuplicateUserRegistrationException();
+            throw new AccountAlreadyExistsException();
         }
 
         $registrationNumber = isset($data['registration_number']) ? trim((string) $data['registration_number']) : null;
@@ -31,16 +31,16 @@ class UserRegistrationService
                 'FK_TIPO_PERFIL' => $data['profile_type_id'] ?? null,
                 'FK_TIPO_USUARIO' => null,
                 'NO_USUARIO' => trim($data['name']),
-                'NO_ORGAO_EMPRESA' => trim($data['organization_company']),
+                'NO_ORGAO_EMPRESA' => trim($data['organization']),
                 'NO_SETOR' => trim($data['department']),
-                'NU_MATRICULA' => $registrationNumber !== '' ? $registrationNumber : null,
+                'NU_MATRICULA' => $registrationNumber,
                 'DS_EMAIL' => $email,
                 'DS_SENHA' => Hash::make($data['password']),
                 'ST_ATIVO' => self::STATUS_PENDING_ACTIVATION,
             ]);
         } catch (QueryException $exception) {
             if ($this->isUniqueEmailViolation($exception)) {
-                throw new DuplicateUserRegistrationException(previous: $exception);
+                throw new AccountAlreadyExistsException(previous: $exception);
             }
 
             throw $exception;

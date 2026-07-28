@@ -10,7 +10,7 @@ tags:
   - name: Health
     description: Endpoints de disponibilidade da API
   - name: Auth
-    description: Endpoints de autenticacao
+    description: Endpoints publicos de cadastro e autenticacao
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: Template
@@ -108,10 +108,10 @@ paths:
                       include_steps:
                         - The include steps field must be true or false.
                     code: VALIDATION_ERROR
-  /users/register:
+  /auth/register:
     post:
       tags:
-        - Users
+        - Auth
       summary: Cadastra um usuario pendente de ativacao
       description: Cria uma conta de usuario com status pendente de ativacao por administrador.
       x-rate-limit: 3 requisicoes por minuto por IP.
@@ -127,15 +127,15 @@ paths:
                 value:
                   name: Maria Silva
                   email: maria.silva@example.com
-                  password: secret123
-                  password_confirmation: secret123
-                  organization_company: Ministerio da Justica
+                  password: SenhaSegura123
+                  password_confirmation: SenhaSegura123
+                  organization: Secretaria de Governo
                   department: Privacidade
-                  registration_number: MJ-123
+                  registration_number: MAT-123
                   profile_type_id: 1
       responses:
         "201":
-          description: Usuario cadastrado pendente de ativacao
+          description: Usuario cadastrado com ativacao pendente
           content:
             application/json:
               schema:
@@ -149,9 +149,9 @@ paths:
                       id: 1
                       name: Maria Silva
                       email: maria.silva@example.com
-                      organization_company: Ministerio da Justica
+                      organization_company: Secretaria de Governo
                       department: Privacidade
-                      registration_number: MJ-123
+                      registration_number: MAT-123
                       profile_type_id: 1
                       active_status: 2
                       account_status: pending_activation
@@ -169,8 +169,8 @@ paths:
                     message: Ja existe uma conta cadastrada com este e-mail.
                     errors:
                       email:
-                        - Ja existe uma conta cadastrada com este e-mail.
-                    code: USER_ALREADY_EXISTS
+                        - Informe outro e-mail ou solicite a ativacao da conta existente.
+                    code: ACCOUNT_ALREADY_EXISTS
         "422":
           description: Erro de validacao
           content:
@@ -719,6 +719,8 @@ components:
         - email
         - organization_company
         - department
+        - registration_number
+        - profile_type_id
         - active_status
         - account_status
       properties:
@@ -734,15 +736,13 @@ components:
           example: maria.silva@example.com
         organization_company:
           type: string
-          example: Ministerio da Justica
+          example: Secretaria de Governo
         department:
           type: string
           example: Privacidade
         registration_number:
-          type:
-            - string
-            - "null"
-          example: MJ-123
+          type: string
+          example: MAT-123
         profile_type_id:
           type:
             - integer
@@ -769,13 +769,14 @@ components:
         - email
         - password
         - password_confirmation
-        - organization_company
+        - organization
         - department
+        - registration_number
       properties:
         name:
           type: string
           maxLength: 50
-          description: Nome completo, contendo nome e sobrenome.
+          description: Nome completo, com pelo menos nome e sobrenome.
           example: Maria Silva
         email:
           type: string
@@ -787,29 +788,28 @@ components:
           minLength: 8
           maxLength: 100
           format: password
-          example: secret123
+          example: SenhaSegura123
         password_confirmation:
           type: string
           format: password
-          example: secret123
-        organization_company:
+          example: SenhaSegura123
+        organization:
           type: string
           maxLength: 100
-          example: Ministerio da Justica
+          example: Secretaria de Governo
         department:
           type: string
           maxLength: 100
           example: Privacidade
         registration_number:
-          type:
-            - string
-            - "null"
+          type: string
           maxLength: 50
-          example: MJ-123
+          example: MAT-123
         profile_type_id:
           type:
             - integer
             - "null"
+          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
           example: 1
     LoginResponse:
       type: object
@@ -925,7 +925,7 @@ components:
           type: string
           format: password
           maxLength: 100
-          example: secret123
+          example: SenhaSegura123
     Competency:
       type: object
       required:

@@ -11,6 +11,8 @@ use App\Http\Middleware\AuthenticateSessionUser;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
+Route::post('/auth/register', UserRegistrationController::class)->middleware('throttle:registration');
+
 // Rotas temporarias de teste/scaffold do projeto.
 // Quando os endpoints reais forem implementados, remova estas rotas de exemplo
 // antes de criar rotas definitivas com os mesmos nomes ou responsabilidades.
@@ -21,9 +23,6 @@ Route::get('/template-example', TemplateExampleController::class);
 // Nao usar como endpoint real de competencias; excluir este scaffold quando as
 // rotas oficiais de competencias forem criadas.
 Route::apiResource('competencies', CompetencyController::class);
-
-//Rota de registro de usuario
-Route::post('/users/register', UserRegistrationController::class)->middleware('throttle:registration');
 
 // Rota de autenticacao de usuario
 Route::middleware([StartSession::class])->group(function (): void {
