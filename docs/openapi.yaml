@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Jornada de Capacitacao API
   version: 0.1.0
-  description: API REST inicial para a Jornada de Capacitacao para Privacidade e Seguranca.
+  description: API REST inicial para a Jornada de Capacitacao para Privacidade e Seguranca. A autenticacao usa sessao por cookie HttpOnly emitido pelo backend; clientes browser em origem diferente devem enviar credenciais nas requisicoes e usar uma origem CORS explicitamente permitida.
 servers:
   - url: http://localhost:8030/api
     description: Ambiente local via Docker
@@ -15,6 +15,8 @@ tags:
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
+  - name: Users
+    description: Endpoints de cadastro e gestao de usuarios
 paths:
   /health:
     get:
@@ -110,7 +112,9 @@ paths:
     post:
       tags:
         - Auth
-      summary: Cadastra um usuario com ativacao pendente
+      summary: Cadastra um usuario pendente de ativacao
+      description: Cria uma conta de usuario com status pendente de ativacao por administrador.
+      x-rate-limit: 3 requisicoes por minuto por IP.
       operationId: registerUser
       requestBody:
         required: true
@@ -143,16 +147,17 @@ paths:
                     message: Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.
                     data:
                       id: 1
-                      profile_type_id: 1
                       name: Maria Silva
-                      organization: Secretaria de Governo
+                      email: maria.silva@example.com
+                      organization_company: Secretaria de Governo
                       department: Privacidade
                       registration_number: MAT-123
-                      email: maria.silva@example.com
-                      active: false
-                      created_at: "2026-07-23 10:00:00"
+                      profile_type_id: 1
+                      active_status: 2
+                      account_status: pending_activation
+                      created_at: "2026-07-23 16:30:00"
         "409":
-          description: Conta ja cadastrada
+          description: Conta ja cadastrada, inclusive quando o e-mail difere apenas por maiusculas/minusculas
           content:
             application/json:
               schema:
@@ -172,6 +177,294 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Muitas tentativas de cadastro
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                tooManyAttempts:
+                  value:
+                    success: false
+                    message: Muitas tentativas. Tente novamente mais tarde.
+                    errors: []
+                    code: TOO_MANY_ATTEMPTS
+  /auth/csrf-token:
+    get:
+      tags:
+        - Auth
+      summary: Gera token CSRF para requisicoes de sessao
+      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout.
+      operationId: getCsrfToken
+      responses:
+        "200":
+          description: Token CSRF gerado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CsrfTokenResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Token CSRF gerado com sucesso.
+                    data:
+                      csrf_token: 6g7XqYcH5q9mKpT3nB2wR8sV1zL0aE4d
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Autentica um usuario
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. Em browsers, a resposta emite o cookie de sessao HttpOnly e as chamadas seguintes devem enviar credenciais.
+      operationId: loginUser
+      x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  password: secret123
+      responses:
+        "200":
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+              examples:
+                commonUser:
+                  value:
+                    success: true
+                    message: Login realizado com sucesso.
+                    data:
+                      id: 1
+                      name: Maria Silva
+                      email: maria.silva@example.com
+                      role: common_user
+                      profile:
+                        role: common_user
+                        label: Usuario comum
+                        user_type_id: 2
+                        profile_type_id: 1
+                        profile_type_name: Aluno
+                      active_status: 1
+                administrator:
+                  value:
+                    success: true
+                    message: Login realizado com sucesso.
+                    data:
+                      id: 2
+                      name: Admin Sistema
+                      email: admin@example.com
+                      role: administrator
+                      profile:
+                        role: administrator
+                        label: Administrador
+                        user_type_id: 1
+                        profile_type_id: null
+                        profile_type_name: null
+                      active_status: 1
+        "401":
+          description: Credenciais invalidas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                invalidCredentials:
+                  value:
+                    success: false
+                    message: Usuario e/ou senha invalidos.
+                    errors: []
+                    code: INVALID_CREDENTIALS
+        "403":
+          description: Conta pendente de ativacao pelo administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                accountNotActivated:
+                  value:
+                    success: false
+                    message: Sua conta ainda nao foi ativada por um administrador do sistema.
+                    errors: []
+                    code: ACCOUNT_NOT_ACTIVATED
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Muitas tentativas de login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                tooManyAttempts:
+                  value:
+                    success: false
+                    message: Muitas tentativas. Tente novamente mais tarde.
+                    errors: []
+                    code: TOO_MANY_ATTEMPTS
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfTokenMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Erro interno do servidor.
+                    errors: []
+                    code: INTERNAL_SERVER_ERROR
+  /me:
+    get:
+      tags:
+        - Auth
+      summary: Recupera o usuario autenticado
+      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
+      operationId: getAuthenticatedUser
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Usuario autenticado recuperado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticatedUserResponse"
+              examples:
+                commonUser:
+                  value:
+                    success: true
+                    message: Usuario autenticado recuperado com sucesso.
+                    data:
+                      id: 1
+                      name: Maria Silva
+                      email: maria.silva@example.com
+                      role: common_user
+                      profile:
+                        role: common_user
+                        label: Usuario comum
+                        user_type_id: 2
+                        profile_type_id: 1
+                        profile_type_name: Aluno
+                      active_status: 1
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Conta da sessao atual nao esta ativa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                accountNotActivated:
+                  value:
+                    success: false
+                    message: Sua conta ainda nao foi ativada por um administrador do sistema.
+                    errors: []
+                    code: ACCOUNT_NOT_ACTIVATED
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Encerra a sessao autenticada
+      description: Invalida a sessao atual no backend e regenera o token de sessao. Depois do logout, o cookie anterior nao autentica novas chamadas para /me.
+      operationId: logoutUser
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmptySuccessResponse"
+              examples:
+                loggedOut:
+                  value:
+                    success: true
+                    message: Logout realizado com sucesso.
+                    data: null
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Conta da sessao atual nao esta ativa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                accountNotActivated:
+                  value:
+                    success: false
+                    message: Sua conta ainda nao foi ativada por um administrador do sistema.
+                    errors: []
+                    code: ACCOUNT_NOT_ACTIVATED
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfTokenMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
   /competencies:
     get:
       tags:
@@ -272,7 +565,21 @@ paths:
         "404":
           description: Competencia nao encontrada
 components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: jornada_session
+      description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
   parameters:
+    CsrfToken:
+      name: X-CSRF-TOKEN
+      in: header
+      required: true
+      description: Valor do cookie XSRF-TOKEN emitido pela API depois de iniciar a sessao. No Swagger local, execute primeiro GET /me, copie o cookie XSRF-TOKEN no navegador e cole aqui antes de chamar endpoints POST de sessao.
+      schema:
+        type: string
+      example: test-csrf-token
     CompetencyId:
       name: id
       in: path
@@ -398,6 +705,27 @@ components:
         data:
           type: "null"
           example: null
+    CsrfTokenResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Token CSRF gerado com sucesso.
+        data:
+          type: object
+          required:
+            - csrf_token
+          properties:
+            csrf_token:
+              type: string
+              example: 6g7XqYcH5q9mKpT3nB2wR8sV1zL0aE4d
     StandardValidationError:
       type: object
       required:
@@ -439,7 +767,12 @@ components:
           type: string
           example: An error occurred.
         errors:
-          type: object
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
+          example: {}
         code:
           type: string
           example: ERROR_CODE
@@ -457,33 +790,31 @@ components:
           type: string
           example: Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.
         data:
-          $ref: "#/components/schemas/User"
-    User:
+          $ref: "#/components/schemas/RegisteredUser"
+    RegisteredUser:
       type: object
       required:
         - id
-        - profile_type_id
         - name
-        - organization
+        - email
+        - organization_company
         - department
         - registration_number
-        - email
-        - active
-        - created_at
+        - profile_type_id
+        - active_status
+        - account_status
       properties:
         id:
           type: integer
           example: 1
-        profile_type_id:
-          type:
-            - integer
-            - "null"
-          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
-          example: 1
         name:
           type: string
           example: Maria Silva
-        organization:
+        email:
+          type: string
+          format: email
+          example: maria.silva@example.com
+        organization_company:
           type: string
           example: Secretaria de Governo
         department:
@@ -492,18 +823,25 @@ components:
         registration_number:
           type: string
           example: MAT-123
-        email:
+        profile_type_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        active_status:
+          type: integer
+          description: 2 representa conta inativa, pendente de ativacao por administrador.
+          example: 2
+        account_status:
           type: string
-          format: email
-          example: maria.silva@example.com
-        active:
-          type: boolean
-          example: false
+          enum:
+            - pending_activation
+          example: pending_activation
         created_at:
           type:
             - string
             - "null"
-          example: "2026-07-23 10:00:00"
+          example: "2026-07-23 16:30:00"
     UserRegistrationPayload:
       type: object
       required:
@@ -523,12 +861,12 @@ components:
         email:
           type: string
           format: email
-          maxLength: 50
+          maxLength: 100
           example: maria.silva@example.com
         password:
           type: string
           minLength: 8
-          maxLength: 72
+          maxLength: 100
           format: password
           example: SenhaSegura123
         password_confirmation:
@@ -553,6 +891,121 @@ components:
             - "null"
           description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
           example: 1
+    LoginResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login realizado com sucesso.
+        data:
+          $ref: "#/components/schemas/AuthenticatedUser"
+    AuthenticatedUserResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Usuario autenticado recuperado com sucesso.
+        data:
+          $ref: "#/components/schemas/AuthenticatedUser"
+    AuthenticatedUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - role
+        - profile
+        - active_status
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Maria Silva
+        email:
+          type: string
+          format: email
+          example: maria.silva@example.com
+        role:
+          type: string
+          enum:
+            - common_user
+            - administrator
+          example: common_user
+        profile:
+          $ref: "#/components/schemas/AuthenticatedUserProfile"
+        active_status:
+          type: integer
+          description: 1 representa conta ativa.
+          example: 1
+    AuthenticatedUserProfile:
+      type: object
+      required:
+        - role
+        - label
+        - user_type_id
+        - profile_type_id
+        - profile_type_name
+      properties:
+        role:
+          type: string
+          enum:
+            - common_user
+            - administrator
+          example: common_user
+        label:
+          type: string
+          enum:
+            - Usuario comum
+            - Administrador
+          example: Usuario comum
+        user_type_id:
+          type:
+            - integer
+            - "null"
+          description: 1 representa administrador; outros valores ou nulo representam usuario comum.
+          example: 2
+        profile_type_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        profile_type_name:
+          type:
+            - string
+            - "null"
+          example: Aluno
+    LoginPayload:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: maria.silva@example.com
+        password:
+          type: string
+          format: password
+          maxLength: 100
+          example: SenhaSegura123
     Competency:
       type: object
       required:

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\AccountAlreadyExistsException;
 use App\Http\Requests\RegisterUserRequest;
-use App\Http\Resources\UsuarioResource;
+use App\Http\Resources\UserRegistrationResource;
 use App\Services\UserRegistrationService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +34,7 @@ class UserRegistrationController
         }
 
         return ApiResponse::success(
-            data: (new UsuarioResource($user))->resolve(),
+            data: (new UserRegistrationResource($user))->resolve(),
             message: self::SUCCESS_MESSAGE,
             status: Response::HTTP_CREATED,
         );

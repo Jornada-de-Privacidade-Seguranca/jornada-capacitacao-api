@@ -21,6 +21,9 @@ class RegisterUserRequest extends FormRequest
         $this->merge([
             'email' => is_string($this->email) ? mb_strtolower(trim($this->email)) : $this->email,
             'name' => is_string($this->name) ? trim($this->name) : $this->name,
+            'organization' => is_string($this->organization) ? trim($this->organization) : $this->organization,
+            'department' => is_string($this->department) ? trim($this->department) : $this->department,
+            'registration_number' => is_string($this->registration_number) ? trim($this->registration_number) : $this->registration_number,
         ]);
     }
 
@@ -28,8 +31,8 @@ class RegisterUserRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:50', 'regex:/^\S+\s+\S+(?:.*)?$/u'],
-            'email' => ['required', 'email:rfc', 'max:50'],
-            'password' => ['required', 'string', 'min:8', 'max:72', 'confirmed'],
+            'email' => ['required', 'email:rfc', 'max:100'],
+            'password' => ['required', 'string', 'min:8', 'max:100', 'confirmed'],
             'organization' => ['required', 'string', 'max:100'],
             'department' => ['required', 'string', 'max:100'],
             'registration_number' => ['required', 'string', 'max:50'],
@@ -48,11 +51,11 @@ class RegisterUserRequest extends FormRequest
             'name.regex' => 'Informe nome e sobrenome.',
             'email.required' => 'Informe o e-mail.',
             'email.email' => 'Informe um e-mail valido.',
-            'email.max' => 'O e-mail deve ter no maximo 50 caracteres.',
+            'email.max' => 'O e-mail deve ter no maximo 100 caracteres.',
             'password.required' => 'Informe a senha.',
             'password.string' => 'A senha deve ser um texto.',
             'password.min' => 'A senha deve ter pelo menos 8 caracteres.',
-            'password.max' => 'A senha deve ter no maximo 72 caracteres.',
+            'password.max' => 'A senha deve ter no maximo 100 caracteres.',
             'password.confirmed' => 'A confirmacao da senha nao confere.',
             'organization.required' => 'Informe o orgao ou empresa.',
             'organization.string' => 'O orgao ou empresa deve ser um texto.',
@@ -68,7 +71,7 @@ class RegisterUserRequest extends FormRequest
         ];
     }
 
-    protected function failedValidation(Validator $validator)
+    protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(ApiResponse::error(
             message: 'Validation error.',

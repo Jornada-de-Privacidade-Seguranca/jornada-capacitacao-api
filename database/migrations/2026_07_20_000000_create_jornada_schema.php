@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -109,17 +111,51 @@ return new class extends Migration
         Schema::create('TB_USUARIO', function (Blueprint $table): void {
             $table->increments('PK_USUARIO');
             $table->unsignedInteger('FK_TIPO_PERFIL')->nullable();
+            $table->integer('FK_TIPO_USUARIO')->nullable();
             $table->string('NO_USUARIO', 50)->nullable();
             $table->string('NO_ORGAO_EMPRESA', 100)->nullable();
             $table->string('NO_SETOR', 100)->nullable();
             $table->string('NU_MATRICULA', 50)->nullable();
-            $table->string('DS_EMAIL', 50)->nullable();
-            $table->string('DS_SENHA')->nullable();
+            $table->string('DS_EMAIL', 100)->nullable();
+            $table->string('DS_SENHA', 255)->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->integer('ST_ATIVO')->nullable();
 
             $table->foreign('FK_TIPO_PERFIL')->references('PK_TIPO_PERFIL')->on('TB_TIPO_PERFIL');
         });
+
+        $driver = DB::connection()->getDriverName();
+
+        if (in_array($driver, ['pgsql', 'sqlite'], true)) {
+            DB::statement('CREATE UNIQUE INDEX "TB_USUARIO_DS_EMAIL_LOWER_UNIQUE" ON "TB_USUARIO" (LOWER("DS_EMAIL")) WHERE "DS_EMAIL" IS NOT NULL');
+        }
+
+        DB::table('TB_USUARIO')->insert([
+            [
+                'FK_TIPO_PERFIL' => null,
+                'FK_TIPO_USUARIO' => 1,
+                'NO_USUARIO' => 'Administrador Sistema',
+                'NO_ORGAO_EMPRESA' => 'Jornada',
+                'NO_SETOR' => 'Administracao',
+                'NU_MATRICULA' => null,
+                'DS_EMAIL' => 'admin@jornada.local',
+                'DS_SENHA' => Hash::make('admin123'),
+                'DH_CRIADO_EM' => now(),
+                'ST_ATIVO' => 1,
+            ],
+            [
+                'FK_TIPO_PERFIL' => null,
+                'FK_TIPO_USUARIO' => 2,
+                'NO_USUARIO' => 'Usuario Teste',
+                'NO_ORGAO_EMPRESA' => 'Jornada',
+                'NO_SETOR' => 'Testes',
+                'NU_MATRICULA' => null,
+                'DS_EMAIL' => 'user@jornada.local',
+                'DS_SENHA' => Hash::make('usere123'),
+                'DH_CRIADO_EM' => now(),
+                'ST_ATIVO' => 1,
+            ],
+        ]);
 
         Schema::create('TB_JORNADA', function (Blueprint $table): void {
             $table->increments('PK_JORNADA');

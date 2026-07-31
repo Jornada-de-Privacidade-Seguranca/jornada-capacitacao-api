@@ -4,35 +4,42 @@ namespace App\Services;
 
 use App\Exceptions\AccountAlreadyExistsException;
 use App\Models\Usuario;
-use App\Repositories\Contracts\UsuarioRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
 
 class UserRegistrationService
 {
-    public function __construct(private readonly UsuarioRepositoryInterface $usuarioRepository)
+    private const STATUS_PENDING_ACTIVATION = 2;
+
+    public function __construct(private readonly UserRepositoryInterface $userRepository)
     {
     }
 
     public function register(array $data): Usuario
     {
-        if ($this->usuarioRepository->existsByEmail($data['email'])) {
+        $email = strtolower(trim($data['email']));
+
+        if ($this->userRepository->existsByEmail($email)) {
             throw new AccountAlreadyExistsException();
         }
 
+        $registrationNumber = isset($data['registration_number']) ? trim((string) $data['registration_number']) : null;
+
         try {
-            return $this->usuarioRepository->create([
+            return $this->userRepository->create([
                 'FK_TIPO_PERFIL' => $data['profile_type_id'] ?? null,
-                'NO_USUARIO' => $data['name'],
-                'NO_ORGAO_EMPRESA' => $data['organization'],
-                'NO_SETOR' => $data['department'],
-                'NU_MATRICULA' => $data['registration_number'],
-                'DS_EMAIL' => $data['email'],
+                'FK_TIPO_USUARIO' => null,
+                'NO_USUARIO' => trim($data['name']),
+                'NO_ORGAO_EMPRESA' => trim($data['organization']),
+                'NO_SETOR' => trim($data['department']),
+                'NU_MATRICULA' => $registrationNumber,
+                'DS_EMAIL' => $email,
                 'DS_SENHA' => Hash::make($data['password']),
-                'ST_ATIVO' => 0,
+                'ST_ATIVO' => self::STATUS_PENDING_ACTIVATION,
             ]);
         } catch (QueryException $exception) {
-            if ($this->isUniqueConstraintViolation($exception)) {
+            if ($this->isUniqueEmailViolation($exception)) {
                 throw new AccountAlreadyExistsException(previous: $exception);
             }
 
@@ -40,10 +47,12 @@ class UserRegistrationService
         }
     }
 
-    private function isUniqueConstraintViolation(QueryException $exception): bool
+    private function isUniqueEmailViolation(QueryException $exception): bool
     {
-        $sqlState = $exception->errorInfo[0] ?? null;
+        $code = (string) $exception->getCode();
+        $message = strtolower($exception->getMessage());
 
-        return in_array($sqlState, ['23000', '23505'], true);
+        return in_array($code, ['23000', '23505'], true)
+            || (str_contains($message, 'unique') && str_contains($message, 'email'));
     }
 }
