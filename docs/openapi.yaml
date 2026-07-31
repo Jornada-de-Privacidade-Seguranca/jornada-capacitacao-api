@@ -10,7 +10,7 @@ tags:
   - name: Health
     description: Endpoints de disponibilidade da API
   - name: Auth
-    description: Endpoints de autenticacao
+    description: Endpoints publicos de cadastro e autenticacao
   - name: Dashboard
     description: Endpoints de dados do painel inicial do usuario
   - name: Competencies
@@ -110,10 +110,10 @@ paths:
                       include_steps:
                         - The include steps field must be true or false.
                     code: VALIDATION_ERROR
-  /users/register:
+  /auth/register:
     post:
       tags:
-        - Users
+        - Auth
       summary: Cadastra um usuario pendente de ativacao
       description: Cria uma conta de usuario com status pendente de ativacao por administrador.
       x-rate-limit: 3 requisicoes por minuto por IP.
@@ -129,15 +129,15 @@ paths:
                 value:
                   name: Maria Silva
                   email: maria.silva@example.com
-                  password: secret123
-                  password_confirmation: secret123
-                  organization_company: Ministerio da Justica
+                  password: SenhaSegura123
+                  password_confirmation: SenhaSegura123
+                  organization: Secretaria de Governo
                   department: Privacidade
-                  registration_number: MJ-123
+                  registration_number: MAT-123
                   profile_type_id: 1
       responses:
         "201":
-          description: Usuario cadastrado pendente de ativacao
+          description: Usuario cadastrado com ativacao pendente
           content:
             application/json:
               schema:
@@ -151,9 +151,9 @@ paths:
                       id: 1
                       name: Maria Silva
                       email: maria.silva@example.com
-                      organization_company: Ministerio da Justica
+                      organization_company: Secretaria de Governo
                       department: Privacidade
-                      registration_number: MJ-123
+                      registration_number: MAT-123
                       profile_type_id: 1
                       active_status: 2
                       account_status: pending_activation
@@ -171,8 +171,8 @@ paths:
                     message: Ja existe uma conta cadastrada com este e-mail.
                     errors:
                       email:
-                        - Ja existe uma conta cadastrada com este e-mail.
-                    code: USER_ALREADY_EXISTS
+                        - Informe outro e-mail ou solicite a ativacao da conta existente.
+                    code: ACCOUNT_ALREADY_EXISTS
         "422":
           description: Erro de validacao
           content:
@@ -192,6 +192,27 @@ paths:
                     message: Muitas tentativas. Tente novamente mais tarde.
                     errors: []
                     code: TOO_MANY_ATTEMPTS
+  /auth/csrf-token:
+    get:
+      tags:
+        - Auth
+      summary: Gera token CSRF para requisicoes de sessao
+      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout.
+      operationId: getCsrfToken
+      responses:
+        "200":
+          description: Token CSRF gerado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CsrfTokenResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Token CSRF gerado com sucesso.
+                    data:
+                      csrf_token: 6g7XqYcH5q9mKpT3nB2wR8sV1zL0aE4d
   /auth/login:
     post:
       tags:
@@ -200,6 +221,8 @@ paths:
       description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. Em browsers, a resposta emite o cookie de sessao HttpOnly e as chamadas seguintes devem enviar credenciais.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
@@ -296,6 +319,19 @@ paths:
                     message: Muitas tentativas. Tente novamente mais tarde.
                     errors: []
                     code: TOO_MANY_ATTEMPTS
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfTokenMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
         "500":
           description: Erro interno do servidor
           content:
@@ -504,6 +540,8 @@ paths:
       operationId: logoutUser
       security:
         - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
       responses:
         "200":
           description: Logout realizado com sucesso
@@ -543,6 +581,19 @@ paths:
                     message: Sua conta ainda nao foi ativada por um administrador do sistema.
                     errors: []
                     code: ACCOUNT_NOT_ACTIVATED
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfTokenMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
   /competencies:
     get:
       tags:
@@ -650,6 +701,14 @@ components:
       name: jornada_session
       description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
   parameters:
+    CsrfToken:
+      name: X-CSRF-TOKEN
+      in: header
+      required: true
+      description: Valor do cookie XSRF-TOKEN emitido pela API depois de iniciar a sessao. No Swagger local, execute primeiro GET /me, copie o cookie XSRF-TOKEN no navegador e cole aqui antes de chamar endpoints POST de sessao.
+      schema:
+        type: string
+      example: test-csrf-token
     CompetencyId:
       name: id
       in: path
@@ -775,6 +834,27 @@ components:
         data:
           type: "null"
           example: null
+    CsrfTokenResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Token CSRF gerado com sucesso.
+        data:
+          type: object
+          required:
+            - csrf_token
+          properties:
+            csrf_token:
+              type: string
+              example: 6g7XqYcH5q9mKpT3nB2wR8sV1zL0aE4d
     StandardValidationError:
       type: object
       required:
@@ -848,6 +928,8 @@ components:
         - email
         - organization_company
         - department
+        - registration_number
+        - profile_type_id
         - active_status
         - account_status
       properties:
@@ -863,15 +945,13 @@ components:
           example: maria.silva@example.com
         organization_company:
           type: string
-          example: Ministerio da Justica
+          example: Secretaria de Governo
         department:
           type: string
           example: Privacidade
         registration_number:
-          type:
-            - string
-            - "null"
-          example: MJ-123
+          type: string
+          example: MAT-123
         profile_type_id:
           type:
             - integer
@@ -898,13 +978,14 @@ components:
         - email
         - password
         - password_confirmation
-        - organization_company
+        - organization
         - department
+        - registration_number
       properties:
         name:
           type: string
           maxLength: 50
-          description: Nome completo, contendo nome e sobrenome.
+          description: Nome completo, com pelo menos nome e sobrenome.
           example: Maria Silva
         email:
           type: string
@@ -916,29 +997,28 @@ components:
           minLength: 8
           maxLength: 100
           format: password
-          example: secret123
+          example: SenhaSegura123
         password_confirmation:
           type: string
           format: password
-          example: secret123
-        organization_company:
+          example: SenhaSegura123
+        organization:
           type: string
           maxLength: 100
-          example: Ministerio da Justica
+          example: Secretaria de Governo
         department:
           type: string
           maxLength: 100
           example: Privacidade
         registration_number:
-          type:
-            - string
-            - "null"
+          type: string
           maxLength: 50
-          example: MJ-123
+          example: MAT-123
         profile_type_id:
           type:
             - integer
             - "null"
+          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
           example: 1
     LoginResponse:
       type: object
@@ -1345,7 +1425,7 @@ components:
           type: string
           format: password
           maxLength: 100
-          example: secret123
+          example: SenhaSegura123
     Competency:
       type: object
       required:

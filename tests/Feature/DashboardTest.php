@@ -254,7 +254,7 @@ class DashboardTest extends TestCase
 
     private function loginAs(string $email): void
     {
-        $this->postJson('/api/auth/login', [
+        $this->postJsonWithCsrf('/api/auth/login', [
             'email' => $email,
             'password' => 'secret123',
         ])->assertOk();
