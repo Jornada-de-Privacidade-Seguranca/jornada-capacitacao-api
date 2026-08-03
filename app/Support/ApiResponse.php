@@ -43,6 +43,7 @@ class ApiResponse
                     'per_page' => $paginator->perPage(),
                     'total' => $paginator->total(),
                     'last_page' => $paginator->lastPage(),
+                    'has_next_page' => $paginator->hasMorePages(),
                 ],
             ],
         );
