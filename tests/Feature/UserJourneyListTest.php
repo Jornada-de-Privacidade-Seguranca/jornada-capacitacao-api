@@ -131,6 +131,127 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('errors.per_page.0', 'A quantidade de registros por pagina nao pode ser maior que 100.');
     }
 
+    public function test_it_filters_journeys_by_completed_status(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $oldCompletedJourney = $this->journey($user, $profile, '2026-07-01 09:00:00', '2026-07-01 10:00:00');
+        $this->journey($user, $profile, '2026-07-02 09:00:00');
+        $recentCompletedJourney = $this->journey($user, $profile, '2026-07-03 09:00:00', '2026-07-03 10:00:00');
+
+        $response = $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys?status=completed")
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.status', 'completed')
+            ->assertJsonPath('data.1.status', 'completed')
+            ->assertJsonPath('meta.pagination.total', 2);
+
+        $this->assertSame(
+            [$recentCompletedJourney->PK_JORNADA, $oldCompletedJourney->PK_JORNADA],
+            collect($response->json('data'))->pluck('id')->all(),
+        );
+    }
+
+    public function test_it_filters_journeys_by_ongoing_status(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $this->journey($user, $profile, '2026-07-01 09:00:00', '2026-07-01 10:00:00');
+        $ongoingJourney = $this->journey($user, $profile, '2026-07-02 09:00:00');
+        $this->journey($user, $profile, '2026-07-03 09:00:00', '2026-07-03 10:00:00');
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys?status=ongoing")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $ongoingJourney->PK_JORNADA)
+            ->assertJsonPath('data.0.status', 'ongoing')
+            ->assertJsonPath('data.0.finished_at', null)
+            ->assertJsonPath('meta.pagination.total', 1);
+    }
+
+    public function test_it_filters_journeys_by_journey_profile_id(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $privacyProfile = $this->journeyProfile('Privacidade');
+        $securityProfile = $this->journeyProfile('Seguranca');
+        $privacyJourney = $this->journey($user, $privacyProfile, '2026-07-01 09:00:00');
+        $this->journey($user, $securityProfile, '2026-07-02 09:00:00');
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys?journey_profile_id={$privacyProfile->PK_PERFIS_JORNADA}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $privacyJourney->PK_JORNADA)
+            ->assertJsonPath('data.0.journey_profile.id', $privacyProfile->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.0.journey_profile.description', 'Privacidade')
+            ->assertJsonPath('meta.pagination.total', 1);
+    }
+
+    public function test_it_filters_journeys_by_started_date_range(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $this->journey($user, $profile, '2026-07-01 09:00:00');
+        $journeyInsideRange = $this->journey($user, $profile, '2026-07-15 09:00:00');
+        $this->journey($user, $profile, '2026-08-01 09:00:00');
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys?started_from=2026-07-10&started_to=2026-07-31")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $journeyInsideRange->PK_JORNADA)
+            ->assertJsonPath('data.0.started_at', '2026-07-15 09:00:00')
+            ->assertJsonPath('meta.pagination.total', 1);
+    }
+
+    public function test_it_filters_journeys_by_ended_date_range(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $this->journey($user, $profile, '2026-07-01 09:00:00', '2026-07-01 10:00:00');
+        $journeyInsideRange = $this->journey($user, $profile, '2026-07-15 09:00:00', '2026-07-15 10:00:00');
+        $this->journey($user, $profile, '2026-07-20 09:00:00');
+        $this->journey($user, $profile, '2026-08-01 09:00:00', '2026-08-01 10:00:00');
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys?ended_from=2026-07-10&ended_to=2026-07-31")
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $journeyInsideRange->PK_JORNADA)
+            ->assertJsonPath('data.0.finished_at', '2026-07-15 10:00:00')
+            ->assertJsonPath('meta.pagination.total', 1);
+    }
+
+    public function test_it_rejects_invalid_filter_parameters(): void
+    {
+        $admin = $this->activeUser('Admin Sistema', 1);
+        $user = $this->activeUser('Maria Silva', 2);
+
+        $this->actingAs($admin)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys?status=invalid&journey_profile_id=999999&started_from=2026/07/01&ended_from=2026-07-31&ended_to=2026-07-01")
+            ->assertUnprocessable()
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'errors' => [
+                    'status',
+                    'journey_profile_id',
+                    'started_from',
+                    'ended_to',
+                ],
+                'code',
+            ])
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Parametros de filtro invalidos.')
+            ->assertJsonPath('code', 'INVALID_JOURNEY_FILTERS')
+            ->assertJsonPath('errors.status.0', 'A situacao da jornada deve ser completed ou ongoing.')
+            ->assertJsonPath('errors.journey_profile_id.0', 'O perfil de jornada informado nao existe.')
+            ->assertJsonPath('errors.started_from.0', 'A data inicial minima deve estar no formato Y-m-d.')
+            ->assertJsonPath('errors.ended_to.0', 'A data de finalizacao maxima deve ser maior ou igual a data de finalizacao minima.');
+    }
+
     public function test_it_returns_empty_page_when_user_has_no_journeys(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -161,26 +282,6 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('message', 'Nao foi possivel buscar as jornadas no momento.')
             ->assertJsonPath('code', 'JOURNEYS_SEARCH_FAILED')
             ->assertJsonPath('errors', []);
-    }
-
-    public function test_default_user_has_temporary_swagger_journey_examples(): void
-    {
-        $user = Usuario::query()
-            ->where('DS_EMAIL', 'user@jornada.local')
-            ->firstOrFail();
-
-        $this->actingAs($user)
-            ->getJson("/api/users/{$user->PK_USUARIO}/journeys")
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', 'Jornadas retornadas com sucesso.')
-            ->assertJsonCount(2, 'data')
-            ->assertJsonPath('data.0.status', 'ongoing')
-            ->assertJsonPath('data.0.started_at', '2026-08-01 14:00:00')
-            ->assertJsonPath('data.1.status', 'completed')
-            ->assertJsonPath('data.1.started_at', '2026-07-30 09:00:00')
-            ->assertJsonPath('data.1.finished_at', '2026-07-30 10:30:00')
-            ->assertJsonPath('meta.pagination.total', 2);
     }
 
     private function activeUser(string $name, int $userType): Usuario

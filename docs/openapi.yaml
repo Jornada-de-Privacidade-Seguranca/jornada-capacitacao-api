@@ -626,7 +626,7 @@ paths:
                     errors: []
                     code: USER_NOT_FOUND
         "422":
-          description: Parametros de paginacao invalidos
+          description: Parametros de paginacao ou filtros invalidos
           content:
             application/json:
               schema:
@@ -640,6 +640,16 @@ paths:
                       page:
                         - A pagina atual deve ser maior ou igual a 1.
                     code: INVALID_PAGINATION_PARAMETERS
+                invalidFilters:
+                  value:
+                    success: false
+                    message: Parametros de filtro invalidos.
+                    errors:
+                      status:
+                        - A situacao da jornada deve ser completed ou ongoing.
+                      started_from:
+                        - A data inicial minima deve estar no formato Y-m-d.
+                    code: INVALID_JOURNEY_FILTERS
         "500":
           description: Erro interno do servidor
           content:

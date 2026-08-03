@@ -46,15 +46,31 @@ class ListUserJourneysRequest extends FormRequest
             'per_page.integer' => 'A quantidade de registros por pagina deve ser um numero inteiro.',
             'per_page.min' => 'A quantidade de registros por pagina deve ser maior ou igual a 1.',
             'per_page.max' => 'A quantidade de registros por pagina nao pode ser maior que 100.',
+            'status.in' => 'A situacao da jornada deve ser completed ou ongoing.',
+            'journey_profile_id.integer' => 'O perfil de jornada deve ser um numero inteiro.',
+            'journey_profile_id.exists' => 'O perfil de jornada informado nao existe.',
+            'started_from.date_format' => 'A data inicial minima deve estar no formato Y-m-d.',
+            'started_to.date_format' => 'A data inicial maxima deve estar no formato Y-m-d.',
+            'started_to.after_or_equal' => 'A data inicial maxima deve ser maior ou igual a data inicial minima.',
+            'ended_from.date_format' => 'A data de finalizacao minima deve estar no formato Y-m-d.',
+            'ended_to.date_format' => 'A data de finalizacao maxima deve estar no formato Y-m-d.',
+            'ended_to.after_or_equal' => 'A data de finalizacao maxima deve ser maior ou igual a data de finalizacao minima.',
         ];
     }
 
     protected function failedValidation(Validator $validator): void
     {
+        $errorFields = array_keys($validator->errors()->toArray());
+        $hasOnlyPaginationErrors = empty(array_diff($errorFields, ['page', 'per_page']));
+
         throw new HttpResponseException(ApiResponse::error(
-            message: 'Parametros de paginacao invalidos.',
+            message: $hasOnlyPaginationErrors
+                ? 'Parametros de paginacao invalidos.'
+                : 'Parametros de filtro invalidos.',
             status: Response::HTTP_UNPROCESSABLE_ENTITY,
-            code: 'INVALID_PAGINATION_PARAMETERS',
+            code: $hasOnlyPaginationErrors
+                ? 'INVALID_PAGINATION_PARAMETERS'
+                : 'INVALID_JOURNEY_FILTERS',
             errors: $validator->errors()->toArray(),
         ));
     }
