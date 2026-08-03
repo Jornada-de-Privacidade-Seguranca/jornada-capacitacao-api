@@ -23,6 +23,7 @@
 - Nunca executar comandos destrutivos contra bancos que nao sejam explicitamente de teste.
 - Neste projeto, agentes podem executar testes automatizados sem autorizacao previa quando eles usarem exclusivamente o ambiente `testing` e banco de teste isolado.
 - Antes de executar testes, qualquer IA deve procurar containers Docker existentes do projeto, por exemplo com `docker ps` ou `docker compose ps`, e preferir rodar `php artisan test` no container da aplicacao quando ele estiver disponivel.
+- Ao rodar testes no container da aplicacao, forcar explicitamente `APP_ENV=testing`, `DB_CONNECTION=sqlite` e `DB_DATABASE=:memory:` quando as variaveis do container apontarem para ambiente local ou banco persistente.
 
 ## Testes para funcionalidades que alteram banco
 

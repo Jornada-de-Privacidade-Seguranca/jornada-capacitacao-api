@@ -197,7 +197,7 @@ paths:
       tags:
         - Auth
       summary: Gera token CSRF para requisicoes de sessao
-      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout.
+      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser copiado do campo data.csrf_token e enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout. No Swagger local, acesse a interface por http://localhost:8031 e use a API em http://localhost:8030 para que o navegador aceite e reenvie os cookies de sessao.
       operationId: getCsrfToken
       responses:
         "200":
@@ -218,7 +218,7 @@ paths:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. Em browsers, a resposta emite o cookie de sessao HttpOnly e as chamadas seguintes devem enviar credenciais.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
       parameters:
@@ -472,7 +472,7 @@ paths:
       tags:
         - Journeys
       summary: Lista jornadas paginadas de um usuario
-      description: Retorna as jornadas do usuario informado, da mais recente para a mais antiga. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario.
+      description: Retorna as jornadas do usuario informado, da mais recente para a mais antiga. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: listUserJourneys
       security:
         - sessionAuth: []
@@ -758,13 +758,13 @@ components:
       type: apiKey
       in: cookie
       name: jornada_session
-      description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
+      description: Cookie de sessao HttpOnly emitido pelo backend apos login. No Swagger UI, nao cole este cookie manualmente no botao Authorize; browsers nao permitem controlar corretamente o header Cookie nesse fluxo. Execute /auth/csrf-token e /auth/login no mesmo host da documentacao local para que o navegador armazene e envie o cookie automaticamente.
   parameters:
     CsrfToken:
       name: X-CSRF-TOKEN
       in: header
       required: true
-      description: Valor do cookie XSRF-TOKEN emitido pela API depois de iniciar a sessao. No Swagger local, execute primeiro GET /me, copie o cookie XSRF-TOKEN no navegador e cole aqui antes de chamar endpoints POST de sessao.
+      description: Valor retornado em data.csrf_token por GET /auth/csrf-token. No Swagger local, execute primeiro /auth/csrf-token, copie data.csrf_token e cole aqui antes de chamar endpoints POST de sessao.
       schema:
         type: string
       example: test-csrf-token

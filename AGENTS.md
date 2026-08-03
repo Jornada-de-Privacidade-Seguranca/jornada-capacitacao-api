@@ -16,6 +16,7 @@
 - Nao executar comandos destrutivos.
 - Neste projeto, a regra pessoal de nao executar testes sem autorizacao previa nao se aplica a testes automatizados que usem exclusivamente o ambiente `testing` e banco de teste isolado, conforme `Tests.MD`.
 - Antes de rodar testes neste projeto, qualquer IA deve procurar containers Docker existentes do projeto e preferir executar os testes no container da aplicacao quando ele estiver disponivel.
+- Ao rodar testes no container, forcar explicitamente as variaveis de teste quando o container estiver configurado para ambiente local ou banco persistente, conforme `Tests.MD`.
 - Nao remover arquivos do frontend sem autorizacao.
 - Nao modificar a arquitetura do frontend; integrar via API somente quando necessario.
 - Antes de alterar qualquer endpoint, leia docs/api-contract.md. Todo código de API deve seguir obrigatoriamente o contrato descrito nesse documento.

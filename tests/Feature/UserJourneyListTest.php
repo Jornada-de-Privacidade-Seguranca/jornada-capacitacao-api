@@ -163,6 +163,26 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('errors', []);
     }
 
+    public function test_default_user_has_temporary_swagger_journey_examples(): void
+    {
+        $user = Usuario::query()
+            ->where('DS_EMAIL', 'user@jornada.local')
+            ->firstOrFail();
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Jornadas retornadas com sucesso.')
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.status', 'ongoing')
+            ->assertJsonPath('data.0.started_at', '2026-08-01 14:00:00')
+            ->assertJsonPath('data.1.status', 'completed')
+            ->assertJsonPath('data.1.started_at', '2026-07-30 09:00:00')
+            ->assertJsonPath('data.1.finished_at', '2026-07-30 10:30:00')
+            ->assertJsonPath('meta.pagination.total', 2);
+    }
+
     private function activeUser(string $name, int $userType): Usuario
     {
         return Usuario::create([
