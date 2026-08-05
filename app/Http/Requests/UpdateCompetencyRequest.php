@@ -20,6 +20,7 @@ class UpdateCompetencyRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:100'],
             'description' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'knowledge_domain_id' => ['sometimes', 'nullable', 'integer', 'exists:TB_DOMINIO_CONHECIMENTO,PK_DOMINIO_CONHECIMENTO'],
         ];
     }
 

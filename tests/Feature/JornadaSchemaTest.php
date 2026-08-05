@@ -9,6 +9,7 @@ use App\Models\EnglishProficiency;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
 use App\Models\JourneyProfile;
+use App\Models\KnowledgeDomain;
 use App\Models\KnowledgeArea;
 use App\Models\PostgraduateCourse;
 use App\Models\ProfessionalCertification;
@@ -26,6 +27,7 @@ class JornadaSchemaTest extends TestCase
     public function test_it_creates_jornada_tables_from_the_database_modeling(): void
     {
         foreach ([
+            'TB_DOMINIO_CONHECIMENTO',
             'TB_PERFIS_JORNADA',
             'TB_AREA_CONHECIMENTO',
             'TB_DIFICULDADE',
@@ -56,10 +58,15 @@ class JornadaSchemaTest extends TestCase
             'DS_SENHA' => 'secret',
             'ST_ATIVO' => 1,
         ]);
-        $journeyProfile = JourneyProfile::create(['DS_PERFIS_PT' => 'Privacidade', 'TP_PERFIS' => 2]);
+        $knowledgeDomain = KnowledgeDomain::create(['NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade']);
+        $journeyProfile = JourneyProfile::create([
+            'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
+            'DS_PERFIS_PT' => 'Privacidade',
+        ]);
         $knowledgeArea = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Governanca']);
-        $difficulty = Difficulty::create(['DS_DIFICULDADE_PT' => 'Basico']);
+        $difficulty = Difficulty::create(['NO_DIFICULDADE_PT' => 'Basico']);
         $competency = Competency::create([
+            'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
             'FK_AREA_CONHECIMENTO' => $knowledgeArea->PK_AREA_CONHECIMENTO,
             'FK_DIFICULDADE' => $difficulty->PK_DIFICULDADE,
             'NO_COMPETENCIAS_PT' => 'LGPD',
@@ -87,7 +94,10 @@ class JornadaSchemaTest extends TestCase
             'TP_ADQUIRIDO' => 1,
         ]);
 
-        $certification = ProfessionalCertification::create(['NO_CERTIFICACAO_PROFISSIONAL' => 'CISSP']);
+        $certification = ProfessionalCertification::create([
+            'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_CERTIFICACAO_PROFISSIONAL' => 'CISSP',
+        ]);
         $journey->professionalCertifications()->attach($certification->PK_CERTIFICACAO_PROFISSIONAL);
 
         $this->assertTrue($user->journeys->first()->is($journey));
@@ -96,7 +106,10 @@ class JornadaSchemaTest extends TestCase
         $this->assertTrue($journey->acquiredKnowledges->first()->competency->is($competency));
         $this->assertTrue($journey->professionalCertifications->first()->is($certification));
         $this->assertTrue($competency->knowledgeArea->is($knowledgeArea));
+        $this->assertTrue($competency->knowledgeDomain->is($knowledgeDomain));
         $this->assertTrue($competency->difficulty->is($difficulty));
+        $this->assertTrue($journeyProfile->knowledgeDomain->is($knowledgeDomain));
+        $this->assertTrue($certification->knowledgeDomain->is($knowledgeDomain));
         $this->assertTrue($journeyProfile->competencies->first()->is($competency));
     }
 }

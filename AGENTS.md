@@ -17,3 +17,16 @@
 - Nao remover arquivos do frontend sem autorizacao.
 - Nao modificar a arquitetura do frontend; integrar via API somente quando necessario.
 - Antes de alterar qualquer endpoint, leia docs/api-contract.md. Todo código de API deve seguir obrigatoriamente o contrato descrito nesse documento.
+
+## Segurança de autenticação por cookie e CSRF
+
+Quando a aplicação utilizar autenticação baseada em sessão/cookie:
+
+* Rotas autenticadas somente de leitura, como `GET`, não exigem proteção CSRF.
+* Antes de criar ou alterar qualquer rota autenticada mutável (`POST`, `PUT`, `PATCH` ou `DELETE`), verificar obrigatoriamente se existe proteção CSRF adequada.
+* Não criar rotas mutáveis autenticadas por cookie utilizando apenas `StartSession` ou equivalente sem proteção CSRF.
+* Preferir os mecanismos nativos do Laravel/Sanctum ou a solução já adotada pelo projeto, evitando implementações proprietárias de CSRF.
+* Caso uma nova rota mutável autenticada por cookie seja necessária e a proteção CSRF ainda não esteja configurada, apresentar o problema e a solução proposta antes de implementar a rota.
+* Não remover ou desabilitar proteção CSRF apenas para fazer uma rota funcionar.
+* Caso o modelo de autenticação seja alterado de cookie/session para Bearer Token, reavaliar esta regra conforme o novo modelo de autenticação.
+

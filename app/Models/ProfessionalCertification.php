@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ProfessionalCertification extends JornadaModel
@@ -11,8 +12,14 @@ class ProfessionalCertification extends JornadaModel
     protected $primaryKey = 'PK_CERTIFICACAO_PROFISSIONAL';
 
     protected $fillable = [
+        'FK_DOMINIO_CONHECIMENTO',
         'NO_CERTIFICACAO_PROFISSIONAL',
     ];
+
+    public function knowledgeDomain(): BelongsTo
+    {
+        return $this->belongsTo(KnowledgeDomain::class, 'FK_DOMINIO_CONHECIMENTO', 'PK_DOMINIO_CONHECIMENTO');
+    }
 
     public function journeys(): BelongsToMany
     {

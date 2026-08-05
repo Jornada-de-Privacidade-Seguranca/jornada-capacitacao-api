@@ -11,8 +11,8 @@ class Difficulty extends JornadaModel
     protected $primaryKey = 'PK_DIFICULDADE';
 
     protected $fillable = [
-        'DS_DIFICULDADE_PT',
-        'DS_DIFICULDADE_EN',
+        'NO_DIFICULDADE_PT',
+        'NO_DIFICULDADE_EN',
     ];
 
     public function competencies(): HasMany

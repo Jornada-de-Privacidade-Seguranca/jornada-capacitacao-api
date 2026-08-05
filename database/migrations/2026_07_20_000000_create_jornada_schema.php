@@ -2,17 +2,29 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        Schema::create('TB_DOMINIO_CONHECIMENTO', function (Blueprint $table): void {
+            $table->increments('PK_DOMINIO_CONHECIMENTO');
+            $table->string('NO_DOMINIO_CONHECIMENTO_PT', 100)->nullable();
+            $table->string('NO_DOMINIO_CONHECIMENTO_EN', 100)->nullable();
+        });
+
         Schema::create('TB_PERFIS_JORNADA', function (Blueprint $table): void {
             $table->increments('PK_PERFIS_JORNADA');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
             $table->string('DS_PERFIS_PT', 1000)->nullable();
             $table->string('DS_PERFIS_EN', 1000)->nullable();
-            $table->integer('TP_PERFIS')->nullable();
+
+            $table->foreign('FK_DOMINIO_CONHECIMENTO')
+                ->references('PK_DOMINIO_CONHECIMENTO')
+                ->on('TB_DOMINIO_CONHECIMENTO');
         });
 
         Schema::create('TB_AREA_CONHECIMENTO', function (Blueprint $table): void {
@@ -23,12 +35,13 @@ return new class extends Migration
 
         Schema::create('TB_DIFICULDADE', function (Blueprint $table): void {
             $table->increments('PK_DIFICULDADE');
-            $table->string('DS_DIFICULDADE_PT', 20)->nullable();
-            $table->string('DS_DIFICULDADE_EN', 20)->nullable();
+            $table->string('NO_DIFICULDADE_PT', 20)->nullable();
+            $table->string('NO_DIFICULDADE_EN', 20)->nullable();
         });
 
         Schema::create('TB_COMPETENCIAS', function (Blueprint $table): void {
             $table->increments('PK_COMPETENCIAS');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
             $table->unsignedInteger('FK_AREA_CONHECIMENTO')->nullable();
             $table->unsignedInteger('FK_DIFICULDADE')->nullable();
             $table->string('NO_ORIGEM_COMPETENCIAS_PT', 50)->nullable();
@@ -37,10 +50,12 @@ return new class extends Migration
             $table->string('NO_COMPETENCIAS_EN', 100)->nullable();
             $table->string('DS_COMPETENCIAS_PT', 500)->nullable();
             $table->string('DS_COMPETENCIAS_EN', 500)->nullable();
-            $table->integer('TP_COMPETENCIAS')->nullable();
 
             $table->foreign('FK_AREA_CONHECIMENTO')->references('PK_AREA_CONHECIMENTO')->on('TB_AREA_CONHECIMENTO');
             $table->foreign('FK_DIFICULDADE')->references('PK_DIFICULDADE')->on('TB_DIFICULDADE');
+            $table->foreign('FK_DOMINIO_CONHECIMENTO')
+                ->references('PK_DOMINIO_CONHECIMENTO')
+                ->on('TB_DOMINIO_CONHECIMENTO');
         });
 
         Schema::create('RL_PERFIS_COMPETENCIAS', function (Blueprint $table): void {
@@ -68,7 +83,12 @@ return new class extends Migration
 
         Schema::create('TB_CERTIFICACAO_PROFISSIONAL', function (Blueprint $table): void {
             $table->increments('PK_CERTIFICACAO_PROFISSIONAL');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
             $table->string('NO_CERTIFICACAO_PROFISSIONAL', 100)->nullable();
+
+            $table->foreign('FK_DOMINIO_CONHECIMENTO')
+                ->references('PK_DOMINIO_CONHECIMENTO')
+                ->on('TB_DOMINIO_CONHECIMENTO');
         });
 
         Schema::create('TB_PROFICIENCIA_INGLES', function (Blueprint $table): void {
@@ -96,13 +116,46 @@ return new class extends Migration
             $table->string('NO_ORGAO_EMPRESA', 100)->nullable();
             $table->string('NO_SETOR', 100)->nullable();
             $table->string('NU_MATRICULA', 50)->nullable();
-            $table->string('DS_EMAIL', 50)->nullable();
-            $table->string('DS_SENHA', 50)->nullable();
+            $table->string('DS_EMAIL', 100)->nullable();
+            $table->string('DS_SENHA', 255)->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->integer('ST_ATIVO')->nullable();
 
             $table->foreign('FK_TIPO_PERFIL')->references('PK_TIPO_PERFIL')->on('TB_TIPO_PERFIL');
         });
+
+        $driver = DB::connection()->getDriverName();
+
+        if (in_array($driver, ['pgsql', 'sqlite'], true)) {
+            DB::statement('CREATE UNIQUE INDEX "TB_USUARIO_DS_EMAIL_LOWER_UNIQUE" ON "TB_USUARIO" (LOWER("DS_EMAIL")) WHERE "DS_EMAIL" IS NOT NULL');
+        }
+
+        DB::table('TB_USUARIO')->insert([
+            [
+                'FK_TIPO_PERFIL' => null,
+                'FK_TIPO_USUARIO' => 1,
+                'NO_USUARIO' => 'Administrador Sistema',
+                'NO_ORGAO_EMPRESA' => 'Jornada',
+                'NO_SETOR' => 'Administracao',
+                'NU_MATRICULA' => null,
+                'DS_EMAIL' => 'admin@jornada.local',
+                'DS_SENHA' => Hash::make('admin123'),
+                'DH_CRIADO_EM' => now(),
+                'ST_ATIVO' => 1,
+            ],
+            [
+                'FK_TIPO_PERFIL' => null,
+                'FK_TIPO_USUARIO' => 2,
+                'NO_USUARIO' => 'Usuario Teste',
+                'NO_ORGAO_EMPRESA' => 'Jornada',
+                'NO_SETOR' => 'Testes',
+                'NU_MATRICULA' => null,
+                'DS_EMAIL' => 'user@jornada.local',
+                'DS_SENHA' => Hash::make('usere123'),
+                'DH_CRIADO_EM' => now(),
+                'ST_ATIVO' => 1,
+            ],
+        ]);
 
         Schema::create('TB_JORNADA', function (Blueprint $table): void {
             $table->increments('PK_JORNADA');
@@ -162,5 +215,6 @@ return new class extends Migration
         Schema::dropIfExists('TB_DIFICULDADE');
         Schema::dropIfExists('TB_AREA_CONHECIMENTO');
         Schema::dropIfExists('TB_PERFIS_JORNADA');
+        Schema::dropIfExists('TB_DOMINIO_CONHECIMENTO');
     }
 };
