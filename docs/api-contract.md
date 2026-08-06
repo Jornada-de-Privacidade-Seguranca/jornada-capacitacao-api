@@ -253,7 +253,8 @@ Formato obrigatório:
       "current_page": 1,
       "per_page": 10,
       "total": 100,
-      "last_page": 10
+      "last_page": 10,
+      "has_next_page": true
     }
   }
 }
@@ -267,6 +268,7 @@ Formato obrigatório:
 | `per_page` | Quantidade de itens por página. |
 | `total` | Total de registros encontrados. |
 | `last_page` | Última página disponível. |
+| `has_next_page` | Indica se existe uma próxima página disponível. |
 
 ---
 
