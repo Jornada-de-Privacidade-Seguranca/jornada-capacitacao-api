@@ -404,6 +404,133 @@ paths:
                     message: Sua conta ainda nao foi ativada por um administrador do sistema.
                     errors: []
                     code: ACCOUNT_NOT_ACTIVATED
+  /dashboard:
+    get:
+      tags:
+        - Dashboard
+      summary: Recupera os dados do painel do usuario autenticado
+      description: Retorna dados basicos do usuario autenticado, jornada em andamento quando houver, ultima jornada concluida e ate tres outras jornadas concluidas recentes do mesmo usuario.
+      operationId: getDashboard
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados do painel recuperados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResponse"
+              examples:
+                withJourneys:
+                  value:
+                    success: true
+                    message: Dados do painel recuperados com sucesso.
+                    data:
+                      user:
+                        id: 1
+                        name: Maria Silva
+                        email: maria.silva@example.com
+                        role: common_user
+                        organization: Ministerio da Justica
+                        department: Privacidade
+                        registration_number: MJ-123
+                        profile:
+                          role: common_user
+                          label: Usuario comum
+                          user_type_id: 2
+                          profile_type_id: 1
+                          profile_type_name: Aluno
+                        active_status: 1
+                        created_at: "2026-07-23 16:30:00"
+                      journeys:
+                        has_unfinished_journey: true
+                        unfinished_journey:
+                          id: 5
+                          user_id: 1
+                          journey_profile_id: 2
+                          status: in_progress
+                          started_at: "2026-07-24 08:00:00"
+                          finished_at: null
+                          journey_profile:
+                            id: 2
+                            description_pt: Privacidade
+                            description_en: Privacy
+                            knowledge_domain:
+                              id: 1
+                              name_pt: Protecao de Dados
+                              name_en: Data Protection
+                          professional_experience:
+                            id: null
+                            description_pt: null
+                            description_en: null
+                          profile_experience:
+                            id: null
+                            description_pt: null
+                            description_en: null
+                          english_proficiency:
+                            id: null
+                            name_pt: null
+                            name_en: null
+                          higher_education_course:
+                            id: null
+                            name_pt: null
+                            name_en: null
+                            type: null
+                          postgraduate_course:
+                            id: null
+                            name_pt: null
+                            name_en: null
+                            type: null
+                        latest_journey:
+                          id: 4
+                          user_id: 1
+                          journey_profile_id: 2
+                          status: completed
+                          started_at: "2026-07-23 08:00:00"
+                          finished_at: "2026-07-23 09:00:00"
+                          journey_profile:
+                            id: 2
+                            description_pt: Privacidade
+                            description_en: Privacy
+                            knowledge_domain:
+                              id: 1
+                              name_pt: Protecao de Dados
+                              name_en: Data Protection
+                          professional_experience:
+                            id: 3
+                            description_pt: 1 ano
+                            description_en: 1 year
+                          profile_experience:
+                            id: 3
+                            description_pt: 1 ano
+                            description_en: 1 year
+                          english_proficiency:
+                            id: 1
+                            name_pt: Basico
+                            name_en: Basic
+                          higher_education_course:
+                            id: 4
+                            name_pt: Direito
+                            name_en: Law
+                            type: 1
+                          postgraduate_course:
+                            id: 5
+                            name_pt: Seguranca
+                            name_en: Security
+                            type: 2
+                        recent_journeys: []
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "403":
+          description: Conta da sessao atual nao esta ativa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
   /auth/logout:
     post:
       tags:
@@ -1353,6 +1480,297 @@ components:
         user_id:
           type: integer
           example: 2
+    DashboardResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Dados do painel recuperados com sucesso.
+        data:
+          $ref: "#/components/schemas/Dashboard"
+    Dashboard:
+      type: object
+      required:
+        - user
+        - journeys
+      properties:
+        user:
+          $ref: "#/components/schemas/DashboardUser"
+        journeys:
+          $ref: "#/components/schemas/DashboardJourneys"
+    DashboardUser:
+      allOf:
+        - $ref: "#/components/schemas/AuthenticatedUser"
+        - type: object
+          required:
+            - organization
+            - department
+            - registration_number
+            - created_at
+          properties:
+            organization:
+              type:
+                - string
+                - "null"
+              example: Ministerio da Justica
+            department:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            registration_number:
+              type:
+                - string
+                - "null"
+              example: MJ-123
+            created_at:
+              type:
+                - string
+                - "null"
+              example: "2026-07-23 16:30:00"
+    DashboardJourneys:
+      type: object
+      required:
+        - has_unfinished_journey
+        - unfinished_journey
+        - latest_journey
+        - recent_journeys
+      properties:
+        has_unfinished_journey:
+          type: boolean
+          example: true
+        unfinished_journey:
+          oneOf:
+            - $ref: "#/components/schemas/DashboardJourney"
+            - type: "null"
+        latest_journey:
+          oneOf:
+            - $ref: "#/components/schemas/DashboardJourney"
+            - type: "null"
+        recent_journeys:
+          type: array
+          maxItems: 3
+          items:
+            $ref: "#/components/schemas/DashboardJourney"
+    DashboardJourney:
+      type: object
+      required:
+        - id
+        - user_id
+        - journey_profile_id
+        - status
+        - started_at
+        - finished_at
+        - journey_profile
+        - professional_experience
+        - profile_experience
+        - english_proficiency
+        - higher_education_course
+        - postgraduate_course
+      properties:
+        id:
+          type: integer
+          example: 4
+        user_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        journey_profile_id:
+          type:
+            - integer
+            - "null"
+          example: 2
+        status:
+          type: string
+          enum:
+            - in_progress
+            - completed
+          example: completed
+        started_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 08:00:00"
+        finished_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 09:00:00"
+        journey_profile:
+          type: object
+          required:
+            - id
+            - description_pt
+            - description_en
+            - knowledge_domain
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 2
+            description_pt:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            description_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
+            knowledge_domain:
+              type: object
+              required:
+                - id
+                - name_pt
+                - name_en
+              properties:
+                id:
+                  type:
+                    - integer
+                    - "null"
+                  example: 1
+                name_pt:
+                  type:
+                    - string
+                    - "null"
+                  example: Protecao de Dados
+                name_en:
+                  type:
+                    - string
+                    - "null"
+                  example: Data Protection
+        professional_experience:
+          type: object
+          required:
+            - id
+            - description_pt
+            - description_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 3
+            description_pt:
+              type:
+                - string
+                - "null"
+              example: 1 ano
+            description_en:
+              type:
+                - string
+                - "null"
+              example: 1 year
+        profile_experience:
+          type: object
+          required:
+            - id
+            - description_pt
+            - description_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 3
+            description_pt:
+              type:
+                - string
+                - "null"
+              example: 1 ano
+            description_en:
+              type:
+                - string
+                - "null"
+              example: 1 year
+        english_proficiency:
+          type: object
+          required:
+            - id
+            - name_pt
+            - name_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Basico
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Basic
+        higher_education_course:
+          type: object
+          required:
+            - id
+            - name_pt
+            - name_en
+            - type
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 4
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Direito
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Law
+            type:
+              type:
+                - integer
+                - "null"
+              example: 1
+        postgraduate_course:
+          type: object
+          required:
+            - id
+            - name_pt
+            - name_en
+            - type
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 5
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Seguranca
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Security
+            type:
+              type:
+                - integer
+                - "null"
+              example: 2
     LoginPayload:
       type: object
       required:
