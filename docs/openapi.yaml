@@ -11,14 +11,14 @@ tags:
     description: Endpoints de disponibilidade da API
   - name: Auth
     description: Endpoints publicos de cadastro e autenticacao
-  - name: Dashboard
-    description: Endpoints de dados do painel inicial do usuario
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
   - name: Users
     description: Endpoints de cadastro e gestao de usuarios
+  - name: Journeys
+    description: Endpoints de consulta das jornadas dos usuarios
 paths:
   /health:
     get:
@@ -197,7 +197,7 @@ paths:
       tags:
         - Auth
       summary: Gera token CSRF para requisicoes de sessao
-      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout.
+      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser copiado do campo data.csrf_token e enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout. No Swagger local, acesse a interface por http://localhost:8031 e use a API em http://localhost:8030 para que o navegador aceite e reenvie os cookies de sessao.
       operationId: getCsrfToken
       responses:
         "200":
@@ -218,7 +218,7 @@ paths:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. Em browsers, a resposta emite o cookie de sessao HttpOnly e as chamadas seguintes devem enviar credenciais.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
       parameters:
@@ -594,6 +594,202 @@ paths:
                     message: Token CSRF invalido.
                     errors: []
                     code: CSRF_TOKEN_MISMATCH
+  /users/{user}/journeys:
+    get:
+      tags:
+        - Journeys
+      summary: Lista jornadas paginadas de um usuario
+      description: Retorna as jornadas do usuario informado, da mais recente para a mais antiga. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      operationId: listUserJourneys
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - name: page
+          in: query
+          required: false
+          description: Pagina atual.
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          example: 1
+        - name: per_page
+          in: query
+          required: false
+          description: Quantidade de registros por pagina.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          example: 10
+        - name: status
+          in: query
+          required: false
+          description: Filtra pela situacao da jornada.
+          schema:
+            type: string
+            enum:
+              - completed
+              - ongoing
+          example: ongoing
+        - name: journey_profile_id
+          in: query
+          required: false
+          description: Filtra pelo perfil de jornada.
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: started_from
+          in: query
+          required: false
+          description: Data inicial minima da jornada.
+          schema:
+            type: string
+            format: date
+          example: "2026-07-01"
+        - name: started_to
+          in: query
+          required: false
+          description: Data inicial maxima da jornada.
+          schema:
+            type: string
+            format: date
+          example: "2026-07-31"
+        - name: ended_from
+          in: query
+          required: false
+          description: Data de finalizacao minima da jornada.
+          schema:
+            type: string
+            format: date
+          example: "2026-07-01"
+        - name: ended_to
+          in: query
+          required: false
+          description: Data de finalizacao maxima da jornada.
+          schema:
+            type: string
+            format: date
+          example: "2026-07-31"
+      responses:
+        "200":
+          description: Jornadas retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyListResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Jornadas retornadas com sucesso.
+                    data:
+                      - id: 10
+                        user_id: 2
+                        user_name: Maria Silva
+                        journey_profile:
+                          id: 1
+                          description: Privacidade e Seguranca
+                          knowledge_domain:
+                            id: 1
+                            name: Privacidade
+                        started_at: "2026-07-23 16:30:00"
+                        finished_at: null
+                        status: ongoing
+                        is_completed: false
+                        summary:
+                          acquired_knowledges_count: 8
+                          professional_certifications_count: 2
+                        detail:
+                          journey_id: 10
+                          user_id: 2
+                    meta:
+                      pagination:
+                        current_page: 1
+                        per_page: 10
+                        total: 1
+                        last_page: 1
+                        has_next_page: false
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Usuario sem permissao para visualizar jornadas do usuario informado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar as jornadas deste usuario.
+                    errors: []
+                    code: USER_JOURNEYS_FORBIDDEN
+        "404":
+          description: Usuario informado nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                userNotFound:
+                  value:
+                    success: false
+                    message: Usuario nao encontrado.
+                    errors: []
+                    code: USER_NOT_FOUND
+        "422":
+          description: Parametros de paginacao ou filtros invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidPagination:
+                  value:
+                    success: false
+                    message: Parametros de paginacao invalidos.
+                    errors:
+                      page:
+                        - A pagina atual deve ser maior ou igual a 1.
+                    code: INVALID_PAGINATION_PARAMETERS
+                invalidFilters:
+                  value:
+                    success: false
+                    message: Parametros de filtro invalidos.
+                    errors:
+                      status:
+                        - A situacao da jornada deve ser completed ou ongoing.
+                      started_from:
+                        - A data inicial minima deve estar no formato Y-m-d.
+                    code: INVALID_JOURNEY_FILTERS
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as jornadas no momento.
+                    errors: []
+                    code: JOURNEYS_SEARCH_FAILED
   /competencies:
     get:
       tags:
@@ -699,13 +895,13 @@ components:
       type: apiKey
       in: cookie
       name: jornada_session
-      description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
+      description: Cookie de sessao HttpOnly emitido pelo backend apos login. No Swagger UI, nao cole este cookie manualmente no botao Authorize; browsers nao permitem controlar corretamente o header Cookie nesse fluxo. Execute /auth/csrf-token e /auth/login no mesmo host da documentacao local para que o navegador armazene e envie o cookie automaticamente.
   parameters:
     CsrfToken:
       name: X-CSRF-TOKEN
       in: header
       required: true
-      description: Valor do cookie XSRF-TOKEN emitido pela API depois de iniciar a sessao. No Swagger local, execute primeiro GET /me, copie o cookie XSRF-TOKEN no navegador e cole aqui antes de chamar endpoints POST de sessao.
+      description: Valor retornado em data.csrf_token por GET /auth/csrf-token. No Swagger local, execute primeiro /auth/csrf-token, copie data.csrf_token e cole aqui antes de chamar endpoints POST de sessao.
       schema:
         type: string
       example: test-csrf-token
@@ -717,6 +913,15 @@ components:
         type: integer
         minimum: 1
       example: 1
+    UserId:
+      name: user
+      in: path
+      required: true
+      description: Identificador do usuario cujas jornadas serao listadas.
+      schema:
+        type: integer
+        minimum: 1
+      example: 2
   schemas:
     HealthResponse:
       type: object
@@ -1119,6 +1324,162 @@ components:
             - string
             - "null"
           example: Aluno
+    UserJourneyListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornadas retornadas com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyListItem"
+        meta:
+          type: object
+          required:
+            - pagination
+          properties:
+            pagination:
+              $ref: "#/components/schemas/PaginationMeta"
+    PaginationMeta:
+      type: object
+      required:
+        - current_page
+        - per_page
+        - total
+        - last_page
+        - has_next_page
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 25
+        last_page:
+          type: integer
+          example: 3
+        has_next_page:
+          type: boolean
+          example: true
+    UserJourneyListItem:
+      type: object
+      required:
+        - id
+        - user_id
+        - user_name
+        - journey_profile
+        - started_at
+        - finished_at
+        - status
+        - is_completed
+        - summary
+        - detail
+      properties:
+        id:
+          type: integer
+          example: 10
+        user_id:
+          type: integer
+          example: 2
+        user_name:
+          type:
+            - string
+            - "null"
+          example: Maria Silva
+        journey_profile:
+          $ref: "#/components/schemas/UserJourneyProfileSummary"
+        started_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 16:30:00"
+        finished_at:
+          type:
+            - string
+            - "null"
+          example: null
+        status:
+          type: string
+          enum:
+            - completed
+            - ongoing
+          example: ongoing
+        is_completed:
+          type: boolean
+          example: false
+        summary:
+          $ref: "#/components/schemas/UserJourneySummary"
+        detail:
+          $ref: "#/components/schemas/UserJourneyDetailReference"
+    UserJourneyProfileSummary:
+      type: object
+      required:
+        - id
+        - description
+        - knowledge_domain
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        description:
+          type:
+            - string
+            - "null"
+          example: Privacidade e Seguranca
+        knowledge_domain:
+          type: object
+          required:
+            - id
+            - name
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 1
+            name:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+    UserJourneySummary:
+      type: object
+      required:
+        - acquired_knowledges_count
+        - professional_certifications_count
+      properties:
+        acquired_knowledges_count:
+          type: integer
+          example: 8
+        professional_certifications_count:
+          type: integer
+          example: 2
+    UserJourneyDetailReference:
+      type: object
+      required:
+        - journey_id
+        - user_id
+      properties:
+        journey_id:
+          type: integer
+          example: 10
+        user_id:
+          type: integer
+          example: 2
     DashboardResponse:
       type: object
       required:
