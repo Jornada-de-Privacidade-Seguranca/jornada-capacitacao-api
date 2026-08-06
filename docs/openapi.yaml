@@ -11,8 +11,12 @@ tags:
     description: Endpoints de disponibilidade da API
   - name: Auth
     description: Endpoints publicos de cadastro e autenticacao
+  - name: Dashboard
+    description: Endpoints de dados do painel inicial do usuario
   - name: Competencies
     description: Exemplo removivel de CRUD usando MVC, Services e Repositories
+  - name: JourneyProfiles
+    description: Consulta de tipos de jornada usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
   - name: Users
@@ -197,7 +201,7 @@ paths:
       tags:
         - Auth
       summary: Gera token CSRF para requisicoes de sessao
-      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser copiado do campo data.csrf_token e enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout. No Swagger local, acesse a interface por http://localhost:8031 e use a API em http://localhost:8030 para que o navegador aceite e reenvie os cookies de sessao.
+      description: Inicia ou reutiliza a sessao atual e retorna o token CSRF que deve ser enviado no header X-CSRF-TOKEN em endpoints mutaveis de sessao, como login e logout.
       operationId: getCsrfToken
       responses:
         "200":
@@ -889,13 +893,87 @@ paths:
                 $ref: "#/components/schemas/EmptySuccessResponse"
         "404":
           description: Competencia nao encontrada
+  /journey-profiles:
+    parameters:
+      - name: page
+        in: query
+        description: Número da página
+        required: false
+        schema:
+          type: integer
+          default: 1
+          minimum: 1
+      - name: per_page
+        in: query
+        description: Quantidade de itens por página
+        required: false
+        schema:
+          type: integer
+          default: 10
+          minimum: 1
+          maximum: 100
+    get:
+      tags:
+        - JourneyProfiles
+      summary: Lista tipos de jornada
+      operationId: listJourneyProfiles
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Lista de tipos de jornada cadastrados
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyProfileListResponse"
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Parametros de paginacao invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+  /journey-profiles/{id}:
+    parameters:
+      - $ref: "#/components/parameters/JourneyProfileId"
+    get:
+      tags:
+        - JourneyProfiles
+      summary: Busca um tipo de jornada por ID
+      operationId: getJourneyProfile
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Tipo de jornada encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyProfileResponse"
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Tipo de jornada nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
 components:
   securitySchemes:
     sessionAuth:
       type: apiKey
       in: cookie
       name: jornada_session
-      description: Cookie de sessao HttpOnly emitido pelo backend apos login. No Swagger UI, nao cole este cookie manualmente no botao Authorize; browsers nao permitem controlar corretamente o header Cookie nesse fluxo. Execute /auth/csrf-token e /auth/login no mesmo host da documentacao local para que o navegador armazene e envie o cookie automaticamente.
+      description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
   parameters:
     CsrfToken:
       name: X-CSRF-TOKEN
@@ -906,6 +984,14 @@ components:
         type: string
       example: test-csrf-token
     CompetencyId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+    JourneyProfileId:
       name: id
       in: path
       required: true
@@ -991,6 +1077,30 @@ components:
         put_here:
           type: string
           example: Fluxos, validacoes de dominio, decisoes e chamadas para repositories.
+    PaginationMeta:
+      type: object
+      required:
+        - current_page
+        - per_page
+        - total
+        - last_page
+        - has_next_page
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 100
+        last_page:
+          type: integer
+          example: 3
+        has_next_page:
+          type: boolean
+          example: true
     CompetencyListResponse:
       type: object
       required:
@@ -1349,30 +1459,6 @@ components:
           properties:
             pagination:
               $ref: "#/components/schemas/PaginationMeta"
-    PaginationMeta:
-      type: object
-      required:
-        - current_page
-        - per_page
-        - total
-        - last_page
-        - has_next_page
-      properties:
-        current_page:
-          type: integer
-          example: 1
-        per_page:
-          type: integer
-          example: 10
-        total:
-          type: integer
-          example: 25
-        last_page:
-          type: integer
-          example: 3
-        has_next_page:
-          type: boolean
-          example: true
     UserJourneyListItem:
       type: object
       required:
@@ -1842,6 +1928,68 @@ components:
           type:
             - integer
             - "null"
+          example: 1
+    JourneyProfileListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Journey profiles retrieved successfully.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/JourneyProfile"
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: "#/components/schemas/PaginationMeta"
+
+    JourneyProfileResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Journey profile retrieved successfully.
+        data:
+          $ref: "#/components/schemas/JourneyProfile"
+    JourneyProfile:
+      type: object
+      required:
+        - id
+        - description_pt
+        - description_en
+        - type
+      properties:
+        id:
+          type: integer
+          example: 1
+        description_pt:
+          type: string
+          example: "Agente Responsável pela Avaliação de Conformidade"
+        description_en:
+          type: string
+          example: "Agent Responsible for Compliance Assessment"
+        type:
+          type:
+            - integer
+            - "null"
+          description: ID do dominio de conhecimento associado ao perfil de jornada.
           example: 1
     ValidationError:
       type: object

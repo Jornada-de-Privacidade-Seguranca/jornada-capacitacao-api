@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CompetencyController;
 use App\Http\Controllers\Api\CsrfTokenController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\TemplateExampleController;
@@ -34,6 +35,9 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
     Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
     Route::get('/dashboard', DashboardController::class)->middleware(AuthenticateSessionUser::class);
+    Route::apiResource('journey-profiles', JourneyProfileController::class)
+        ->only(['index', 'show'])
+        ->middleware(AuthenticateSessionUser::class);
     Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
 });
