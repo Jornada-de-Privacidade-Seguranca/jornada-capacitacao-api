@@ -14,7 +14,6 @@ class JourneyProfileFactory extends Factory
         return [
             'DS_PERFIS_PT' => fake()->sentence(3),
             'DS_PERFIS_EN' => fake()->sentence(3),
-            'TP_PERFIS' => fake()->numberBetween(1, 3),
         ];
     }
 }

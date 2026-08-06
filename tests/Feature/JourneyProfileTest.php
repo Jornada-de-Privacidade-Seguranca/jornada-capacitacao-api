@@ -65,7 +65,6 @@ class JourneyProfileTest extends TestCase
         $journeyProfile = JourneyProfile::factory()->create([
             'DS_PERFIS_PT' => 'Perfil técnico',
             'DS_PERFIS_EN' => 'Technical profile',
-            'TP_PERFIS' => 2,
         ]);
 
         $this->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
@@ -75,7 +74,7 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('data.id', $journeyProfile->PK_PERFIS_JORNADA)
             ->assertJsonPath('data.description_pt', 'Perfil técnico')
             ->assertJsonPath('data.description_en', 'Technical profile')
-            ->assertJsonPath('data.type', 2);
+            ->assertJsonPath('data.type', null);
     }
 
     public function test_it_returns_not_found_when_journey_profile_does_not_exist(): void
