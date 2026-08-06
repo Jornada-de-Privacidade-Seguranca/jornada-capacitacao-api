@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\JourneyProfile;
+use App\Models\KnowledgeDomain;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -70,7 +71,12 @@ class JourneyProfileTest extends TestCase
     public function test_it_shows_a_journey_profile(): void
     {
         $user = $this->activeUser();
+        $knowledgeDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade e Seguranca',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Privacy and Security',
+        ]);
         $journeyProfile = JourneyProfile::factory()->create([
+            'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
             'DS_PERFIS_PT' => 'Perfil técnico',
             'DS_PERFIS_EN' => 'Technical profile',
         ]);
@@ -83,7 +89,7 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('data.id', $journeyProfile->PK_PERFIS_JORNADA)
             ->assertJsonPath('data.description_pt', 'Perfil técnico')
             ->assertJsonPath('data.description_en', 'Technical profile')
-            ->assertJsonPath('data.type', null);
+            ->assertJsonPath('data.type', $knowledgeDomain->PK_DOMINIO_CONHECIMENTO);
     }
 
     public function test_it_returns_not_found_when_journey_profile_does_not_exist(): void

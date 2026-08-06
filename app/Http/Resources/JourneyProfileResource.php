@@ -13,7 +13,7 @@ class JourneyProfileResource extends JsonResource
             'id' => $this->PK_PERFIS_JORNADA,
             'description_pt' => $this->DS_PERFIS_PT,
             'description_en' => $this->DS_PERFIS_EN,
-            'type' => $this->TP_PERFIS,
+            'type' => $this->FK_DOMINIO_CONHECIMENTO,
         ];
     }
 }
