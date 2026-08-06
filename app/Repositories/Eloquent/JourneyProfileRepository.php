@@ -4,7 +4,6 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\JourneyProfile;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class JourneyProfileRepository implements JourneyProfileRepositoryInterface

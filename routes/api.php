@@ -29,13 +29,15 @@ Route::get('/template-example', TemplateExampleController::class);
 // rotas oficiais de competencias forem criadas.
 Route::apiResource('competencies', CompetencyController::class);
 
-Route::apiResource('journey-profiles', JourneyProfileController::class)->only(['index', 'show']);
 // Rota de autenticacao de usuario
 Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group(function (): void {
     Route::get('/auth/csrf-token', CsrfTokenController::class);
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
     Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
     Route::get('/dashboard', DashboardController::class)->middleware(AuthenticateSessionUser::class);
+    Route::apiResource('journey-profiles', JourneyProfileController::class)
+        ->only(['index', 'show'])
+        ->middleware(AuthenticateSessionUser::class);
     Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
 });

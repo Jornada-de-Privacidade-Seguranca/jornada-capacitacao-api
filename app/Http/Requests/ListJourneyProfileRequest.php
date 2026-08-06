@@ -2,7 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Support\ApiResponse;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Response;
 
 class ListJourneyProfileRequest extends FormRequest
 {
@@ -16,8 +20,28 @@ class ListJourneyProfileRequest extends FormRequest
         return [
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
-            'type' => ['sometimes', 'integer', 'in:1,2,3'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'page.integer' => 'A pagina atual deve ser um numero inteiro.',
+            'page.min' => 'A pagina atual deve ser maior ou igual a 1.',
+            'per_page.integer' => 'A quantidade de registros por pagina deve ser um numero inteiro.',
+            'per_page.min' => 'A quantidade de registros por pagina deve ser maior ou igual a 1.',
+            'per_page.max' => 'A quantidade de registros por pagina nao pode ser maior que 100.',
+        ];
+    }
+
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(ApiResponse::error(
+            message: 'Parametros de paginacao invalidos.',
+            status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            code: 'INVALID_PAGINATION_PARAMETERS',
+            errors: $validator->errors()->toArray(),
+        ));
     }
 
     public function page(): int

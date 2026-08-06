@@ -222,7 +222,7 @@ paths:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. Em browsers, a resposta emite o cookie de sessao HttpOnly e as chamadas seguintes devem enviar credenciais.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
       parameters:
@@ -909,7 +909,7 @@ paths:
         required: false
         schema:
           type: integer
-          default: 15
+          default: 10
           minimum: 1
           maximum: 100
     get:
@@ -917,6 +917,8 @@ paths:
         - JourneyProfiles
       summary: Lista tipos de jornada
       operationId: listJourneyProfiles
+      security:
+        - sessionAuth: []
       responses:
         "200":
           description: Lista de tipos de jornada cadastrados
@@ -924,6 +926,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JourneyProfileListResponse"
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
   /journey-profiles/{id}:
     parameters:
       - $ref: "#/components/parameters/JourneyProfileId"
@@ -932,6 +940,8 @@ paths:
         - JourneyProfiles
       summary: Busca um tipo de jornada por ID
       operationId: getJourneyProfile
+      security:
+        - sessionAuth: []
       responses:
         "200":
           description: Tipo de jornada encontrado
@@ -939,6 +949,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/JourneyProfileResponse"
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
         "404":
           description: Tipo de jornada nao encontrado
 components:
@@ -953,7 +969,7 @@ components:
       name: X-CSRF-TOKEN
       in: header
       required: true
-      description: Valor do cookie XSRF-TOKEN emitido pela API depois de iniciar a sessao. No Swagger local, execute primeiro GET /me, copie o cookie XSRF-TOKEN no navegador e cole aqui antes de chamar endpoints POST de sessao.
+      description: Valor retornado em data.csrf_token por GET /auth/csrf-token. No Swagger local, execute primeiro /auth/csrf-token, copie data.csrf_token e cole aqui antes de chamar endpoints POST de sessao.
       schema:
         type: string
       example: test-csrf-token
@@ -973,6 +989,15 @@ components:
         type: integer
         minimum: 1
       example: 1
+    UserId:
+      name: user
+      in: path
+      required: true
+      description: Identificador do usuario cujas jornadas serao listadas.
+      schema:
+        type: integer
+        minimum: 1
+      example: 2
   schemas:
     HealthResponse:
       type: object
@@ -1049,6 +1074,7 @@ components:
         - per_page
         - total
         - last_page
+        - has_next_page
       properties:
         current_page:
           type: integer
@@ -1062,6 +1088,9 @@ components:
         last_page:
           type: integer
           example: 3
+        has_next_page:
+          type: boolean
+          example: true
     CompetencyListResponse:
       type: object
       required:
@@ -1926,11 +1955,9 @@ components:
           example: true
         message:
           type: string
-          example: "Journey profiles retrieved successfully."
+          example: Journey profile retrieved successfully.
         data:
-          type: array
-          items:
-            $ref: '#/components/schemas/JourneyProfile'
+          $ref: "#/components/schemas/JourneyProfile"
     JourneyProfile:
       type: object
       required:

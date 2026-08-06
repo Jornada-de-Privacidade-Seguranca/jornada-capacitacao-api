@@ -6,7 +6,6 @@ use App\Models\JourneyProfile;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-
 class JourneyProfileService
 {
     public function __construct(private readonly JourneyProfileRepositoryInterface $journeyProfileRepository)
