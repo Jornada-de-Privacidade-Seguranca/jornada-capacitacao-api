@@ -12,6 +12,8 @@ class JourneyProfileFactory extends Factory
     public function definition(): array
     {
         return [
+            'NO_PERFIS_PT' => fake()->words(3, true),
+            'NO_PERFIS_EN' => fake()->words(3, true),
             'DS_PERFIS_PT' => fake()->sentence(3),
             'DS_PERFIS_EN' => fake()->sentence(3),
         ];

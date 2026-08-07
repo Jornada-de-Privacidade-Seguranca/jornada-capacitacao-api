@@ -11,12 +11,15 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
     public function all(int $page, int $perPage): LengthAwarePaginator
     {
         return JourneyProfile::query()
+            ->whereNotNull('NO_PERFIS_PT')
             ->orderBy('PK_PERFIS_JORNADA')
             ->paginate(perPage: $perPage, page: $page);
     }
 
     public function findOrFail(int $id): JourneyProfile
     {
-        return JourneyProfile::query()->findOrFail($id);
+        return JourneyProfile::query()
+            ->whereNotNull('NO_PERFIS_PT')
+            ->findOrFail($id);
     }
 }

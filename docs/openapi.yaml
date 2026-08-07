@@ -457,6 +457,8 @@ paths:
                           finished_at: null
                           journey_profile:
                             id: 2
+                            name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                            name_en: Data Protection Officer
                             description_pt: Privacidade
                             description_en: Privacy
                             knowledge_domain:
@@ -494,6 +496,8 @@ paths:
                           finished_at: "2026-07-23 09:00:00"
                           journey_profile:
                             id: 2
+                            name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                            name_en: Data Protection Officer
                             description_pt: Privacidade
                             description_en: Privacy
                             knowledge_domain:
@@ -696,6 +700,7 @@ paths:
                         user_name: Maria Silva
                         journey_profile:
                           id: 1
+                          name: Encarregado pelo Tratamento de Dados Pessoais
                           description: Privacidade e Seguranca
                           knowledge_domain:
                             id: 1
@@ -1268,9 +1273,7 @@ components:
           type: string
           example: MAT-123
         profile_type_id:
-          type:
-            - integer
-            - "null"
+          type: integer
           example: 1
         active_status:
           type: integer
@@ -1296,6 +1299,7 @@ components:
         - organization
         - department
         - registration_number
+        - profile_type_id
       properties:
         name:
           type: string
@@ -1330,10 +1334,8 @@ components:
           maxLength: 50
           example: MAT-123
         profile_type_id:
-          type:
-            - integer
-            - "null"
-          description: Campo temporariamente opcional ate existir script de banco com os tipos de perfil obrigatorios. Deve voltar a ser obrigatorio quando esse setup estiver disponivel.
+          type: integer
+          description: ID do tipo de perfil fixo migrado em TB_TIPO_PERFIL.
           example: 1
     LoginResponse:
       type: object
@@ -1513,6 +1515,7 @@ components:
       type: object
       required:
         - id
+        - name
         - description
         - knowledge_domain
       properties:
@@ -1521,6 +1524,11 @@ components:
             - integer
             - "null"
           example: 1
+        name:
+          type:
+            - string
+            - "null"
+          example: Encarregado pelo Tratamento de Dados Pessoais
         description:
           type:
             - string
@@ -1694,6 +1702,8 @@ components:
           type: object
           required:
             - id
+            - name_pt
+            - name_en
             - description_pt
             - description_en
             - knowledge_domain
@@ -1703,6 +1713,16 @@ components:
                 - integer
                 - "null"
               example: 2
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Encarregado pelo Tratamento de Dados Pessoais
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Data Protection Officer
             description_pt:
               type:
                 - string
@@ -1972,6 +1992,8 @@ components:
       type: object
       required:
         - id
+        - name_pt
+        - name_en
         - description_pt
         - description_en
         - type
@@ -1979,12 +2001,18 @@ components:
         id:
           type: integer
           example: 1
-        description_pt:
+        name_pt:
           type: string
           example: "Agente Responsável pela Avaliação de Conformidade"
+        name_en:
+          type: string
+          example: "Agent Responsible for the Conformity Assessment"
+        description_pt:
+          type: string
+          example: "Perfil conforme IN GSI/PR nº 3, de 28 de maio de 2021."
         description_en:
           type: string
-          example: "Agent Responsible for Compliance Assessment"
+          example: "Profile in accordance with IN GSI/PR No. 3 of May 28, 2021."
         type:
           type:
             - integer

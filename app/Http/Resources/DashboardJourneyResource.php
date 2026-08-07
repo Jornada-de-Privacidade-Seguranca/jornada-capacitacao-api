@@ -18,6 +18,8 @@ class DashboardJourneyResource extends JsonResource
             'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
             'journey_profile' => [
                 'id' => $this->journeyProfile?->PK_PERFIS_JORNADA,
+                'name_pt' => $this->journeyProfile?->NO_PERFIS_PT,
+                'name_en' => $this->journeyProfile?->NO_PERFIS_EN,
                 'description_pt' => $this->journeyProfile?->DS_PERFIS_PT,
                 'description_en' => $this->journeyProfile?->DS_PERFIS_EN,
                 'knowledge_domain' => [

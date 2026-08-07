@@ -17,7 +17,7 @@ class UserRegistrationTest extends TestCase
 
     public function test_it_registers_a_user_pending_admin_activation(): void
     {
-        $profileType = ProfileType::create(['NO_TIPO_PERFIL' => 'Aluno']);
+        $profileType = ProfileType::query()->where('NO_TIPO_PERFIL', 'Usuário')->firstOrFail();
 
         $response = $this->postJson('/api/auth/register', [
             'name' => ' Maria Silva ',
@@ -59,19 +59,19 @@ class UserRegistrationTest extends TestCase
         $this->assertTrue(Hash::check('SenhaSegura123', $user->DS_SENHA));
     }
 
-    public function test_it_registers_a_pending_user_account_without_profile_type(): void
+    public function test_it_rejects_missing_profile_type(): void
     {
-        $this->postJson('/api/auth/register', $this->validPayload())
-            ->assertCreated()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.profile_type_id', null)
-            ->assertJsonPath('data.email', 'maria.silva@example.com')
-            ->assertJsonPath('data.active_status', 2);
+        $payload = $this->validPayload();
+        unset($payload['profile_type_id']);
 
-        $this->assertDatabaseHas('TB_USUARIO', [
-            'FK_TIPO_PERFIL' => null,
+        $this->postJson('/api/auth/register', $payload)
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.profile_type_id.0', 'Informe o tipo de perfil.');
+
+        $this->assertDatabaseMissing('TB_USUARIO', [
             'DS_EMAIL' => 'maria.silva@example.com',
-            'ST_ATIVO' => 2,
         ]);
     }
 
@@ -130,10 +130,11 @@ class UserRegistrationTest extends TestCase
                     'email',
                     'password',
                     'organization',
-                    'department',
-                    'registration_number',
-                ],
-            ]);
+                'department',
+                'registration_number',
+                'profile_type_id',
+            ],
+        ]);
     }
 
     public function test_it_rejects_invalid_payload(): void
@@ -244,6 +245,7 @@ class UserRegistrationTest extends TestCase
             'organization' => 'Secretaria de Governo',
             'department' => 'Privacidade',
             'registration_number' => 'MAT-123',
+            'profile_type_id' => 3,
         ], $overrides);
     }
 
