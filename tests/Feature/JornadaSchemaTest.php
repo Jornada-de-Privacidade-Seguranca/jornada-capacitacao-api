@@ -48,6 +48,49 @@ class JornadaSchemaTest extends TestCase
         }
     }
 
+    public function test_it_migrates_fixed_jornada_reference_data(): void
+    {
+        $this->assertDatabaseCount('TB_DOMINIO_CONHECIMENTO', 3);
+        $this->assertDatabaseCount('TB_PERFIS_JORNADA', 20);
+        $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 17);
+        $this->assertDatabaseCount('TB_DIFICULDADE', 5);
+        $this->assertDatabaseCount('TB_PROFICIENCIA_INGLES', 3);
+        $this->assertDatabaseCount('TB_EXPERIENCIA_ATUACAO', 5);
+        $this->assertDatabaseCount('TB_TIPO_PERFIL', 3);
+
+        $this->assertDatabaseHas('TB_DOMINIO_CONHECIMENTO', [
+            'PK_DOMINIO_CONHECIMENTO' => 1,
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Privacy',
+        ]);
+        $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
+            'PK_PERFIS_JORNADA' => 1,
+            'FK_DOMINIO_CONHECIMENTO' => 1,
+            'NO_PERFIS_PT' => 'Encarregado pelo Tratamento de Dados Pessoais',
+            'NO_PERFIS_EN' => 'Data Protection Officer',
+        ]);
+        $this->assertDatabaseHas('TB_AREA_CONHECIMENTO', [
+            'PK_AREA_CONHECIMENTO' => 17,
+            'NO_AREA_CONHECIMENTO_PT' => 'Gestão de Conformidade',
+        ]);
+        $this->assertDatabaseHas('TB_DIFICULDADE', [
+            'PK_DIFICULDADE' => 5,
+            'NO_DIFICULDADE_PT' => 'Especialista',
+        ]);
+        $this->assertDatabaseHas('TB_PROFICIENCIA_INGLES', [
+            'PK_PROFICIENCIA_INGLES' => 3,
+            'NO_PROFICIENCIA_INGLES_PT' => 'Avançado - Fluente',
+        ]);
+        $this->assertDatabaseHas('TB_EXPERIENCIA_ATUACAO', [
+            'PK_EXPERIENCIA_ATUACAO' => 5,
+            'DS_EXPERIENCIA_ATUACAO_PT' => 'Mais de 10 anos',
+        ]);
+        $this->assertDatabaseHas('TB_TIPO_PERFIL', [
+            'PK_TIPO_PERFIL' => 3,
+            'NO_TIPO_PERFIL' => 'Usuário',
+        ]);
+    }
+
     public function test_it_persists_journey_relationships_with_script_table_names(): void
     {
         $profileType = ProfileType::create(['NO_TIPO_PERFIL' => 'Aluno']);
@@ -61,6 +104,7 @@ class JornadaSchemaTest extends TestCase
         $knowledgeDomain = KnowledgeDomain::create(['NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade']);
         $journeyProfile = JourneyProfile::create([
             'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'Privacidade',
             'DS_PERFIS_PT' => 'Privacidade',
         ]);
         $knowledgeArea = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Governanca']);

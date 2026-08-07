@@ -36,9 +36,7 @@ class RegisterUserRequest extends FormRequest
             'organization' => ['required', 'string', 'max:100'],
             'department' => ['required', 'string', 'max:100'],
             'registration_number' => ['required', 'string', 'max:50'],
-            // Temporarily nullable until the database script provides the required profile types.
-            // Make this field required again when that setup exists.
-            'profile_type_id' => ['nullable', 'integer', Rule::exists('TB_TIPO_PERFIL', 'PK_TIPO_PERFIL')],
+            'profile_type_id' => ['required', 'integer', Rule::exists('TB_TIPO_PERFIL', 'PK_TIPO_PERFIL')],
         ];
     }
 
@@ -66,6 +64,7 @@ class RegisterUserRequest extends FormRequest
             'registration_number.required' => 'Informe a matricula.',
             'registration_number.string' => 'A matricula deve ser um texto.',
             'registration_number.max' => 'A matricula deve ter no maximo 50 caracteres.',
+            'profile_type_id.required' => 'Informe o tipo de perfil.',
             'profile_type_id.integer' => 'O tipo de perfil deve ser um numero inteiro.',
             'profile_type_id.exists' => 'Informe um tipo de perfil valido.',
         ];

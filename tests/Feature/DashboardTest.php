@@ -103,6 +103,7 @@ class DashboardTest extends TestCase
             ->assertJsonPath('data.journeys.unfinished_journey.finished_at', null)
             ->assertJsonPath('data.journeys.latest_journey.id', $latestCompleted->PK_JORNADA)
             ->assertJsonPath('data.journeys.latest_journey.status', 'completed')
+            ->assertJsonPath('data.journeys.latest_journey.journey_profile.name_pt', 'Privacidade')
             ->assertJsonPath('data.journeys.latest_journey.journey_profile.description_pt', 'Privacidade')
             ->assertJsonPath(
                 'data.journeys.latest_journey.journey_profile.knowledge_domain.name_pt',
@@ -232,6 +233,8 @@ class DashboardTest extends TestCase
 
         return JourneyProfile::create([
             'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'Privacidade',
+            'NO_PERFIS_EN' => 'Privacy',
             'DS_PERFIS_PT' => 'Privacidade',
             'DS_PERFIS_EN' => 'Privacy',
         ]);

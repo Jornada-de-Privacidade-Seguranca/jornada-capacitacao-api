@@ -17,6 +17,7 @@ class JourneyListResource extends JsonResource
             'user_name' => $this->usuario?->NO_USUARIO,
             'journey_profile' => [
                 'id' => $this->journeyProfile?->PK_PERFIS_JORNADA,
+                'name' => $this->journeyProfile?->NO_PERFIS_PT,
                 'description' => $this->journeyProfile?->DS_PERFIS_PT,
                 'knowledge_domain' => [
                     'id' => $this->journeyProfile?->knowledgeDomain?->PK_DOMINIO_CONHECIMENTO,

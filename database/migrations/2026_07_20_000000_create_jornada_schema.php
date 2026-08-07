@@ -19,6 +19,8 @@ return new class extends Migration
         Schema::create('TB_PERFIS_JORNADA', function (Blueprint $table): void {
             $table->increments('PK_PERFIS_JORNADA');
             $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
+            $table->string('NO_PERFIS_PT', 100)->nullable();
+            $table->string('NO_PERFIS_EN', 100)->nullable();
             $table->string('DS_PERFIS_PT', 1000)->nullable();
             $table->string('DS_PERFIS_EN', 1000)->nullable();
 
@@ -93,14 +95,14 @@ return new class extends Migration
 
         Schema::create('TB_PROFICIENCIA_INGLES', function (Blueprint $table): void {
             $table->increments('PK_PROFICIENCIA_INGLES');
-            $table->string('NO_PROFICIENCIA_INGLES_PT', 20)->nullable();
-            $table->string('NO_PROFICIENCIA_INGLES_EN', 20)->nullable();
+            $table->string('NO_PROFICIENCIA_INGLES_PT', 40)->nullable();
+            $table->string('NO_PROFICIENCIA_INGLES_EN', 40)->nullable();
         });
 
         Schema::create('TB_EXPERIENCIA_ATUACAO', function (Blueprint $table): void {
             $table->increments('PK_EXPERIENCIA_ATUACAO');
             $table->string('DS_EXPERIENCIA_ATUACAO_PT', 20)->nullable();
-            $table->string('DS_EXPERIENCIA_ATUACAO_EN', 20)->nullable();
+            $table->string('DS_EXPERIENCIA_ATUACAO_EN', 30)->nullable();
         });
 
         Schema::create('TB_TIPO_PERFIL', function (Blueprint $table): void {
@@ -124,6 +126,8 @@ return new class extends Migration
             $table->foreign('FK_TIPO_PERFIL')->references('PK_TIPO_PERFIL')->on('TB_TIPO_PERFIL');
         });
 
+        DB::unprepared(file_get_contents(database_path('sql/jornada_fixed_data.sql')));
+
         $driver = DB::connection()->getDriverName();
 
         if (in_array($driver, ['pgsql', 'sqlite'], true)) {
@@ -132,7 +136,7 @@ return new class extends Migration
 
         DB::table('TB_USUARIO')->insert([
             [
-                'FK_TIPO_PERFIL' => null,
+                'FK_TIPO_PERFIL' => 1,
                 'FK_TIPO_USUARIO' => 1,
                 'NO_USUARIO' => 'Administrador Sistema',
                 'NO_ORGAO_EMPRESA' => 'Jornada',
@@ -144,7 +148,7 @@ return new class extends Migration
                 'ST_ATIVO' => 1,
             ],
             [
-                'FK_TIPO_PERFIL' => null,
+                'FK_TIPO_PERFIL' => 3,
                 'FK_TIPO_USUARIO' => 2,
                 'NO_USUARIO' => 'Usuario Teste',
                 'NO_ORGAO_EMPRESA' => 'Jornada',

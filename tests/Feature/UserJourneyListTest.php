@@ -302,6 +302,7 @@ class UserJourneyListTest extends TestCase
 
         return JourneyProfile::create([
             'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => $description,
             'DS_PERFIS_PT' => $description,
         ]);
     }

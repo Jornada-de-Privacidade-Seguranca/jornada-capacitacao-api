@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Journey;
 use App\Models\JourneyProfile;
-use App\Models\KnowledgeDomain;
 use App\Models\Usuario;
 use Illuminate\Database\Seeder;
 use RuntimeException;
@@ -24,18 +23,13 @@ class ManualSwaggerDashboardSeeder extends Seeder
             throw new RuntimeException('Usuario user@jornada.local nao encontrado.');
         }
 
-        $knowledgeDomain = KnowledgeDomain::query()->firstOrCreate(
-            ['NO_DOMINIO_CONHECIMENTO_PT' => 'Protecao de Dados'],
-            ['NO_DOMINIO_CONHECIMENTO_EN' => 'Data Protection'],
-        );
+        $journeyProfile = JourneyProfile::query()
+            ->where('NO_PERFIS_PT', 'Encarregado pelo Tratamento de Dados Pessoais')
+            ->first();
 
-        $journeyProfile = JourneyProfile::query()->firstOrCreate(
-            [
-                'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
-                'DS_PERFIS_PT' => 'Painel Swagger',
-            ],
-            ['DS_PERFIS_EN' => 'Swagger Dashboard'],
-        );
+        if ($journeyProfile === null) {
+            throw new RuntimeException('Perfil fixo de jornada nao encontrado.');
+        }
 
         Journey::query()->firstOrCreate(
             [

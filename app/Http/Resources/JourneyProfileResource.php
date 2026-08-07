@@ -11,6 +11,8 @@ class JourneyProfileResource extends JsonResource
     {
         return [
             'id' => $this->PK_PERFIS_JORNADA,
+            'name_pt' => $this->NO_PERFIS_PT,
+            'name_en' => $this->NO_PERFIS_EN,
             'description_pt' => $this->DS_PERFIS_PT,
             'description_en' => $this->DS_PERFIS_EN,
             'type' => $this->FK_DOMINIO_CONHECIMENTO,

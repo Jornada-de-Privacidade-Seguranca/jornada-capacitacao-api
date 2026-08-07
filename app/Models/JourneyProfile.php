@@ -17,6 +17,8 @@ class JourneyProfile extends JornadaModel
 
     protected $fillable = [
         'FK_DOMINIO_CONHECIMENTO',
+        'NO_PERFIS_PT',
+        'NO_PERFIS_EN',
         'DS_PERFIS_PT',
         'DS_PERFIS_EN',
     ];

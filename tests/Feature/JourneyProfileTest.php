@@ -15,20 +15,27 @@ class JourneyProfileTest extends TestCase
     public function test_it_lists_journey_profiles(): void
     {
         $user = $this->activeUser();
-        JourneyProfile::factory()->count(2)->create();
+        JourneyProfile::create([
+            'DS_PERFIS_PT' => 'Mock antigo',
+            'DS_PERFIS_EN' => 'Old mock',
+        ]);
 
         $this->actingAs($user)
             ->getJson('/api/journey-profiles')
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Journey profiles retrieved successfully.')
-            ->assertJsonCount(2, 'data')
+            ->assertJsonCount(10, 'data')
+            ->assertJsonPath('data.0.name_pt', 'Encarregado pelo Tratamento de Dados Pessoais')
+            ->assertJsonPath('meta.pagination.total', 20)
             ->assertJsonStructure([
                 'success',
                 'message',
                 'data' => [
                     '*' => [
                         'id',
+                        'name_pt',
+                        'name_en',
                         'description_pt',
                         'description_en',
                         'type',
@@ -40,7 +47,6 @@ class JourneyProfileTest extends TestCase
     public function test_it_paginates_journey_profiles(): void
     {
         $user = $this->activeUser();
-        JourneyProfile::factory()->count(25)->create();
 
         $this->actingAs($user)
             ->getJson('/api/journey-profiles?page=2&per_page=8')
@@ -49,8 +55,8 @@ class JourneyProfileTest extends TestCase
             ->assertJsonCount(8, 'data')
             ->assertJsonPath('meta.pagination.current_page', 2)
             ->assertJsonPath('meta.pagination.per_page', 8)
-            ->assertJsonPath('meta.pagination.total', 25)
-            ->assertJsonPath('meta.pagination.last_page', 4)
+            ->assertJsonPath('meta.pagination.total', 20)
+            ->assertJsonPath('meta.pagination.last_page', 3)
             ->assertJsonPath('meta.pagination.has_next_page', true)
             ->assertJsonStructure([
                 'success',
@@ -77,6 +83,8 @@ class JourneyProfileTest extends TestCase
         ]);
         $journeyProfile = JourneyProfile::factory()->create([
             'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'Perfil tecnico',
+            'NO_PERFIS_EN' => 'Technical role',
             'DS_PERFIS_PT' => 'Perfil técnico',
             'DS_PERFIS_EN' => 'Technical profile',
         ]);
@@ -87,9 +95,27 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Journey profile retrieved successfully.')
             ->assertJsonPath('data.id', $journeyProfile->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.name_pt', 'Perfil tecnico')
+            ->assertJsonPath('data.name_en', 'Technical role')
             ->assertJsonPath('data.description_pt', 'Perfil técnico')
             ->assertJsonPath('data.description_en', 'Technical profile')
             ->assertJsonPath('data.type', $knowledgeDomain->PK_DOMINIO_CONHECIMENTO);
+    }
+
+    public function test_it_does_not_show_old_mocked_journey_profile_without_real_name(): void
+    {
+        $user = $this->activeUser();
+        $journeyProfile = JourneyProfile::create([
+            'DS_PERFIS_PT' => 'Mock antigo',
+            'DS_PERFIS_EN' => 'Old mock',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
+            ->assertNotFound()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Journey profile not found.')
+            ->assertJsonPath('code', 'JOURNEY_PROFILE_NOT_FOUND');
     }
 
     public function test_it_returns_not_found_when_journey_profile_does_not_exist(): void
