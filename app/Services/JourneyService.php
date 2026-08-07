@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\IncompleteJourneyException;
 use App\Models\Journey;
 use App\Models\Usuario;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
@@ -51,6 +52,8 @@ class JourneyService
             throw new AccessDeniedHttpException;
         }
 
+        $this->ensureCompletedJourneyHasRequiredData($journey);
+
         return $journey;
     }
 
@@ -70,5 +73,48 @@ class JourneyService
         }
 
         return (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
+    }
+
+    private function ensureCompletedJourneyHasRequiredData(Journey $journey): void
+    {
+        if ($journey->DH_FIM === null) {
+            return;
+        }
+
+        $missingFields = [];
+
+        foreach ($this->requiredCompletedJourneyRelations() as $relation => $field) {
+            if ($journey->{$relation} === null) {
+                $missingFields[] = $field;
+            }
+        }
+
+        if ($journey->journeyProfile !== null && $journey->journeyProfile->knowledgeDomain === null) {
+            $missingFields[] = 'journey_profile.knowledge_domain';
+        }
+
+        if ($journey->acquiredKnowledges->contains(fn ($acquiredKnowledge): bool => $acquiredKnowledge->competency === null)) {
+            $missingFields[] = 'acquired_knowledges.competency';
+        }
+
+        if ($missingFields !== []) {
+            throw new IncompleteJourneyException($missingFields);
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function requiredCompletedJourneyRelations(): array
+    {
+        return [
+            'usuario' => 'user',
+            'journeyProfile' => 'journey_profile',
+            'professionalExperience' => 'answers.professional_experience',
+            'profileExperience' => 'answers.profile_experience',
+            'englishProficiency' => 'answers.english_proficiency',
+            'higherEducationCourse' => 'answers.higher_education_course',
+            'postgraduateCourse' => 'answers.postgraduate_course',
+        ];
     }
 }

@@ -901,6 +901,22 @@ paths:
                     message: Jornada nao encontrada.
                     errors: []
                     code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada concluida com dados obrigatorios incompletos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                incompleteJourney:
+                  value:
+                    success: false
+                    message: Jornada concluida possui dados obrigatorios incompletos.
+                    errors:
+                      fields:
+                        - journey_profile
+                        - answers.professional_experience
+                    code: INCOMPLETE_JOURNEY
         "422":
           description: Identificador da jornada invalido
           content:

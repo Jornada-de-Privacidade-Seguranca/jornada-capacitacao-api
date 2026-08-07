@@ -73,7 +73,36 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.user.id', $user->PK_USUARIO)
             ->assertJsonPath('data.finished_at', '2026-07-23 17:30:00')
             ->assertJsonPath('data.status', 'completed')
-            ->assertJsonPath('data.is_completed', true);
+            ->assertJsonPath('data.is_completed', true)
+            ->assertJsonPath('data.answers.professional_experience.description_pt', '1 a 3 anos')
+            ->assertJsonPath('data.answers.profile_experience.description_pt', 'Mais de 5 anos')
+            ->assertJsonPath('data.answers.english_proficiency.name_pt', 'Intermediario')
+            ->assertJsonPath('data.answers.higher_education_course.name_pt', 'Direito')
+            ->assertJsonPath('data.answers.postgraduate_course.name_pt', 'Especializacao');
+    }
+
+    public function test_it_rejects_completed_journey_with_missing_required_data(): void
+    {
+        $admin = $this->activeUser('Admin Sistema', 1);
+        $user = $this->activeUser('Joao Souza', 2);
+        $journey = Journey::create([
+            'FK_USUARIO' => $user->PK_USUARIO,
+            'DH_CRIADO_EM' => '2026-07-23 16:30:00',
+            'DH_FIM' => '2026-07-23 17:30:00',
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertConflict()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Jornada concluida possui dados obrigatorios incompletos.')
+            ->assertJsonPath('code', 'INCOMPLETE_JOURNEY')
+            ->assertJsonPath('errors.fields.0', 'journey_profile')
+            ->assertJsonPath('errors.fields.1', 'answers.professional_experience')
+            ->assertJsonPath('errors.fields.2', 'answers.profile_experience')
+            ->assertJsonPath('errors.fields.3', 'answers.english_proficiency')
+            ->assertJsonPath('errors.fields.4', 'answers.higher_education_course')
+            ->assertJsonPath('errors.fields.5', 'answers.postgraduate_course');
     }
 
     public function test_common_user_cannot_view_journey_from_another_user(): void

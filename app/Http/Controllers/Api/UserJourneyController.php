@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\IncompleteJourneyException;
 use App\Http\Requests\ListUserJourneysRequest;
 use App\Http\Resources\JourneyDetailResource;
 use App\Http\Resources\JourneyListResource;
@@ -84,6 +85,15 @@ class UserJourneyController
                 message: 'Voce nao possui permissao para visualizar esta jornada.',
                 status: Response::HTTP_FORBIDDEN,
                 code: 'JOURNEY_FORBIDDEN',
+            );
+        } catch (IncompleteJourneyException $exception) {
+            return ApiResponse::error(
+                message: 'Jornada concluida possui dados obrigatorios incompletos.',
+                status: Response::HTTP_CONFLICT,
+                code: 'INCOMPLETE_JOURNEY',
+                errors: [
+                    'fields' => $exception->missingFields(),
+                ],
             );
         } catch (Throwable) {
             return ApiResponse::error(
