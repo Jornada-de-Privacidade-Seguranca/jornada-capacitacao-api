@@ -799,6 +799,161 @@ paths:
                     message: Nao foi possivel buscar as jornadas no momento.
                     errors: []
                     code: JOURNEYS_SEARCH_FAILED
+    post:
+      tags:
+        - Journeys
+      summary: Inicia uma nova jornada para um usuario
+      description: Registra o inicio de uma nova jornada para o usuario informado. Usuarios comuns so podem iniciar jornadas para si mesmos; administradores podem iniciar jornadas para qualquer usuario. O usuario nao pode possuir outra jornada em andamento (com DH_FIM nulo). Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      operationId: createUserJourney
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserJourneyCreatePayload"
+            examples:
+              minimal:
+                value:
+                  journey_profile_id: 1
+              complete:
+                value:
+                  journey_profile_id: 1
+                  professional_experience_id: 1
+                  profile_experience_id: 2
+                  english_proficiency_id: 1
+                  higher_education_course_id: 1
+                  postgraduate_course_id: 1
+      responses:
+        "201":
+          description: Jornada iniciada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyCreateResponse"
+              examples:
+                created:
+                  value:
+                    success: true
+                    message: Jornada iniciada com sucesso.
+                    data:
+                      id: 10
+                      user_id: 2
+                      user_name: Maria Silva
+                      journey_profile:
+                        id: 1
+                        name: Encarregado pelo Tratamento de Dados Pessoais
+                        description: Privacidade e Seguranca
+                        knowledge_domain:
+                          id: 1
+                          name: Privacidade
+                      started_at: "2026-07-23 16:30:00"
+                      finished_at: null
+                      status: ongoing
+                      is_completed: false
+                      summary:
+                        acquired_knowledges_count: 0
+                        professional_certifications_count: 0
+                      detail:
+                        journey_id: 10
+                        user_id: 2
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Usuario sem permissao para iniciar uma jornada para o usuario informado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para iniciar uma jornada para este usuario.
+                    errors: []
+                    code: USER_JOURNEYS_FORBIDDEN
+        "404":
+          description: Usuario ou perfil de jornada informado nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                userNotFound:
+                  value:
+                    success: false
+                    message: Usuario nao encontrado.
+                    errors: []
+                    code: USER_NOT_FOUND
+                journeyProfileNotFound:
+                  value:
+                    success: false
+                    message: Perfil de jornada nao encontrado.
+                    errors: []
+                    code: JOURNEY_PROFILE_NOT_FOUND
+        "409":
+          description: Usuario ja possui uma jornada em andamento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyInProgress:
+                  value:
+                    success: false
+                    message: Voce ja possui uma jornada em andamento. Finalize ou continue a jornada atual antes de iniciar uma nova.
+                    errors: []
+                    code: JOURNEY_IN_PROGRESS
+        "422":
+          description: Dados obrigatorios nao informados ou dados invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                missingRequiredFields:
+                  value:
+                    success: false
+                    message: Dados obrigatorios nao informados.
+                    errors:
+                      journey_profile_id:
+                        - O perfil de jornada e obrigatorio.
+                    code: REQUIRED_FIELDS_MISSING
+                invalidData:
+                  value:
+                    success: false
+                    message: Dados invalidos.
+                    errors:
+                      professional_experience_id:
+                        - A experiencia profissional informada nao existe.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel iniciar a jornada no momento.
+                    errors: []
+                    code: JOURNEY_CREATION_FAILED
   /competencies:
     get:
       tags:
@@ -1574,6 +1729,44 @@ components:
         user_id:
           type: integer
           example: 2
+    UserJourneyCreatePayload:
+      type: object
+      required:
+        - journey_profile_id
+      properties:
+        journey_profile_id:
+          type: integer
+          example: 1
+        professional_experience_id:
+          type: integer
+          example: 1
+        profile_experience_id:
+          type: integer
+          example: 2
+        english_proficiency_id:
+          type: integer
+          example: 1
+        higher_education_course_id:
+          type: integer
+          example: 1
+        postgraduate_course_id:
+          type: integer
+          example: 1
+    UserJourneyCreateResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornada iniciada com sucesso.
+        data:
+          $ref: "#/components/schemas/UserJourneyListItem"
     DashboardResponse:
       type: object
       required:

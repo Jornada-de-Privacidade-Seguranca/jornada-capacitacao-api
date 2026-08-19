@@ -54,4 +54,17 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->orderByDesc('PK_JORNADA')
             ->paginate($perPage, ['*'], 'page', $page);
     }
+
+    public function hasOngoingJourney(int $userId): bool
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_FIM')
+            ->exists();
+    }
+
+    public function create(array $data): Journey
+    {
+        return Journey::query()->create($data);
+    }
 }
