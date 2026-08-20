@@ -1,7 +1,7 @@
 -- Insert TB_DOMINIO_CONHECIMENTO
-INSERT INTO "TB_DOMINIO_CONHECIMENTO" ("NO_DOMINIO_CONHECIMENTO_PT", "NO_DOMINIO_CONHECIMENTO_EN") VALUES ('Privacidade','Privacy');
-INSERT INTO "TB_DOMINIO_CONHECIMENTO" ("NO_DOMINIO_CONHECIMENTO_PT", "NO_DOMINIO_CONHECIMENTO_EN") VALUES ('Segurança da Informação','Information Security');
-INSERT INTO "TB_DOMINIO_CONHECIMENTO" ("NO_DOMINIO_CONHECIMENTO_PT", "NO_DOMINIO_CONHECIMENTO_EN") VALUES ('Conjunta (Privacidade/Segurança)','Joint (Privacy/security)');
+INSERT INTO "TB_DOMINIO_CONHECIMENTO" ("NO_DOMINIO_CONHECIMENTO_PT", "NO_DOMINIO_CONHECIMENTO_EN" ) VALUES ('Privacidade','Privacy');
+INSERT INTO "TB_DOMINIO_CONHECIMENTO" ("NO_DOMINIO_CONHECIMENTO_PT", "NO_DOMINIO_CONHECIMENTO_EN" ) VALUES ('Segurança da Informação','Information Security');
+INSERT INTO "TB_DOMINIO_CONHECIMENTO" ("NO_DOMINIO_CONHECIMENTO_PT", "NO_DOMINIO_CONHECIMENTO_EN" ) VALUES ('Conjunta (Privacidade/Segurança)','Joint (Privacy/security)');
 
 -- Insert TB_PERFIS_JORNADA
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (1,
@@ -39,14 +39,14 @@ Adicionalmente, o Gestor de Segurança da Informação compõe a estrutura de go
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (2,
 'The agent responsible for managing information assets shall be designated by the Information Security Manager, in accordance with Article 8 of Normative Instruction GSI/PR No. 3, dated May 28, 2021:
 “Article 8. It is the responsibility of the information security manager of each agency or entity to coordinate the process of mapping information assets, as well as to designate an agent responsible for managing information assets from among the agency’s or entity’s permanent staff.”'
-,'O Agente responsável pela gestão dos ativos de informação será designado pelo Gestor de Segurança da Informação, conforme o Art. 8º da IN GSI/PR N°3, de 28 de maio de 2021: 
+,'O Agente responsável pela gestão dos ativos de informação será designado pelo Gestor de Segurança da Informação, conforme o Art. 8º da IN GSI/PR N°3, de 28 de maio de 2021:
 “Art. 8º Cabe ao gestor de segurança da informação de cada órgão ou entidade coordenar o processo de mapeamento de ativos de informação, bem como designar um agente responsável pela gestão dos ativos de informação, dentre os servidores efetivos do órgão ou da entidade.”'
 ,'Agente Responsável pela Gestão dos Ativos de Informação', 'Agent Responsible for Managing Information Assets');
 
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (2,
 'Pursuant to Article 8 of IN GSI/PR No. 3, dated May 28, 2021:
 “It is the responsibility of the information security manager of each agency or entity to coordinate the information asset mapping process, as well as to designate an agent responsible for managing information assets from among the agency’s or entity’s permanent staff.”'
-,'Conforme o Art. 8° da IN GSI/PR N°3, de 28 de maio de 2021: 
+,'Conforme o Art. 8° da IN GSI/PR N°3, de 28 de maio de 2021:
 “Cabe ao gestor de segurança da informação de cada órgão ou entidade coordenar o processo de mapeamento de ativos de informação, bem como designar um agente responsável pela gestão dos ativos de informação, dentre os servidores efetivos do órgão ou da entidade.”'
 ,'Agente Responsável pela Gestão de Mudança nos Aspectos de Segurança da Informação', 'Agent Responsible for Managing Change Regarding Information Security Aspects');
 
@@ -78,21 +78,21 @@ INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (2,
 'In accordance with Normative Instruction No. 1 of May 27, 2020, a Cyber ​​Incident Prevention, Handling, and Response Team (ETIR) must be established and implemented by agencies and entities of the direct and indirect federal public administration, as indicated in Article 15:
 IV - Establish and implement a Cyber ​​Incident Prevention, Handling, and Response Team (ETIR), which shall constitute the network of teams—comprising agencies and entities of the federal public administration—coordinated by the Government Cyber ​​Incident Handling and Response Center of the Institutional Security Office of the Presidency of the Republic.'
-,'Conforme a IN Nº 1 de 27 de Maio de 2020, a Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR) deverá ser instituída e implementada pelos órgãos e entidades da administração pública federal, direta e indireta, conforme indicado no Art.15: 
+,'Conforme a IN Nº 1 de 27 de Maio de 2020, a Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR) deverá ser instituída e implementada pelos órgãos e entidades da administração pública federal, direta e indireta, conforme indicado no Art.15:
 IV - Instituir e implementar Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos - ETIR, que constituirá a rede de equipes, integrada pelos órgãos e pelas entidades da administração pública federal, coordenada pelo Centro de Tratamento e Resposta a Incidentes Cibernéticos de Governo do Gabinete de Segurança Institucional da Presidência da República.'
 ,'Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR)', 'Cyber ​​Incident Prevention, Handling, and Response Team (ETIR)');
 
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (2,
 'Normative Instruction No. 2 of February 5, 2013, defines the Security and Accreditation Manager as:
 “The person responsible for the security of information classified at any level of secrecy within Registration Bodies and Control Posts.”'
-,'A Instrução Normativa N° - 2, de 5 de fevereiro de 2013 define o Gestor de Segurança e Credenciamento como: 
+,'A Instrução Normativa N° - 2, de 5 de fevereiro de 2013 define o Gestor de Segurança e Credenciamento como:
 “Responsável pela segurança da informação classificada em qualquer grau de sigilo nos Órgãos de Registro e Postos de Controle”.'
 ,'Gestor de Segurança e Credenciamento', 'Security and Accreditation Manager');
 
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (3,
 'In accordance with Ordinance SGD/MGI No. 852 of March 28, 2023, the Information and Communication Technology Manager is part of the PPSI governance structure within each agency and entity of the direct, autonomous, and foundational federal public administration.
 Additionally, the Privacy and Information Security Program (PPSI) Framework Guide states that the IT Manager constitutes the first line of defense, representing the primary structure responsible for PPSI governance.'
-,'De acordo com a Portaria SGD/MGI nº 852, de 28 de março de 2023, o Gestor de Tecnologia da Informação e Comunicação compõe a Estrutura de Governança do PPSI em cada órgão e entidade da administração pública federal direta, autárquica e fundacional.  
+,'De acordo com a Portaria SGD/MGI nº 852, de 28 de março de 2023, o Gestor de Tecnologia da Informação e Comunicação compõe a Estrutura de Governança do PPSI em cada órgão e entidade da administração pública federal direta, autárquica e fundacional.
 Adicionalmente, o Guia do Framework do Programa de Privacidade e Segurança da Informação informa que o Gestor de TI compõe a primeira linha de defesa, representando a estrutura principal responsável pela governança do PPSI.'
 ,'Gestor de Tecnologia da Informação e Comunicação', 'Information and Communication Technology Manager');
 
@@ -105,21 +105,26 @@ Their responsibilities include hardware and software management, data protection
 
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (3,
 'Senior management in public sector bodies is understood to comprise individuals in leadership and strategic decision-making positions who represent the public administration and are responsible for guiding privacy and data protection policy. This includes:
-1.Ministers of State and Secretaries, Presidents, Vice-Presidents, Rectors, Vice-Rectors, Pro-Rectors, Armed Forces Commanders, and the Information Security Committee.
-2.Directors, Deputy Directors, Superintendents, Undersecretaries, and General Coordinators.
-3.Chiefs of Staff, Deputy Chiefs of Staff, and Advisors.
-4.Internal Control Advisor and Ombudsman.'
-,'Entende-se que a Alta Administração em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui: 
-1.Ministros de Estado e Secretários, Presidentes, Vice-Presidente, Reitores, Vice-Reitores, Pró-Reitores e Comandantes das Forças Armadas, Comitê de Segurança da Informação. 
-2.Diretores, Vice-Diretores, Superintendentes, Subsecretários, Coordenadores-Gerais. 
-3.Chefes de Gabinete, Subchefes e Assessores. 
-4.Assessor de Controle Interno, Ouvidor. '
-,'Alta Administração', 'Senior Management');
+1.Ministers of State and Secretaries, Presidents, Vice-Presidents, Rectors, Vice-Rectors, Pro-Rectors, Armed Forces Commanders, and the Information Security Committee.'
+,'Entende-se que a Alta Administração em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
+1.Ministros de Estado e Secretários, Presidentes, Vice-Presidente, Reitores, Vice-Reitores, Pró-Reitores e Comandantes das Forças Armadas, Comitê de Segurança da Informação.'
+,'Alta Administração 1', 'Senior Management 1');
+
+INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (3,
+'Senior management 2 in public sector bodies is understood to comprise individuals in leadership and strategic decision-making positions who represent the public administration and are responsible for guiding privacy and data protection policy. This includes:
+1.Directors, Deputy Directors, Superintendents, Undersecretaries, and General Coordinators.
+2.Chiefs of Staff, Deputy Chiefs of Staff, and Advisors.
+3.Internal Control Advisor and Ombudsman.'
+,'Entende-se que a Alta Administração 2 em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
+1.Diretores, Vice-Diretores, Superintendentes, Subsecretários, Coordenadores-Gerais.
+2.Chefes de Gabinete, Subchefes e Assessores.
+3.Assessor de Controle Interno, Ouvidor. '
+,'Alta Administração 2', 'Senior Management 2');
 
 INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_PERFIS_PT", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (3,
 'According to the Information Security and Privacy Framework Guide, the Head of the Internal Control Unit plays a fundamental role in driving and implementing the Framework, supporting, supervising, and monitoring the activities carried out by the first line of defense established by CGU Normative Instruction No. 3 of June 9, 2017.
 Ordinance SGD/MGI No. 852 of March 28, 2023, states that the Head of the Internal Control Unit will support, supervise, and monitor the activities carried out by the first line of defense established by CGU Normative Instruction No. 3 of June 9, 2017.'
-,'De acordo com o Guia do Framework de Privacidade e Segurança da Informação, o Responsável pela Unidade de Controle Interno consiste em um dos papéis fundamentais para condução e implementação do Framework, atuando no apoio, supervisão e monitoramento das atividades desenvolvidas pela primeira linha de defesa prevista pela Instrução Normativa CGU nº 3, de 9 de junho de 2017. 
+,'De acordo com o Guia do Framework de Privacidade e Segurança da Informação, o Responsável pela Unidade de Controle Interno consiste em um dos papéis fundamentais para condução e implementação do Framework, atuando no apoio, supervisão e monitoramento das atividades desenvolvidas pela primeira linha de defesa prevista pela Instrução Normativa CGU nº 3, de 9 de junho de 2017.
 A Portaria SGD/MGI nº 852, de 28 de março de 2023 informa que o Responsável pela Unidade Controle Interno atuará no apoio, supervisão e monitoramento das atividades desenvolvidas pela primeira linha de defesa prevista pela Instrução Normativa CGU nº 3, de 9 de junho de 2017. '
 ,'Responsável pela Unidade de Controle Interno', 'Head of the Internal Control Unit');
 
@@ -130,44 +135,370 @@ INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_
 
 
 -- Insert TB_AREA_CONHECIMENTO
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Privacidade', 'Privacy Management');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Estratégias de Privacidade', 'Privacy Strategies');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Documentos Orientativos', 'Guidance Documents');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos e Conformidade', 'Risk Management and Compliance');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Conhecimentos em Tecnologia da Informação', 'Knowledge of Information Technology');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Privacy By Design', 'Privacy By Design');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Segurança da Informação', 'Information Security Management');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos', 'Risk Management');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão do Uso dos Recursos Operacionais e de Comunicações', 'Management of Operational and Communication Resource Usage');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Tratamento da Informação', 'Data Handling');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Ativos', 'Asset Management');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Incidentes Cibernéticos', 'Cyber ​​Incident Management');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Continuidade', 'Continuity Management');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Segurança de Controle de Acesso', 'Access Control Security');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Security By Design', 'Security By Design');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Mudança', 'Change Management');
-INSERT INTO "TB_AREA_CONHECIMENTO" ("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Conformidade', 'Compliance Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Privacidade', 'Privacy Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Estratégias de Privacidade', 'Privacy Strategies');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Documentos Orientativos', 'Guidance Documents');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos e Conformidade', 'Risk Management and Compliance');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Conhecimentos em Tecnologia da Informação', 'Knowledge of Information Technology');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Privacy By Design', 'Privacy By Design');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Segurança da Informação', 'Information Security Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos', 'Risk Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão do Uso dos Recursos Operacionais e de Comunicações', 'Management of Operational and Communication Resource Usage');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Tratamento da Informação', 'Data Handling');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Ativos', 'Asset Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Incidentes Cibernéticos', 'Cyber ​​Incident Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Continuidade', 'Continuity Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Segurança de Controle de Acesso', 'Access Control Security');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Security By Design', 'Security By Design');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Mudança', 'Change Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Conformidade', 'Compliance Management');
 
 -- Insert TB_DIFICULDADE
-INSERT INTO "TB_DIFICULDADE" ("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Iniciante','Beginner');
-INSERT INTO "TB_DIFICULDADE" ("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Básico','Basic');
-INSERT INTO "TB_DIFICULDADE" ("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Intermediário','Intermediary');
-INSERT INTO "TB_DIFICULDADE" ("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Avançado','Advanced');
-INSERT INTO "TB_DIFICULDADE" ("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Especialista','Specialist');
+INSERT INTO "TB_DIFICULDADE"("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Iniciante','Beginner');
+INSERT INTO "TB_DIFICULDADE"("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Básico','Basic');
+INSERT INTO "TB_DIFICULDADE"("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Intermediário','Intermediary');
+INSERT INTO "TB_DIFICULDADE"("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Avançado','Advanced');
+INSERT INTO "TB_DIFICULDADE"("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Especialista','Specialist');
 
--- Insert TB_PROFICIENCIA_INGLES
-INSERT INTO "TB_PROFICIENCIA_INGLES" ("NO_PROFICIENCIA_INGLES_PT", "NO_PROFICIENCIA_INGLES_EN") VALUES ('Básico - Leitura', 'Basic - Reading');
-INSERT INTO "TB_PROFICIENCIA_INGLES" ("NO_PROFICIENCIA_INGLES_PT", "NO_PROFICIENCIA_INGLES_EN") VALUES ('Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing');
-INSERT INTO "TB_PROFICIENCIA_INGLES" ("NO_PROFICIENCIA_INGLES_PT", "NO_PROFICIENCIA_INGLES_EN") VALUES ('Avançado - Fluente', 'Advanced - Fluent');
+-- Insert TB_CRITERIOS
+INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Experiência Profissional', 'Professional Experience', 23.81);
+INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Formação Acadêmica', 'Education', 14.7);
+INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Certificação Profissional', 'Professional Certification', 10.72);
+INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Nível de Proficiência - Inglês', 'Proficiency Level - English', 4.85);
+INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Competências', 'Competencies', 45.82);
+
+-- Insert TB_SUBCRITERIOS
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Graduação', 'Graduation', 8.829);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Pós-Graduação', 'Postgraduate', 15.751);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Mestrado', 'Masters', 27.18);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Doutorado', 'Doctorate', 48.241);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Tempo de Experiência Profissional', 'Years of Professional Experience', 50);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Tempo de Atuação no Perfil','Time Spent on Role', 50);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Básico - Leitura', 'Basic - Reading', 10.616);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing', 26.05);
+INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Avançado - Fluente', 'Advanced - Fluent', 63.335);
+
+-- Insert TB_PESO_CRIT_COMPETENCIA
+--Gestor de Segurança da Informação
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,5,13.366);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,7,14.439);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,3,10.901);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,10,3.027);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,12,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,8,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,9,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,11,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,14,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,13,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,16,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,17,6.787);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (6,15,3.975);
+
+--Agente Responsável pela Avaliação de Conformidade
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,5,4.15);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,7,12.09);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,3,11.21);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,10,9.44);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,12,5.91);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,8,7.63);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,9,5.69);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,11,6.59);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,14,5.37);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,13,6.21);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,16,6.21);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,17,15.51);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (12,15,3.99);
+
+--Usuário
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,5,8.25);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,7,7.45);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,3,6.17);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,10,4.47);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,12,3.86);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,8,3.48);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,9,6.41);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,11,3.47);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,14,6.46);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,5,6.65);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,6,4.40);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,2,10.40);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,1,12.90);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,3,7.40);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (21,4,8.25);
+
+--Alta Administração 1
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,5,5.79);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,7,6.96);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,3,5.05);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,10,6.07);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,12,3.32);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,8,3.31);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,9,3.27);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,11,3.30);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,14,3.28);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,13,2.84);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,16,2.41);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,17,2.41);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,15,1.99);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,5,4.50);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,6,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,2,12);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,1,11.5);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,3,11);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (18,4,5);
+
+--Alta Administração 2
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,5,5.79);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,7,6.96);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,3,5.05);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,10,6.07);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,12,3.32);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,8,3.31);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,9,3.27);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,11,3.30);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,14,3.28);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,13,2.84);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,16,2.41);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,17,2.41);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,15,1.99);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,5,4);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,6,5.5);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,2,12.5);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,1,12);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,3,11.5);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (19,4,4.5);
+
+--Responsável pela Unidade de Controle Interno
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,5,4.53);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,7,6.39);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,3,4.39);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,10,6.14);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,12,3.27);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,8,3.67);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,9,3.23);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,11,3.66);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,14,3.14);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,13,2.94);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,16,2.94);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,17,2.74);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,15,2);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,5,4.59);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,6,4.04);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,2,5.81);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,1,10.62);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,3,11.59);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (20,4,13.36);
+
+--Agente Responsável pela Gestão de Continuidade de Negócios em Segurança da Informação
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,5,11.33);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,7,12.48);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,3,10.43);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,10,2.94);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,12,6.82);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,8,10.37);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,9,5.49);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,11,8.08);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,14,5.22);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,13,14.53);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,16,5.97);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,17,2.37);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (10,15,3.97);
+
+--Agente Responsável pela Gestão de Mudança nos Aspectos de Segurança da Informação
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,5,11.33);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,7,12.48);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,3,10.43);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,10,2.94);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,12,6.82);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,8,10.37);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,9,5.49);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,11,8.08);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,14,5.22);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,13,5.97);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,16,14.53);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,17,2.37);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (8,15,3.97);
+
+--Agente Responsável pela Gestão de Riscos de Segurança da Informação
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,5,11.41);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,7,11.48);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,3,11.07);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,10,3.09);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,12,6.31);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,8,15.38);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,9,5.69);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,11,11.29);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,14,5.34);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,13,5.95);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,16,5.95);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,17,3.08);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (9,15,3.96);
+
+--Agente Responsável pela Gestão dos Ativos de Informação
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,5,11.62);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,7,11.80);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,3,10.80);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,10,3.18);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,12,6.25);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,8,11.78);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,9,5.62);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,11,14.35);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,14,5.35);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,13,6.07);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,16,6.07);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,17,3.14);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (7,15,3.97);
+
+--Agente Responsável pelo uso Seguro de Mídias Sociais
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,5,13.20);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,7,12.02);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,3,10.25);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,10,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,12,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,8,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,9,14.55);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,11,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,14,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,13,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,16,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,17,5.75);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (11,15,3.98);
+
+--Equipe de Administração e de Gestão de Perfis Institucionais em Mídias Sociais
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,5,15.53);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,7,12.03);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,3,13.79);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,10,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,12,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,8,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,9,15.70);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,11,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,14,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,13,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,16,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,17,4.88);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (13,15,3.91);
+
+--Equipe de TI
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,5,10.305);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,7,6.5);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,3,5.265);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,10,1.475);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,12,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,8,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,9,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,11,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,14,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,13,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,16,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,17,3.06);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,15,1.975);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,5,19.64);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,6,11.31);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,2,9.245);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,1,3.53);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,3,3.315);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (17,4,2.96);
+
+--ETIR
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,5,18.92);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,7,13.03);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,3,9.37);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,10,2.93);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,12,9.79);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,8,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,9,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,11,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,14,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,13,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,16,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,17,6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (14,15,3.96);
+
+--Gestor de Segurança e Credenciamento
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,5,8.21);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,7,9.48);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,3,7.1);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,10,22.78);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,12,6.82);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,8,6.62);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,9,5.94);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,11,6.6);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,14,6.02);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,13,5.67);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,16,5.49);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,17,5.32);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (15,15,3.95);
+
+--Gestor de Tecnologia da Informação e Comunicação
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,5,9.19);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,7,6.66);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,3,5.15);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,10,1.54);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,12,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,8,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,9,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,11,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,14,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,13,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,16,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,17,3.185);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,15,1.98);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,5,19.64);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,6,11.31);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,2,9.245);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,1,3.53);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,3,3.315);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (16,4,2.96);
+
+--Encarregado de Dados
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (1,5,8);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (1,6,17);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (1,2,25);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (1,1,23);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (1,3,13);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (1,4,14);
+
+--Controlador
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (2,5,7.81);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (2,6,11.02);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (2,2,25.05);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (2,1,20.04);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (2,3,13.03);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (2,4,23.05);
+
+--Operador
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (3,5,10.94);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (3,6,11.95);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (3,2,24.35);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (3,1,17.92);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (3,3,12.94);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (3,4,21.9);
+
+--Titular
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (4,5,13);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (4,6,7);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (4,2,20);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (4,1,35);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (4,3,15);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (4,4,10);
+
+--Equipe de Apoio ao Encarregado
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (5,5,12);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (5,6,18);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (5,2,21);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (5,1,20);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (5,3,13);
+INSERT INTO "TB_PESO_CRIT_COMPETENCIA"("FK_PERFIS_JORNADA", "FK_AREA_CONHECIMENTO", "NU_PESO_CRIT_COMPETENCIA") VALUES (5,4,16);
 
 -- Insert TB_EXPERIENCIA_ATUACAO
-INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Menos de 1 ano', 'Less than 1 year');
-INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 1 e 3 anos', 'Between 1 and 3 years');
-INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 4 e 6 anos', 'Between 4 and 6 years');
-INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 7 e 10 anos', 'Between 7 and 10 years');
-INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Mais de 10 anos', 'More than 10 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Menos de 1 ano', 'Less than 1 year');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 1 e 3 anos', 'Between 1 and 3 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 4 e 6 anos', 'Between 4 and 6 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 7 e 10 anos', 'Between 7 and 10 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Mais de 10 anos', 'More than 10 years');
 
 -- Insert TB_TIPO_PERFIL
-INSERT INTO "TB_TIPO_PERFIL" ("NO_TIPO_PERFIL") VALUES ('Administrador');
-INSERT INTO "TB_TIPO_PERFIL" ("NO_TIPO_PERFIL") VALUES ('Gestor');
-INSERT INTO "TB_TIPO_PERFIL" ("NO_TIPO_PERFIL") VALUES ('Usuário');
+INSERT INTO "TB_TIPO_PERFIL"("NO_TIPO_PERFIL") VALUES ('Administrador');
+INSERT INTO "TB_TIPO_PERFIL"("NO_TIPO_PERFIL") VALUES ('Gestor');
+INSERT INTO "TB_TIPO_PERFIL"("NO_TIPO_PERFIL") VALUES ('Usuário');

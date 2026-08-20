@@ -19,12 +19,6 @@ return new class extends Migration
             }
         });
 
-        if (DB::connection()->getDriverName() === 'pgsql') {
-            DB::statement('ALTER TABLE "TB_PROFICIENCIA_INGLES" ALTER COLUMN "NO_PROFICIENCIA_INGLES_PT" TYPE VARCHAR(40)');
-            DB::statement('ALTER TABLE "TB_PROFICIENCIA_INGLES" ALTER COLUMN "NO_PROFICIENCIA_INGLES_EN" TYPE VARCHAR(40)');
-            DB::statement('ALTER TABLE "TB_EXPERIENCIA_ATUACAO" ALTER COLUMN "DS_EXPERIENCIA_ATUACAO_EN" TYPE VARCHAR(30)');
-        }
-
         $hasFixedJourneyProfiles = DB::table('TB_PERFIS_JORNADA')
             ->where('NO_PERFIS_PT', 'Encarregado pelo Tratamento de Dados Pessoais')
             ->exists();
@@ -59,6 +53,21 @@ return new class extends Migration
                 sequence: 'TB_PERFIS_JORNADA_PK_PERFIS_JORNADA_seq',
                 table: 'TB_PERFIS_JORNADA',
                 primaryKey: 'PK_PERFIS_JORNADA',
+            );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_CRITERIOS_PK_CRITERIOS_seq',
+                table: 'TB_CRITERIOS',
+                primaryKey: 'PK_CRITERIOS',
+            );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_SUBCRITERIOS_PK_SUBCRITERIOS_seq',
+                table: 'TB_SUBCRITERIOS',
+                primaryKey: 'PK_SUBCRITERIOS',
+            );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_PESO_CRIT_COMPETENCIA_PK_PESO_CRIT_COMPETENCIA_seq',
+                table: 'TB_PESO_CRIT_COMPETENCIA',
+                primaryKey: 'PK_PESO_CRIT_COMPETENCIA',
             );
         });
     }

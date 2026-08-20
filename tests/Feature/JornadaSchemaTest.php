@@ -4,17 +4,18 @@ namespace Tests\Feature;
 
 use App\Models\AcquiredKnowledge;
 use App\Models\Competency;
+use App\Models\CompetencyCriterionWeight;
+use App\Models\Criterion;
 use App\Models\Difficulty;
-use App\Models\EnglishProficiency;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
 use App\Models\JourneyProfile;
 use App\Models\KnowledgeDomain;
 use App\Models\KnowledgeArea;
-use App\Models\PostgraduateCourse;
 use App\Models\ProfessionalCertification;
 use App\Models\ProfessionalExperience;
 use App\Models\ProfileType;
+use App\Models\Subcriterion;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -30,19 +31,21 @@ class JornadaSchemaTest extends TestCase
             'TB_DOMINIO_CONHECIMENTO',
             'TB_PERFIS_JORNADA',
             'TB_AREA_CONHECIMENTO',
+            'TB_CRITERIOS',
+            'TB_SUBCRITERIOS',
+            'TB_PESO_CRIT_COMPETENCIA',
             'TB_DIFICULDADE',
             'TB_COMPETENCIAS',
             'RL_PERFIS_COMPETENCIAS',
             'TB_CURSO_SUPERIOR',
-            'TB_POS_GRADUACAO',
             'TB_CERTIFICACAO_PROFISSIONAL',
-            'TB_PROFICIENCIA_INGLES',
             'TB_EXPERIENCIA_ATUACAO',
             'TB_TIPO_PERFIL',
             'TB_USUARIO',
             'TB_JORNADA',
             'TB_CONHECIMENTOS_ADQUIRIDOS',
             'RL_CERTIFICACAO_JORNADA',
+            'RL_CURSOS_SUPERIORES_JORNADA',
         ] as $table) {
             $this->assertTrue(Schema::hasTable($table), "Table {$table} was not created.");
         }
@@ -51,10 +54,12 @@ class JornadaSchemaTest extends TestCase
     public function test_it_migrates_fixed_jornada_reference_data(): void
     {
         $this->assertDatabaseCount('TB_DOMINIO_CONHECIMENTO', 3);
-        $this->assertDatabaseCount('TB_PERFIS_JORNADA', 20);
+        $this->assertDatabaseCount('TB_PERFIS_JORNADA', 21);
         $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 17);
         $this->assertDatabaseCount('TB_DIFICULDADE', 5);
-        $this->assertDatabaseCount('TB_PROFICIENCIA_INGLES', 3);
+        $this->assertDatabaseCount('TB_CRITERIOS', 5);
+        $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
+        $this->assertDatabaseCount('TB_PESO_CRIT_COMPETENCIA', 270);
         $this->assertDatabaseCount('TB_EXPERIENCIA_ATUACAO', 5);
         $this->assertDatabaseCount('TB_TIPO_PERFIL', 3);
 
@@ -77,9 +82,21 @@ class JornadaSchemaTest extends TestCase
             'PK_DIFICULDADE' => 5,
             'NO_DIFICULDADE_PT' => 'Especialista',
         ]);
-        $this->assertDatabaseHas('TB_PROFICIENCIA_INGLES', [
-            'PK_PROFICIENCIA_INGLES' => 3,
-            'NO_PROFICIENCIA_INGLES_PT' => 'Avançado - Fluente',
+        $this->assertDatabaseHas('TB_CRITERIOS', [
+            'PK_CRITERIOS' => 5,
+            'NO_CRITERIO_PT' => 'Competências',
+            'NU_PESO_CRITERIO' => 45.82,
+        ]);
+        $this->assertDatabaseHas('TB_SUBCRITERIOS', [
+            'PK_SUBCRITERIOS' => 9,
+            'NO_SUBCRITERIO_PT' => 'Avançado - Fluente',
+            'NU_PESO_SUBCRITERIO' => 63.335,
+        ]);
+        $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
+            'PK_PESO_CRIT_COMPETENCIA' => 270,
+            'FK_PERFIS_JORNADA' => 5,
+            'FK_AREA_CONHECIMENTO' => 4,
+            'NU_PESO_CRIT_COMPETENCIA' => 16,
         ]);
         $this->assertDatabaseHas('TB_EXPERIENCIA_ATUACAO', [
             'PK_EXPERIENCIA_ATUACAO' => 5,
@@ -118,19 +135,24 @@ class JornadaSchemaTest extends TestCase
         $journeyProfile->competencies()->attach($competency->PK_COMPETENCIAS);
 
         $experience = ProfessionalExperience::create(['DS_EXPERIENCIA_ATUACAO_PT' => '1 ano']);
-        $english = EnglishProficiency::create(['NO_PROFICIENCIA_INGLES_PT' => 'Basico']);
-        $higherEducation = HigherEducationCourse::create(['NO_CURSO_SUPERIOR_PT' => 'Direito']);
-        $postgraduate = PostgraduateCourse::create(['NO_POS_GRADUACAO_PT' => 'Seguranca']);
+        $criterion = Criterion::create(['NO_CRITERIO_PT' => 'Formação Acadêmica']);
+        $subcriterion = Subcriterion::create([
+            'FK_CRITERIOS' => $criterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => 'Basico',
+        ]);
+        $higherEducation = HigherEducationCourse::create([
+            'FK_SUBCRITERIOS' => $subcriterion->PK_SUBCRITERIOS,
+            'NO_CURSO_SUPERIOR_PT' => 'Direito',
+        ]);
 
         $journey = Journey::create([
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $journeyProfile->PK_PERFIS_JORNADA,
             'FK_EXPERIENCIA_PROFISSIONAL' => $experience->PK_EXPERIENCIA_ATUACAO,
             'FK_ATUACAO_PERFIL' => $experience->PK_EXPERIENCIA_ATUACAO,
-            'FK_PROFICIENCIA_INGLES' => $english->PK_PROFICIENCIA_INGLES,
-            'FK_CURSO_SUPERIOR' => $higherEducation->PK_CURSO_SUPERIOR,
-            'FK_POS_GRADUACAO' => $postgraduate->PK_POS_GRADUACAO,
+            'FK_SUBCRITERIOS_INGLES' => $subcriterion->PK_SUBCRITERIOS,
         ]);
+        $journey->higherEducationCourses()->attach($higherEducation->PK_CURSO_SUPERIOR);
 
         AcquiredKnowledge::create([
             'FK_JORNADA' => $journey->PK_JORNADA,
@@ -143,6 +165,11 @@ class JornadaSchemaTest extends TestCase
             'NO_CERTIFICACAO_PROFISSIONAL' => 'CISSP',
         ]);
         $journey->professionalCertifications()->attach($certification->PK_CERTIFICACAO_PROFISSIONAL);
+        CompetencyCriterionWeight::create([
+            'FK_PERFIS_JORNADA' => $journeyProfile->PK_PERFIS_JORNADA,
+            'FK_AREA_CONHECIMENTO' => $knowledgeArea->PK_AREA_CONHECIMENTO,
+            'NU_PESO_CRIT_COMPETENCIA' => 10.5,
+        ]);
 
         $this->assertTrue($user->journeys->first()->is($journey));
         $this->assertTrue($journey->usuario->is($user));
@@ -155,5 +182,8 @@ class JornadaSchemaTest extends TestCase
         $this->assertTrue($journeyProfile->knowledgeDomain->is($knowledgeDomain));
         $this->assertTrue($certification->knowledgeDomain->is($knowledgeDomain));
         $this->assertTrue($journeyProfile->competencies->first()->is($competency));
+        $this->assertTrue($journey->englishSubcriterion->is($subcriterion));
+        $this->assertTrue($journey->higherEducationCourses->first()->is($higherEducation));
+        $this->assertTrue($higherEducation->subcriterion->is($subcriterion));
     }
 }

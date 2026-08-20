@@ -35,6 +35,33 @@ return new class extends Migration
             $table->string('NO_AREA_CONHECIMENTO_EN', 100)->nullable();
         });
 
+        Schema::create('TB_CRITERIOS', function (Blueprint $table): void {
+            $table->increments('PK_CRITERIOS');
+            $table->string('NO_CRITERIO_PT', 100)->nullable();
+            $table->string('NO_CRITERIO_EN', 100)->nullable();
+            $table->double('NU_PESO_CRITERIO')->nullable();
+        });
+
+        Schema::create('TB_SUBCRITERIOS', function (Blueprint $table): void {
+            $table->increments('PK_SUBCRITERIOS');
+            $table->unsignedInteger('FK_CRITERIOS')->nullable();
+            $table->string('NO_SUBCRITERIO_PT', 100)->nullable();
+            $table->string('NO_SUBCRITERIO_EN', 100)->nullable();
+            $table->double('NU_PESO_SUBCRITERIO')->nullable();
+
+            $table->foreign('FK_CRITERIOS')->references('PK_CRITERIOS')->on('TB_CRITERIOS');
+        });
+
+        Schema::create('TB_PESO_CRIT_COMPETENCIA', function (Blueprint $table): void {
+            $table->increments('PK_PESO_CRIT_COMPETENCIA');
+            $table->unsignedInteger('FK_PERFIS_JORNADA')->nullable();
+            $table->unsignedInteger('FK_AREA_CONHECIMENTO')->nullable();
+            $table->double('NU_PESO_CRIT_COMPETENCIA')->nullable();
+
+            $table->foreign('FK_PERFIS_JORNADA')->references('PK_PERFIS_JORNADA')->on('TB_PERFIS_JORNADA');
+            $table->foreign('FK_AREA_CONHECIMENTO')->references('PK_AREA_CONHECIMENTO')->on('TB_AREA_CONHECIMENTO');
+        });
+
         Schema::create('TB_DIFICULDADE', function (Blueprint $table): void {
             $table->increments('PK_DIFICULDADE');
             $table->string('NO_DIFICULDADE_PT', 20)->nullable();
@@ -71,32 +98,22 @@ return new class extends Migration
 
         Schema::create('TB_CURSO_SUPERIOR', function (Blueprint $table): void {
             $table->increments('PK_CURSO_SUPERIOR');
+            $table->unsignedInteger('FK_SUBCRITERIOS')->nullable();
             $table->string('NO_CURSO_SUPERIOR_PT', 100)->nullable();
             $table->string('NO_CURSO_SUPERIOR_EN', 100)->nullable();
-            $table->integer('TP_CURSO_SUPERIOR')->nullable();
-        });
 
-        Schema::create('TB_POS_GRADUACAO', function (Blueprint $table): void {
-            $table->increments('PK_POS_GRADUACAO');
-            $table->string('NO_POS_GRADUACAO_PT', 100)->nullable();
-            $table->string('NO_POS_GRADUACAO_EN', 100)->nullable();
-            $table->integer('TP_POS_GRADUACAO')->nullable();
+            $table->foreign('FK_SUBCRITERIOS')->references('PK_SUBCRITERIOS')->on('TB_SUBCRITERIOS');
         });
 
         Schema::create('TB_CERTIFICACAO_PROFISSIONAL', function (Blueprint $table): void {
             $table->increments('PK_CERTIFICACAO_PROFISSIONAL');
             $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
             $table->string('NO_CERTIFICACAO_PROFISSIONAL', 100)->nullable();
+            $table->string('NO_EMISSOR_CERTIFICACAO', 100)->nullable();
 
             $table->foreign('FK_DOMINIO_CONHECIMENTO')
                 ->references('PK_DOMINIO_CONHECIMENTO')
                 ->on('TB_DOMINIO_CONHECIMENTO');
-        });
-
-        Schema::create('TB_PROFICIENCIA_INGLES', function (Blueprint $table): void {
-            $table->increments('PK_PROFICIENCIA_INGLES');
-            $table->string('NO_PROFICIENCIA_INGLES_PT', 40)->nullable();
-            $table->string('NO_PROFICIENCIA_INGLES_EN', 40)->nullable();
         });
 
         Schema::create('TB_EXPERIENCIA_ATUACAO', function (Blueprint $table): void {
@@ -167,9 +184,7 @@ return new class extends Migration
             $table->unsignedInteger('FK_PERFIS_JORNADA')->nullable();
             $table->unsignedInteger('FK_EXPERIENCIA_PROFISSIONAL')->nullable();
             $table->unsignedInteger('FK_ATUACAO_PERFIL')->nullable();
-            $table->unsignedInteger('FK_PROFICIENCIA_INGLES')->nullable();
-            $table->unsignedInteger('FK_CURSO_SUPERIOR')->nullable();
-            $table->unsignedInteger('FK_POS_GRADUACAO')->nullable();
+            $table->unsignedInteger('FK_SUBCRITERIOS_INGLES')->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->timestamp('DH_FIM')->nullable();
 
@@ -177,9 +192,7 @@ return new class extends Migration
             $table->foreign('FK_PERFIS_JORNADA')->references('PK_PERFIS_JORNADA')->on('TB_PERFIS_JORNADA');
             $table->foreign('FK_EXPERIENCIA_PROFISSIONAL')->references('PK_EXPERIENCIA_ATUACAO')->on('TB_EXPERIENCIA_ATUACAO');
             $table->foreign('FK_ATUACAO_PERFIL')->references('PK_EXPERIENCIA_ATUACAO')->on('TB_EXPERIENCIA_ATUACAO');
-            $table->foreign('FK_PROFICIENCIA_INGLES')->references('PK_PROFICIENCIA_INGLES')->on('TB_PROFICIENCIA_INGLES');
-            $table->foreign('FK_CURSO_SUPERIOR')->references('PK_CURSO_SUPERIOR')->on('TB_CURSO_SUPERIOR');
-            $table->foreign('FK_POS_GRADUACAO')->references('PK_POS_GRADUACAO')->on('TB_POS_GRADUACAO');
+            $table->foreign('FK_SUBCRITERIOS_INGLES')->references('PK_SUBCRITERIOS')->on('TB_SUBCRITERIOS');
         });
 
         Schema::create('TB_CONHECIMENTOS_ADQUIRIDOS', function (Blueprint $table): void {
@@ -200,23 +213,34 @@ return new class extends Migration
             $table->foreign('FK_JORNADA')->references('PK_JORNADA')->on('TB_JORNADA');
             $table->foreign('FK_CERTIFICACAO_PROFISSIONAL')->references('PK_CERTIFICACAO_PROFISSIONAL')->on('TB_CERTIFICACAO_PROFISSIONAL');
         });
+
+        Schema::create('RL_CURSOS_SUPERIORES_JORNADA', function (Blueprint $table): void {
+            $table->increments('PK_CURSOS_SUPERIORES_JORNADA');
+            $table->unsignedInteger('FK_JORNADA')->nullable();
+            $table->unsignedInteger('FK_CURSO_SUPERIOR')->nullable();
+
+            $table->foreign('FK_JORNADA')->references('PK_JORNADA')->on('TB_JORNADA');
+            $table->foreign('FK_CURSO_SUPERIOR')->references('PK_CURSO_SUPERIOR')->on('TB_CURSO_SUPERIOR');
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('RL_CURSOS_SUPERIORES_JORNADA');
         Schema::dropIfExists('RL_CERTIFICACAO_JORNADA');
         Schema::dropIfExists('TB_CONHECIMENTOS_ADQUIRIDOS');
         Schema::dropIfExists('TB_JORNADA');
         Schema::dropIfExists('TB_USUARIO');
         Schema::dropIfExists('TB_TIPO_PERFIL');
         Schema::dropIfExists('TB_EXPERIENCIA_ATUACAO');
-        Schema::dropIfExists('TB_PROFICIENCIA_INGLES');
         Schema::dropIfExists('TB_CERTIFICACAO_PROFISSIONAL');
-        Schema::dropIfExists('TB_POS_GRADUACAO');
         Schema::dropIfExists('TB_CURSO_SUPERIOR');
         Schema::dropIfExists('RL_PERFIS_COMPETENCIAS');
         Schema::dropIfExists('TB_COMPETENCIAS');
         Schema::dropIfExists('TB_DIFICULDADE');
+        Schema::dropIfExists('TB_PESO_CRIT_COMPETENCIA');
+        Schema::dropIfExists('TB_SUBCRITERIOS');
+        Schema::dropIfExists('TB_CRITERIOS');
         Schema::dropIfExists('TB_AREA_CONHECIMENTO');
         Schema::dropIfExists('TB_PERFIS_JORNADA');
         Schema::dropIfExists('TB_DOMINIO_CONHECIMENTO');

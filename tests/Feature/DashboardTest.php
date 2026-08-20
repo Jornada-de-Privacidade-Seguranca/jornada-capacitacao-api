@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\EnglishProficiency;
+use App\Models\Criterion;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
 use App\Models\JourneyProfile;
 use App\Models\KnowledgeDomain;
-use App\Models\PostgraduateCourse;
 use App\Models\ProfessionalExperience;
 use App\Models\ProfileType;
+use App\Models\Subcriterion;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -34,19 +34,22 @@ class DashboardTest extends TestCase
             'DS_EXPERIENCIA_ATUACAO_PT' => '1 ano',
             'DS_EXPERIENCIA_ATUACAO_EN' => '1 year',
         ]);
-        $english = EnglishProficiency::create([
-            'NO_PROFICIENCIA_INGLES_PT' => 'Basico',
-            'NO_PROFICIENCIA_INGLES_EN' => 'Basic',
+        $criterion = Criterion::create([
+            'NO_CRITERIO_PT' => 'Formação Acadêmica',
+            'NO_CRITERIO_EN' => 'Education',
+        ]);
+        $english = Subcriterion::create([
+            'FK_CRITERIOS' => $criterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => 'Basico',
+            'NO_SUBCRITERIO_EN' => 'Basic',
         ]);
         $higherEducation = HigherEducationCourse::create([
+            'FK_SUBCRITERIOS' => $criterion->subcriteria()->create([
+                'NO_SUBCRITERIO_PT' => 'Graduação',
+                'NO_SUBCRITERIO_EN' => 'Graduation',
+            ])->PK_SUBCRITERIOS,
             'NO_CURSO_SUPERIOR_PT' => 'Direito',
             'NO_CURSO_SUPERIOR_EN' => 'Law',
-            'TP_CURSO_SUPERIOR' => 1,
-        ]);
-        $postgraduate = PostgraduateCourse::create([
-            'NO_POS_GRADUACAO_PT' => 'Seguranca',
-            'NO_POS_GRADUACAO_EN' => 'Security',
-            'TP_POS_GRADUACAO' => 2,
         ]);
 
         $oldestCompleted = $this->createJourney(
@@ -75,11 +78,10 @@ class DashboardTest extends TestCase
             [
                 'FK_EXPERIENCIA_PROFISSIONAL' => $experience->PK_EXPERIENCIA_ATUACAO,
                 'FK_ATUACAO_PERFIL' => $experience->PK_EXPERIENCIA_ATUACAO,
-                'FK_PROFICIENCIA_INGLES' => $english->PK_PROFICIENCIA_INGLES,
-                'FK_CURSO_SUPERIOR' => $higherEducation->PK_CURSO_SUPERIOR,
-                'FK_POS_GRADUACAO' => $postgraduate->PK_POS_GRADUACAO,
+                'FK_SUBCRITERIOS_INGLES' => $english->PK_SUBCRITERIOS,
             ],
         );
+        $latestCompleted->higherEducationCourses()->attach($higherEducation->PK_CURSO_SUPERIOR);
         $unfinished = $this->createJourney($user, $journeyProfile, '2026-07-05 08:00:00', null);
         $this->createJourney($otherUser, $journeyProfile, '2026-07-06 08:00:00', '2026-07-06 09:00:00');
 
@@ -111,6 +113,7 @@ class DashboardTest extends TestCase
             )
             ->assertJsonPath('data.journeys.latest_journey.professional_experience.description_pt', '1 ano')
             ->assertJsonPath('data.journeys.latest_journey.english_proficiency.name_pt', 'Basico')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.0.name_pt', 'Direito')
             ->assertJsonCount(3, 'data.journeys.recent_journeys')
             ->assertJsonPath('data.journeys.recent_journeys.0.id', $secondCompleted->PK_JORNADA)
             ->assertJsonPath('data.journeys.recent_journeys.1.id', $thirdCompleted->PK_JORNADA)
