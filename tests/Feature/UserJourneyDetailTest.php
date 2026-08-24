@@ -105,6 +105,42 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('errors.fields.5', 'answers.postgraduate_course');
     }
 
+    public function test_it_rejects_completed_journey_when_journey_profile_knowledge_domain_is_missing(): void
+    {
+        $admin = $this->activeUser('Admin Sistema', 1);
+        $user = $this->activeUser('Joao Souza', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00', '2026-07-23 17:30:00');
+        JourneyProfile::query()
+            ->whereKey($journey->FK_PERFIS_JORNADA)
+            ->update(['FK_DOMINIO_CONHECIMENTO' => null]);
+
+        $this->actingAs($admin)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertConflict()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Jornada concluida possui dados obrigatorios incompletos.')
+            ->assertJsonPath('code', 'INCOMPLETE_JOURNEY')
+            ->assertJsonPath('errors.fields', ['journey_profile.knowledge_domain']);
+    }
+
+    public function test_it_rejects_completed_journey_when_acquired_knowledge_competency_is_missing(): void
+    {
+        $admin = $this->activeUser('Admin Sistema', 1);
+        $user = $this->activeUser('Joao Souza', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00', '2026-07-23 17:30:00');
+        AcquiredKnowledge::query()
+            ->where('FK_JORNADA', $journey->PK_JORNADA)
+            ->update(['FK_COMPETENCIAS' => null]);
+
+        $this->actingAs($admin)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertConflict()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Jornada concluida possui dados obrigatorios incompletos.')
+            ->assertJsonPath('code', 'INCOMPLETE_JOURNEY')
+            ->assertJsonPath('errors.fields', ['acquired_knowledges.competency']);
+    }
+
     public function test_common_user_cannot_view_journey_from_another_user(): void
     {
         $user = $this->activeUser('Maria Silva', 2);

@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\IncompleteJourneyException;
 use App\Http\Requests\ListUserJourneysRequest;
+use App\Http\Requests\ShowJourneyRequest;
 use App\Http\Resources\JourneyDetailResource;
 use App\Http\Resources\JourneyListResource;
 use App\Services\JourneyService;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
@@ -54,25 +54,12 @@ class UserJourneyController
         );
     }
 
-    public function show(Request $request, string $journey): JsonResponse
+    public function show(ShowJourneyRequest $request): JsonResponse
     {
-        if (! ctype_digit($journey) || (int) $journey < 1) {
-            return ApiResponse::error(
-                message: 'Identificador da jornada invalido.',
-                status: Response::HTTP_UNPROCESSABLE_ENTITY,
-                code: 'INVALID_JOURNEY_IDENTIFIER',
-                errors: [
-                    'journey' => [
-                        'O identificador da jornada deve ser um numero inteiro maior ou igual a 1.',
-                    ],
-                ],
-            );
-        }
-
         try {
             $journeyDetail = $this->journeyService->findForAuthenticatedUser(
                 authenticatedUser: $request->user(),
-                journeyId: (int) $journey,
+                journeyId: $request->validatedJourneyId(),
             );
         } catch (ModelNotFoundException) {
             return ApiResponse::error(
