@@ -7,14 +7,10 @@ servers:
   - url: http://localhost:8030/api
     description: Ambiente local via Docker
 tags:
-  - name: Health
-    description: Endpoints de disponibilidade da API
   - name: Auth
     description: Endpoints publicos de cadastro e autenticacao
   - name: Dashboard
     description: Endpoints de dados do painel inicial do usuario
-  - name: Competencies
-    description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: JourneyProfiles
     description: Consulta de tipos de jornada usando MVC, Services e Repositories
   - name: Template
@@ -24,24 +20,6 @@ tags:
   - name: Journeys
     description: Endpoints de consulta das jornadas dos usuarios
 paths:
-  /health:
-    get:
-      tags:
-        - Health
-      summary: Verifica se a API esta disponivel
-      operationId: getHealth
-      responses:
-        "200":
-          description: API disponivel
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-              examples:
-                ok:
-                  value:
-                    status: ok
-                    service: jornada-capacitacao-api
   /template-example:
     get:
       tags:
@@ -762,7 +740,7 @@ paths:
                     errors: []
                     code: USER_NOT_FOUND
         "422":
-          description: Parametros de paginacao ou filtros invalidos
+          description: Erro de validacao
           content:
             application/json:
               schema:
@@ -771,21 +749,21 @@ paths:
                 invalidPagination:
                   value:
                     success: false
-                    message: Parametros de paginacao invalidos.
+                    message: Validation error.
                     errors:
                       page:
                         - A pagina atual deve ser maior ou igual a 1.
-                    code: INVALID_PAGINATION_PARAMETERS
+                    code: VALIDATION_ERROR
                 invalidFilters:
                   value:
                     success: false
-                    message: Parametros de filtro invalidos.
+                    message: Validation error.
                     errors:
                       status:
                         - A situacao da jornada deve ser completed ou ongoing.
                       started_from:
                         - A data inicial minima deve estar no formato Y-m-d.
-                    code: INVALID_JOURNEY_FILTERS
+                    code: VALIDATION_ERROR
         "500":
           description: Erro interno do servidor
           content:
@@ -799,105 +777,6 @@ paths:
                     message: Nao foi possivel buscar as jornadas no momento.
                     errors: []
                     code: JOURNEYS_SEARCH_FAILED
-  /competencies:
-    get:
-      tags:
-        - Competencies
-      summary: Lista competencias
-      operationId: listCompetencies
-      responses:
-        "200":
-          description: Lista de competencias cadastradas
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompetencyListResponse"
-    post:
-      tags:
-        - Competencies
-      summary: Cria uma competencia
-      operationId: createCompetency
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CompetencyPayload"
-            examples:
-              privacy:
-                value:
-                  name: Privacidade de dados
-                  description: Conceitos essenciais de protecao de dados pessoais.
-      responses:
-        "201":
-          description: Competencia criada
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompetencyResponse"
-        "422":
-          description: Erro de validacao
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardValidationError"
-  /competencies/{id}:
-    parameters:
-      - $ref: "#/components/parameters/CompetencyId"
-    get:
-      tags:
-        - Competencies
-      summary: Busca uma competencia por ID
-      operationId: getCompetency
-      responses:
-        "200":
-          description: Competencia encontrada
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompetencyResponse"
-        "404":
-          description: Competencia nao encontrada
-    put:
-      tags:
-        - Competencies
-      summary: Atualiza uma competencia
-      operationId: updateCompetency
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CompetencyPayload"
-      responses:
-        "200":
-          description: Competencia atualizada
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompetencyResponse"
-        "404":
-          description: Competencia nao encontrada
-        "422":
-          description: Erro de validacao
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardValidationError"
-    delete:
-      tags:
-        - Competencies
-      summary: Remove uma competencia
-      operationId: deleteCompetency
-      responses:
-        "200":
-          description: Competencia removida
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EmptySuccessResponse"
-        "404":
-          description: Competencia nao encontrada
   /journey-profiles:
     parameters:
       - name: page
@@ -938,11 +817,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardError"
         "422":
-          description: Parametros de paginacao invalidos
+          description: Erro de validacao
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidPagination:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      page:
+                        - A pagina atual deve ser maior ou igual a 1.
+                    code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:
       - $ref: "#/components/parameters/JourneyProfileId"
@@ -988,14 +876,6 @@ components:
       schema:
         type: string
       example: test-csrf-token
-    CompetencyId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-        minimum: 1
-      example: 1
     JourneyProfileId:
       name: id
       in: path
@@ -1014,18 +894,6 @@ components:
         minimum: 1
       example: 2
   schemas:
-    HealthResponse:
-      type: object
-      required:
-        - status
-        - service
-      properties:
-        status:
-          type: string
-          example: ok
-        service:
-          type: string
-          example: jornada-capacitacao-api
     TemplateExampleSuccessResponse:
       type: object
       required:
@@ -1106,38 +974,6 @@ components:
         has_next_page:
           type: boolean
           example: true
-    CompetencyListResponse:
-      type: object
-      required:
-        - success
-        - message
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: Competencies retrieved successfully.
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Competency"
-    CompetencyResponse:
-      type: object
-      required:
-        - success
-        - message
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: Competency retrieved successfully.
-        data:
-          $ref: "#/components/schemas/Competency"
     EmptySuccessResponse:
       type: object
       required:
@@ -1150,7 +986,7 @@ components:
           example: true
         message:
           type: string
-          example: Competency deleted successfully.
+          example: Logout realizado com sucesso.
         data:
           type: "null"
           example: null
@@ -1893,62 +1729,6 @@ components:
           format: password
           maxLength: 100
           example: SenhaSegura123
-    Competency:
-      type: object
-      required:
-        - id
-        - name
-        - description
-        - knowledge_domain_id
-        - knowledge_area_id
-        - difficulty_id
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: Privacidade de dados
-        description:
-          type:
-            - string
-            - "null"
-          example: Conceitos essenciais de protecao de dados pessoais.
-        knowledge_domain_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-        knowledge_area_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-        difficulty_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-    CompetencyPayload:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          maxLength: 100
-          example: Privacidade de dados
-        description:
-          type:
-            - string
-            - "null"
-          maxLength: 500
-          example: Conceitos essenciais de protecao de dados pessoais.
-        knowledge_domain_id:
-          type:
-            - integer
-            - "null"
-          example: 1
     JourneyProfileListResponse:
       type: object
       required:
