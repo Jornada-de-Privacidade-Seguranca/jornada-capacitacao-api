@@ -799,6 +799,152 @@ paths:
                     message: Nao foi possivel buscar as jornadas no momento.
                     errors: []
                     code: JOURNEYS_SEARCH_FAILED
+  /journeys/{journey}:
+    get:
+      tags:
+        - Journeys
+      summary: Detalha uma jornada especifica
+      description: Retorna os dados completos da jornada informada. Usuarios comuns so podem consultar jornadas vinculadas ao proprio cadastro; administradores podem consultar jornadas de qualquer usuario.
+      operationId: getJourneyDetail
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+      responses:
+        "200":
+          description: Jornada encontrada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyDetailResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Jornada encontrada com sucesso.
+                    data:
+                      id: 10
+                      user:
+                        id: 2
+                        name: Maria Silva
+                        email: maria.silva@example.com
+                        organization: Jornada
+                        sector: Capacitacao
+                        registration: "123"
+                        profile_type:
+                          id: 3
+                          name: Aluno
+                        user_type_id: 2
+                        is_active: true
+                      journey_profile:
+                        id: 1
+                        name_pt: Encarregado
+                        name_en: DPO
+                        description_pt: Privacidade e Seguranca
+                        description_en: Privacy and Security
+                        knowledge_domain:
+                          id: 1
+                          name_pt: Privacidade
+                          name_en: Privacy
+                        competencies: []
+                      started_at: "2026-07-23 16:30:00"
+                      finished_at: null
+                      status: ongoing
+                      is_completed: false
+                      answers:
+                        professional_experience: null
+                        profile_experience: null
+                        english_proficiency: null
+                        higher_education_course: null
+                        postgraduate_course: null
+                      acquired_knowledges: []
+                      professional_certifications: []
+                      summary:
+                        acquired_knowledges_count: 0
+                        professional_certifications_count: 0
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Usuario sem permissao para visualizar a jornada informada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "404":
+          description: Jornada informada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada concluida com dados obrigatorios incompletos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                incompleteJourney:
+                  value:
+                    success: false
+                    message: Jornada concluida possui dados obrigatorios incompletos.
+                    errors:
+                      fields:
+                        - journey_profile
+                        - answers.professional_experience
+                    code: INCOMPLETE_JOURNEY
+        "422":
+          description: Identificador da jornada invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidIdentifier:
+                  value:
+                    success: false
+                    message: Identificador da jornada invalido.
+                    errors:
+                      journey:
+                        - O identificador da jornada deve ser um numero inteiro maior ou igual a 1.
+                    code: INVALID_JOURNEY_IDENTIFIER
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar os dados da jornada no momento.
+                    errors: []
+                    code: JOURNEY_SEARCH_FAILED
   /competencies:
     get:
       tags:
@@ -1013,6 +1159,15 @@ components:
         type: integer
         minimum: 1
       example: 2
+    JourneyId:
+      name: journey
+      in: path
+      required: true
+      description: Identificador da jornada que sera detalhada.
+      schema:
+        type: integer
+        minimum: 1
+      example: 10
   schemas:
     HealthResponse:
       type: object
@@ -1574,6 +1729,348 @@ components:
         user_id:
           type: integer
           example: 2
+    UserJourneyDetailResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornada encontrada com sucesso.
+        data:
+          $ref: "#/components/schemas/UserJourneyDetail"
+    UserJourneyDetail:
+      type: object
+      required:
+        - id
+        - user
+        - journey_profile
+        - started_at
+        - finished_at
+        - status
+        - is_completed
+        - answers
+        - acquired_knowledges
+        - professional_certifications
+        - summary
+      properties:
+        id:
+          type: integer
+          example: 10
+        user:
+          $ref: "#/components/schemas/UserJourneyDetailUser"
+        journey_profile:
+          $ref: "#/components/schemas/UserJourneyDetailProfile"
+        started_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 16:30:00"
+        finished_at:
+          type:
+            - string
+            - "null"
+          example: null
+        status:
+          type: string
+          enum:
+            - completed
+            - ongoing
+          example: ongoing
+        is_completed:
+          type: boolean
+          example: false
+        answers:
+          $ref: "#/components/schemas/UserJourneyAnswers"
+        acquired_knowledges:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyAcquiredKnowledge"
+        professional_certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyProfessionalCertification"
+        summary:
+          $ref: "#/components/schemas/UserJourneySummary"
+    UserJourneyDetailUser:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 2
+        name:
+          type:
+            - string
+            - "null"
+          example: Maria Silva
+        email:
+          type:
+            - string
+            - "null"
+          example: maria.silva@example.com
+        organization:
+          type:
+            - string
+            - "null"
+          example: Jornada
+        sector:
+          type:
+            - string
+            - "null"
+          example: Capacitacao
+        registration:
+          type:
+            - string
+            - "null"
+          example: "123"
+        profile_type:
+          $ref: "#/components/schemas/UserJourneySimpleOption"
+        user_type_id:
+          type:
+            - integer
+            - "null"
+          example: 2
+        is_active:
+          type: boolean
+          example: true
+    UserJourneyDetailProfile:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Encarregado
+        name_en:
+          type:
+            - string
+            - "null"
+          example: DPO
+        description_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade e Seguranca
+        description_en:
+          type:
+            - string
+            - "null"
+          example: Privacy and Security
+        knowledge_domain:
+          $ref: "#/components/schemas/UserJourneyKnowledgeDomain"
+        competencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyCompetency"
+    UserJourneyAnswers:
+      type: object
+      properties:
+        professional_experience:
+          $ref: "#/components/schemas/UserJourneyExperienceOption"
+        profile_experience:
+          $ref: "#/components/schemas/UserJourneyExperienceOption"
+        english_proficiency:
+          $ref: "#/components/schemas/UserJourneyLocalizedOption"
+        higher_education_course:
+          $ref: "#/components/schemas/UserJourneyCourseOption"
+        postgraduate_course:
+          $ref: "#/components/schemas/UserJourneyCourseOption"
+    UserJourneyAcquiredKnowledge:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type_acquired:
+          type:
+            - integer
+            - "null"
+          example: 1
+        is_acquired:
+          type: boolean
+          example: true
+        competency:
+          $ref: "#/components/schemas/UserJourneyCompetency"
+    UserJourneyProfessionalCertification:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type:
+            - string
+            - "null"
+          example: CIPM
+        pivot_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        knowledge_domain:
+          $ref: "#/components/schemas/UserJourneyKnowledgeDomain"
+    UserJourneyCompetency:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        origin_pt:
+          type:
+            - string
+            - "null"
+          example: Referencial
+        origin_en:
+          type:
+            - string
+            - "null"
+          example: Reference
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: LGPD
+        name_en:
+          type:
+            - string
+            - "null"
+          example: LGPD
+        description_pt:
+          type:
+            - string
+            - "null"
+          example: Fundamentos da LGPD
+        description_en:
+          type:
+            - string
+            - "null"
+          example: LGPD fundamentals
+        knowledge_domain:
+          $ref: "#/components/schemas/UserJourneyKnowledgeDomain"
+        knowledge_area:
+          $ref: "#/components/schemas/UserJourneyKnowledgeArea"
+        difficulty:
+          $ref: "#/components/schemas/UserJourneyLocalizedOption"
+    UserJourneyKnowledgeDomain:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Privacy
+    UserJourneyKnowledgeArea:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Governanca
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Governance
+    UserJourneySimpleOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 3
+        name:
+          type:
+            - string
+            - "null"
+          example: Aluno
+    UserJourneyLocalizedOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Intermediario
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Intermediate
+    UserJourneyExperienceOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        description_pt:
+          type:
+            - string
+            - "null"
+          example: 1 a 3 anos
+        description_en:
+          type:
+            - string
+            - "null"
+          example: 1 to 3 years
+    UserJourneyCourseOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Direito
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Law
+        type:
+          type:
+            - integer
+            - "null"
+          example: 1
     DashboardResponse:
       type: object
       required:
