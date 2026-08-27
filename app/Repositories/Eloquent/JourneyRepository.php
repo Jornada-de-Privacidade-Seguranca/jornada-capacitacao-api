@@ -8,6 +8,29 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
+    public function findDetailedById(int $journeyId): ?Journey
+    {
+        return Journey::query()
+            ->with([
+                'usuario.profileType',
+                'journeyProfile.knowledgeDomain',
+                'journeyProfile.competencies.knowledgeDomain',
+                'journeyProfile.competencies.knowledgeArea',
+                'journeyProfile.competencies.difficulty',
+                'professionalExperience',
+                'profileExperience',
+                'englishProficiency',
+                'higherEducationCourse',
+                'postgraduateCourse',
+                'acquiredKnowledges.competency.knowledgeDomain',
+                'acquiredKnowledges.competency.knowledgeArea',
+                'acquiredKnowledges.competency.difficulty',
+                'professionalCertifications.knowledgeDomain',
+            ])
+            ->where('PK_JORNADA', $journeyId)
+            ->first();
+    }
+
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator
     {
         $query = Journey::query()

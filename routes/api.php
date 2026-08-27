@@ -40,5 +40,6 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
         ->middleware(AuthenticateSessionUser::class);
     Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
     Route::post('/users/{user}/journeys', [UserJourneyController::class, 'store'])->middleware(AuthenticateSessionUser::class);
+    Route::get('/journeys/{journey}', [UserJourneyController::class, 'show'])->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
 });
