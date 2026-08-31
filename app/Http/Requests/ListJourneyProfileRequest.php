@@ -37,9 +37,9 @@ class ListJourneyProfileRequest extends FormRequest
     protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(ApiResponse::error(
-            message: 'Parametros de paginacao invalidos.',
+            message: 'Validation error.',
             status: Response::HTTP_UNPROCESSABLE_ENTITY,
-            code: 'INVALID_PAGINATION_PARAMETERS',
+            code: 'VALIDATION_ERROR',
             errors: $validator->errors()->toArray(),
         ));
     }

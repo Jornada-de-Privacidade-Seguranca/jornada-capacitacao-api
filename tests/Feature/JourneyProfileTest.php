@@ -161,8 +161,8 @@ class JourneyProfileTest extends TestCase
             ->getJson('/api/journey-profiles?page=0&per_page=101')
             ->assertUnprocessable()
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Parametros de paginacao invalidos.')
-            ->assertJsonPath('code', 'INVALID_PAGINATION_PARAMETERS')
+            ->assertJsonPath('message', 'Validation error.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonPath('errors.page.0', 'A pagina atual deve ser maior ou igual a 1.')
             ->assertJsonPath('errors.per_page.0', 'A quantidade de registros por pagina nao pode ser maior que 100.');
     }

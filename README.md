@@ -24,15 +24,18 @@ A documentacao Swagger ficara disponivel em `http://localhost:8031`.
 ## Teste inicial
 
 ```bash
-curl http://localhost:8030/api/health
+curl http://localhost:8030/api/auth/csrf-token
 ```
 
 Resposta esperada:
 
 ```json
 {
-  "status": "ok",
-  "service": "jornada-capacitacao-api"
+  "success": true,
+  "message": "Token CSRF gerado com sucesso.",
+  "data": {
+    "csrf_token": "..."
+  }
 }
 ```
 
@@ -54,10 +57,7 @@ Com os containers ativos, acesse:
 http://localhost:8031
 ```
 
-O Swagger UI carrega a documentacao dos endpoints iniciais:
-
-- `GET /api/health`
-- CRUD de `/api/competencies`
+O Swagger UI carrega a documentacao dos endpoints disponiveis da API.
 
 ## Frontend
 
@@ -67,7 +67,7 @@ No frontend Next, configure:
 NEXT_PUBLIC_API_URL=http://localhost:8030/api
 ```
 
-O helper `src/lib/api.ts` chama `GET ${NEXT_PUBLIC_API_URL}/health`.
+Use os endpoints documentados no Swagger como contrato de integracao.
 
 ## Arquitetura
 
@@ -84,9 +84,12 @@ Ao adicionar uma entidade, crie migration, model, repository interface, reposito
 
 ## Endpoints iniciais
 
-- `GET /api/health`
-- `GET /api/competencies`
-- `POST /api/competencies`
-- `GET /api/competencies/{id}`
-- `PUT /api/competencies/{id}`
-- `DELETE /api/competencies/{id}`
+- `POST /api/auth/register`
+- `GET /api/auth/csrf-token`
+- `POST /api/auth/login`
+- `GET /api/me`
+- `GET /api/dashboard`
+- `POST /api/auth/logout`
+- `GET /api/journey-profiles`
+- `GET /api/journey-profiles/{id}`
+- `GET /api/users/{user}/journeys`
