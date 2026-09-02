@@ -49,6 +49,10 @@ class JornadaSchemaTest extends TestCase
         ] as $table) {
             $this->assertTrue(Schema::hasTable($table), "Table {$table} was not created.");
         }
+
+        $this->assertTrue(Schema::hasColumn('TB_AREA_CONHECIMENTO', 'DS_AREA_CONHECIMENTO_PT'));
+        $this->assertTrue(Schema::hasColumn('TB_AREA_CONHECIMENTO', 'DS_AREA_CONHECIMENTO_EN'));
+        $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'NU_PONTUACAO_TOTAL'));
     }
 
     public function test_it_migrates_fixed_jornada_reference_data(): void
@@ -57,10 +61,10 @@ class JornadaSchemaTest extends TestCase
         $this->assertDatabaseCount('TB_PERFIS_JORNADA', 21);
         $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 17);
         $this->assertDatabaseCount('TB_DIFICULDADE', 5);
-        $this->assertDatabaseCount('TB_CRITERIOS', 5);
+        $this->assertDatabaseCount('TB_CRITERIOS', 6);
         $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
         $this->assertDatabaseCount('TB_PESO_CRIT_COMPETENCIA', 270);
-        $this->assertDatabaseCount('TB_EXPERIENCIA_ATUACAO', 5);
+        $this->assertDatabaseCount('TB_EXPERIENCIA_ATUACAO', 6);
         $this->assertDatabaseCount('TB_TIPO_PERFIL', 3);
 
         $this->assertDatabaseHas('TB_DOMINIO_CONHECIMENTO', [
@@ -77,6 +81,7 @@ class JornadaSchemaTest extends TestCase
         $this->assertDatabaseHas('TB_AREA_CONHECIMENTO', [
             'PK_AREA_CONHECIMENTO' => 17,
             'NO_AREA_CONHECIMENTO_PT' => 'Gestão de Conformidade',
+            'DS_AREA_CONHECIMENTO_PT' => 'Conhecimentos relacionados ao processo de avaliação de conformidade nos aspectos da segurança da informação.',
         ]);
         $this->assertDatabaseHas('TB_DIFICULDADE', [
             'PK_DIFICULDADE' => 5,
@@ -85,10 +90,17 @@ class JornadaSchemaTest extends TestCase
         $this->assertDatabaseHas('TB_CRITERIOS', [
             'PK_CRITERIOS' => 5,
             'NO_CRITERIO_PT' => 'Competências',
-            'NU_PESO_CRITERIO' => 45.82,
+            'NU_PESO_CRITERIO' => 45.92,
+        ]);
+        $this->assertDatabaseHas('TB_CRITERIOS', [
+            'PK_CRITERIOS' => 6,
+            'NO_CRITERIO_PT' => 'Nenhum',
+            'NO_CRITERIO_EN' => 'None',
+            'NU_PESO_CRITERIO' => 0,
         ]);
         $this->assertDatabaseHas('TB_SUBCRITERIOS', [
             'PK_SUBCRITERIOS' => 9,
+            'FK_CRITERIOS' => 4,
             'NO_SUBCRITERIO_PT' => 'Avançado - Fluente',
             'NU_PESO_SUBCRITERIO' => 63.335,
         ]);
@@ -101,6 +113,11 @@ class JornadaSchemaTest extends TestCase
         $this->assertDatabaseHas('TB_EXPERIENCIA_ATUACAO', [
             'PK_EXPERIENCIA_ATUACAO' => 5,
             'DS_EXPERIENCIA_ATUACAO_PT' => 'Mais de 10 anos',
+        ]);
+        $this->assertDatabaseHas('TB_EXPERIENCIA_ATUACAO', [
+            'PK_EXPERIENCIA_ATUACAO' => 6,
+            'DS_EXPERIENCIA_ATUACAO_PT' => 'Nenhum',
+            'DS_EXPERIENCIA_ATUACAO_EN' => 'None',
         ]);
         $this->assertDatabaseHas('TB_TIPO_PERFIL', [
             'PK_TIPO_PERFIL' => 3,
@@ -151,6 +168,7 @@ class JornadaSchemaTest extends TestCase
             'FK_EXPERIENCIA_PROFISSIONAL' => $experience->PK_EXPERIENCIA_ATUACAO,
             'FK_ATUACAO_PERFIL' => $experience->PK_EXPERIENCIA_ATUACAO,
             'FK_SUBCRITERIOS_INGLES' => $subcriterion->PK_SUBCRITERIOS,
+            'NU_PONTUACAO_TOTAL' => 85,
         ]);
         $journey->higherEducationCourses()->attach($higherEducation->PK_CURSO_SUPERIOR);
 
@@ -185,5 +203,6 @@ class JornadaSchemaTest extends TestCase
         $this->assertTrue($journey->englishSubcriterion->is($subcriterion));
         $this->assertTrue($journey->higherEducationCourses->first()->is($higherEducation));
         $this->assertTrue($higherEducation->subcriterion->is($subcriterion));
+        $this->assertSame(85, $journey->NU_PONTUACAO_TOTAL);
     }
 }

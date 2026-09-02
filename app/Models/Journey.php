@@ -18,6 +18,7 @@ class Journey extends JornadaModel
         'FK_EXPERIENCIA_PROFISSIONAL',
         'FK_ATUACAO_PERFIL',
         'FK_SUBCRITERIOS_INGLES',
+        'NU_PONTUACAO_TOTAL',
         'DH_CRIADO_EM',
         'DH_FIM',
     ];

@@ -33,6 +33,8 @@ return new class extends Migration
             $table->increments('PK_AREA_CONHECIMENTO');
             $table->string('NO_AREA_CONHECIMENTO_PT', 100)->nullable();
             $table->string('NO_AREA_CONHECIMENTO_EN', 100)->nullable();
+            $table->string('DS_AREA_CONHECIMENTO_PT', 500)->nullable();
+            $table->string('DS_AREA_CONHECIMENTO_EN', 500)->nullable();
         });
 
         Schema::create('TB_CRITERIOS', function (Blueprint $table): void {
@@ -185,6 +187,7 @@ return new class extends Migration
             $table->unsignedInteger('FK_EXPERIENCIA_PROFISSIONAL')->nullable();
             $table->unsignedInteger('FK_ATUACAO_PERFIL')->nullable();
             $table->unsignedInteger('FK_SUBCRITERIOS_INGLES')->nullable();
+            $table->integer('NU_PONTUACAO_TOTAL')->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->timestamp('DH_FIM')->nullable();
 

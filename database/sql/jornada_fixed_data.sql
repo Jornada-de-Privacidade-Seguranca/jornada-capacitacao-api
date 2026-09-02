@@ -135,23 +135,23 @@ INSERT INTO "TB_PERFIS_JORNADA" ("FK_DOMINIO_CONHECIMENTO", "DS_PERFIS_EN", "DS_
 
 
 -- Insert TB_AREA_CONHECIMENTO
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Privacidade', 'Privacy Management');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Estratégias de Privacidade', 'Privacy Strategies');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Documentos Orientativos', 'Guidance Documents');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos e Conformidade', 'Risk Management and Compliance');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Conhecimentos em Tecnologia da Informação', 'Knowledge of Information Technology');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Privacy By Design', 'Privacy By Design');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Segurança da Informação', 'Information Security Management');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos', 'Risk Management');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão do Uso dos Recursos Operacionais e de Comunicações', 'Management of Operational and Communication Resource Usage');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Tratamento da Informação', 'Data Handling');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Ativos', 'Asset Management');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Incidentes Cibernéticos', 'Cyber ​​Incident Management');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Continuidade', 'Continuity Management');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Segurança de Controle de Acesso', 'Access Control Security');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Security By Design', 'Security By Design');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Mudança', 'Change Management');
-INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Conformidade', 'Compliance Management');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Privacidade', 'Privacy Management', 'Conhecimentos relacionados a legislações e obrigações legais referentes a privacidade de dados.', 'Knowledge of legislation and legal obligations regarding data privacy.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Estratégias de Privacidade', 'Privacy Strategies', 'Conhecimentos relacionados a boas práticas, estratégias de implementação e técnicas de privacidade de dados.', 'Knowledge of best practices, implementation strategies, and data privacy techniques.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Documentos Orientativos', 'Guidance Documents', 'Conhecimentos relacionados a documentações oficiais.', 'Knowledge related to official documentation.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos e Conformidade', 'Risk Management and Compliance', 'Conhecimentos relacionados a gestão de riscos de privacidade e conformidade com regulamentações, auditorias e fiscalizações.', 'Knowledge related to privacy risk management and compliance with regulations, audits, and inspections.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Conhecimentos em Tecnologia da Informação', 'Knowledge of Information Technology', 'Conhecimentos relacionados a tecnologia da informação, como programação, armazenamento de arquivos, etc.', 'Knowledge related to information technology, such as programming, file storage, etc.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Privacy By Design', 'Privacy By Design', 'Conhecimentos relacionados aos conceitos e aplicações de privacy by design e privacy by default.', 'Knowledge regarding the concepts and applications of privacy by design and privacy by default.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Segurança da Informação', 'Information Security Management', 'Conhecimentos relacionados a legislações e obrigações legais referentes a segurança da informação.', 'Knowledge related to legislation and legal obligations relating to information security.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Riscos', 'Risk Management', 'Conhecimentos relacionados ao tratamento e gestão de riscos.', 'Knowledge related to risk treatment and management.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão do Uso dos Recursos Operacionais e de Comunicações', 'Management of Operational and Communication Resource Usage', 'Conhecimentos relacionados a gestão do uso de mídias sociais, dispositivos móveis e serviços em nuvem.', 'Knowledge related to the management of social media usage, mobile devices, and cloud services.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Tratamento da Informação', 'Data Handling', 'Conhecimentos relacionados ao tratamento de informação classificada, restrição de acesso, recursos criptográficos, etc.', 'Knowledge related to the handling of classified information, access restrictions, cryptographic resources, etc.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Ativos', 'Asset Management', 'Conhecimentos relacionados ao mapeamento e tratamento de ativos.', 'Knowledge related to asset mapping and treatment.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Incidentes Cibernéticos', 'Cyber ​​Incident Management', 'Conhecimentos relacionados ao tratamento, prevenção e respostas à incidentes ciberneticos, atividades e responsabilidades da da Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR).', 'Knowledge regarding the handling, prevention of, and response to cyber incidents, as well as the activities and responsibilities of the Cyber ​​Incident Prevention, Handling, and Response Team (ETIR).');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Continuidade', 'Continuity Management', 'Conhecimentos relacionados ao processo de continuidade de negócios em segurança da informação.', 'Knowledge related to the information security business continuity process.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Segurança de Controle de Acesso', 'Access Control Security', 'Conhecimentos relacionados ao controle de acesso, privilégios mínimos, senhas, autenticação, etc.', 'Knowledge related to access control, least privilege, passwords, authentication, etc.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Security By Design', 'Security By Design', 'Conhecimentos relacionados aos conceitos e aplicações de security by design.', 'Knowledge regarding the concepts and applications of security by design.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Mudança', 'Change Management', 'Conhecimentos relacionados ao processo da gestão e tipos de classificação sobre a mudança nos aspectos de segurança da informação.', 'Knowledge regarding the management process and classification types concerning changes in information security aspects.');
+INSERT INTO "TB_AREA_CONHECIMENTO"("NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN", "DS_AREA_CONHECIMENTO_PT", "DS_AREA_CONHECIMENTO_EN") VALUES ('Gestão de Conformidade', 'Compliance Management', 'Conhecimentos relacionados ao processo de avaliação de conformidade nos aspectos da segurança da informação.', 'Knowledge related to the conformity assessment process regarding information security aspects.');
 
 -- Insert TB_DIFICULDADE
 INSERT INTO "TB_DIFICULDADE"("NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES ('Iniciante','Beginner');
@@ -165,18 +165,19 @@ INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO
 INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Formação Acadêmica', 'Education', 14.7);
 INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Certificação Profissional', 'Professional Certification', 10.72);
 INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Nível de Proficiência - Inglês', 'Proficiency Level - English', 4.85);
-INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Competências', 'Competencies', 45.82);
+INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Competências', 'Competencies', 45.92);
+INSERT INTO "TB_CRITERIOS"("NO_CRITERIO_PT", "NO_CRITERIO_EN", "NU_PESO_CRITERIO") VALUES ('Nenhum', 'None', 0);
 
 -- Insert TB_SUBCRITERIOS
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Graduação', 'Graduation', 8.829);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Pós-Graduação', 'Postgraduate', 15.751);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Mestrado', 'Masters', 27.18);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Doutorado', 'Doctorate', 48.241);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Tempo de Experiência Profissional', 'Years of Professional Experience', 50);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Tempo de Atuação no Perfil','Time Spent on Role', 50);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Básico - Leitura', 'Basic - Reading', 10.616);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing', 26.05);
-INSERT INTO "TB_SUBCRITERIOS"("NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES ('Avançado - Fluente', 'Advanced - Fluent', 63.335);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (2, 'Graduação', 'Graduation', 8.829);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (2, 'Pós-Graduação', 'Postgraduate', 15.751);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (2, 'Mestrado', 'Masters', 27.18);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (2, 'Doutorado', 'Doctorate', 48.241);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (1, 'Tempo de Experiência Profissional', 'Years of Professional Experience', 50);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (1, 'Tempo de Atuação no Perfil','Time Spent on Role', 50);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (4, 'Básico - Leitura', 'Basic - Reading', 10.616);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (4, 'Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing', 26.05);
+INSERT INTO "TB_SUBCRITERIOS"("FK_CRITERIOS", "NO_SUBCRITERIO_PT", "NO_SUBCRITERIO_EN", "NU_PESO_SUBCRITERIO") VALUES (4, 'Avançado - Fluente', 'Advanced - Fluent', 63.335);
 
 -- Insert TB_PESO_CRIT_COMPETENCIA
 --Gestor de Segurança da Informação
@@ -497,6 +498,7 @@ INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCI
 INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 4 e 6 anos', 'Between 4 and 6 years');
 INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Entre 7 e 10 anos', 'Between 7 and 10 years');
 INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Mais de 10 anos', 'More than 10 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES ('Nenhum', 'None');
 
 -- Insert TB_TIPO_PERFIL
 INSERT INTO "TB_TIPO_PERFIL"("NO_TIPO_PERFIL") VALUES ('Administrador');
