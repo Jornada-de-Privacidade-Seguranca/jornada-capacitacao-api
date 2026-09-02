@@ -90,7 +90,7 @@ class JourneyProfileTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
+            ->getJson('/api/journey-profiles/'.$journeyProfile->PK_PERFIS_JORNADA)
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Journey profile retrieved successfully.')
@@ -111,7 +111,7 @@ class JourneyProfileTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
+            ->getJson('/api/journey-profiles/'.$journeyProfile->PK_PERFIS_JORNADA)
             ->assertNotFound()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Journey profile not found.')
@@ -145,7 +145,7 @@ class JourneyProfileTest extends TestCase
     {
         $journeyProfile = JourneyProfile::factory()->create();
 
-        $this->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
+        $this->getJson('/api/journey-profiles/'.$journeyProfile->PK_PERFIS_JORNADA)
             ->assertUnauthorized()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Usuario nao autenticado.')

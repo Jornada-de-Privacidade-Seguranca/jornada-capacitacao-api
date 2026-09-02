@@ -7,9 +7,7 @@ use App\Repositories\Contracts\DashboardRepositoryInterface;
 
 class DashboardService
 {
-    public function __construct(private readonly DashboardRepositoryInterface $dashboardRepository)
-    {
-    }
+    public function __construct(private readonly DashboardRepositoryInterface $dashboardRepository) {}
 
     public function getDashboardData(Usuario $user): array
     {

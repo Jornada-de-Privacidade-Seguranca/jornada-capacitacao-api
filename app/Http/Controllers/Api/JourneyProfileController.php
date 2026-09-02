@@ -12,9 +12,7 @@ use Illuminate\Http\Response;
 
 class JourneyProfileController
 {
-    public function __construct(private readonly JourneyProfileService $journeyProfileService)
-    {
-    }
+    public function __construct(private readonly JourneyProfileService $journeyProfileService) {}
 
     public function index(ListJourneyProfileRequest $request): JsonResponse
     {

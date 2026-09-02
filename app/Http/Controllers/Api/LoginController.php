@@ -15,9 +15,7 @@ use Throwable;
 
 class LoginController
 {
-    public function __construct(private readonly LoginService $loginService)
-    {
-    }
+    public function __construct(private readonly LoginService $loginService) {}
 
     public function __invoke(LoginRequest $request): JsonResponse
     {

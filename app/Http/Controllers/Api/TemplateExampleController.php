@@ -12,9 +12,7 @@ use Illuminate\Http\JsonResponse;
 // precisar mais demonstrar o contrato padrao de resposta.
 class TemplateExampleController
 {
-    public function __construct(private readonly TemplateExampleService $templateExampleService)
-    {
-    }
+    public function __construct(private readonly TemplateExampleService $templateExampleService) {}
 
     public function __invoke(TemplateExampleRequest $request): JsonResponse
     {

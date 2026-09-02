@@ -47,6 +47,112 @@ docker compose exec app php artisan test
 
 Os testes usam SQLite em memoria por meio do `phpunit.xml`.
 
+## Testes e qualidade de codigo
+
+Instale as dependencias do projeto antes de executar as validacoes locais:
+
+```bash
+composer install
+```
+
+Quando estiver usando Docker, execute os comandos dentro do container da aplicacao:
+
+```bash
+docker compose exec app composer check
+```
+
+### Testes
+
+Execute os testes automatizados com:
+
+```bash
+composer test
+```
+
+Comando equivalente:
+
+```bash
+php artisan test
+```
+
+Os testes usam `APP_ENV=testing` e SQLite em memoria conforme configurado em `phpunit.xml`.
+
+### Formatacao
+
+Verifique a formatacao sem modificar arquivos:
+
+```bash
+composer quality:pint
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/pint --test
+```
+
+Para corrigir a formatacao localmente, use:
+
+```bash
+composer format
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/pint
+```
+
+Esse comando modifica arquivos e nao faz parte da validacao completa automatica.
+
+### Analise estatica
+
+Execute PHPStan com Larastan:
+
+```bash
+composer quality:phpstan
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/phpstan analyse
+```
+
+### Code smells
+
+Execute PHPMD:
+
+```bash
+composer quality:phpmd
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/phpmd app text phpmd.xml
+```
+
+### Qualidade
+
+Execute todas as verificacoes de qualidade:
+
+```bash
+composer quality
+```
+
+Esse comando executa Laravel Pint, PHPStan/Larastan e PHPMD.
+
+### Validacao completa
+
+Antes de abrir ou atualizar um Pull Request, execute:
+
+```bash
+composer check
+```
+
+Esse comando executa Laravel Pint, PHPStan/Larastan, PHPMD e os testes automatizados. Caso qualquer etapa falhe, o comando sera finalizado com erro e o problema devera ser corrigido antes do envio do codigo.
+
 ## Documentacao Swagger
 
 A especificacao OpenAPI fica em `docs/openapi.yaml`.
