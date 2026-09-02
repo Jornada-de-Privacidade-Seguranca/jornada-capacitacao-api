@@ -17,7 +17,9 @@ use App\Models\ProfessionalExperience;
 use App\Models\ProfileType;
 use App\Models\Subcriterion;
 use App\Models\Usuario;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -125,6 +127,84 @@ class JornadaSchemaTest extends TestCase
         ]);
     }
 
+    public function test_it_upgrades_legacy_jornada_schema_to_latest_database_scripts(): void
+    {
+        $defaultConnection = DB::getDefaultConnection();
+        $database = storage_path('framework/testing/legacy_upgrade.sqlite');
+
+        if (! is_dir(dirname($database))) {
+            mkdir(dirname($database), 0777, true);
+        }
+
+        @unlink($database);
+        touch($database);
+
+        config()->set('database.connections.legacy_upgrade', [
+            'driver' => 'sqlite',
+            'database' => $database,
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ]);
+
+        DB::purge('legacy_upgrade');
+        DB::setDefaultConnection('legacy_upgrade');
+
+        try {
+            $this->createLegacyJornadaSchema();
+            $this->seedLegacyJornadaSchema();
+
+            $migration = require database_path('migrations/2026_09_02_000000_sync_latest_jornada_database_scripts.php');
+            $migration->up();
+
+            foreach ([
+                'TB_CRITERIOS',
+                'TB_SUBCRITERIOS',
+                'TB_PESO_CRIT_COMPETENCIA',
+                'RL_CURSOS_SUPERIORES_JORNADA',
+            ] as $table) {
+                $this->assertTrue(Schema::hasTable($table), "Table {$table} was not created during upgrade.");
+            }
+
+            $this->assertTrue(Schema::hasColumn('TB_CURSO_SUPERIOR', 'FK_SUBCRITERIOS'));
+            $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'FK_SUBCRITERIOS_INGLES'));
+            $this->assertTrue(Schema::hasColumn('TB_CERTIFICACAO_PROFISSIONAL', 'NO_EMISSOR_CERTIFICACAO'));
+            $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'NU_PONTUACAO_TOTAL'));
+            $this->assertDatabaseCount('TB_CRITERIOS', 6);
+            $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
+            $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
+                'FK_PERFIS_JORNADA' => 20,
+                'FK_AREA_CONHECIMENTO' => 5,
+                'NU_PESO_CRIT_COMPETENCIA' => 8.25,
+            ]);
+            $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
+                'PK_PERFIS_JORNADA' => 18,
+                'NO_PERFIS_PT' => 'Alta Administração 1',
+            ]);
+            $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
+                'NO_PERFIS_PT' => 'Alta Administração 2',
+                'NO_PERFIS_EN' => 'Senior Management 2',
+            ]);
+            $this->assertDatabaseHas('TB_JORNADA', [
+                'PK_JORNADA' => 1,
+                'FK_SUBCRITERIOS_INGLES' => 8,
+            ]);
+            $this->assertDatabaseHas('TB_CURSO_SUPERIOR', [
+                'PK_CURSO_SUPERIOR' => 1,
+                'FK_SUBCRITERIOS' => 1,
+            ]);
+            $this->assertDatabaseHas('TB_CURSO_SUPERIOR', [
+                'NO_CURSO_SUPERIOR_PT' => 'Governança de Privacidade',
+                'FK_SUBCRITERIOS' => 3,
+            ]);
+            $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 2);
+        } finally {
+            DB::disconnect('legacy_upgrade');
+            DB::setDefaultConnection($defaultConnection);
+            DB::purge('legacy_upgrade');
+            @unlink($database);
+        }
+    }
+
     public function test_it_persists_journey_relationships_with_script_table_names(): void
     {
         $profileType = ProfileType::create(['NO_TIPO_PERFIL' => 'Aluno']);
@@ -204,5 +284,190 @@ class JornadaSchemaTest extends TestCase
         $this->assertTrue($journey->higherEducationCourses->first()->is($higherEducation));
         $this->assertTrue($higherEducation->subcriterion->is($subcriterion));
         $this->assertSame(85, $journey->NU_PONTUACAO_TOTAL);
+    }
+
+    private function createLegacyJornadaSchema(): void
+    {
+        Schema::create('TB_DOMINIO_CONHECIMENTO', function (Blueprint $table): void {
+            $table->increments('PK_DOMINIO_CONHECIMENTO');
+            $table->string('NO_DOMINIO_CONHECIMENTO_PT', 100)->nullable();
+            $table->string('NO_DOMINIO_CONHECIMENTO_EN', 100)->nullable();
+        });
+
+        Schema::create('TB_PERFIS_JORNADA', function (Blueprint $table): void {
+            $table->increments('PK_PERFIS_JORNADA');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
+            $table->string('NO_PERFIS_PT', 100)->nullable();
+            $table->string('NO_PERFIS_EN', 100)->nullable();
+            $table->string('DS_PERFIS_PT', 1000)->nullable();
+            $table->string('DS_PERFIS_EN', 1000)->nullable();
+        });
+
+        Schema::create('TB_AREA_CONHECIMENTO', function (Blueprint $table): void {
+            $table->increments('PK_AREA_CONHECIMENTO');
+            $table->string('NO_AREA_CONHECIMENTO_PT', 100)->nullable();
+            $table->string('NO_AREA_CONHECIMENTO_EN', 100)->nullable();
+        });
+
+        Schema::create('TB_CURSO_SUPERIOR', function (Blueprint $table): void {
+            $table->increments('PK_CURSO_SUPERIOR');
+            $table->string('NO_CURSO_SUPERIOR_PT', 100)->nullable();
+            $table->string('NO_CURSO_SUPERIOR_EN', 100)->nullable();
+            $table->integer('TP_CURSO_SUPERIOR')->nullable();
+        });
+
+        Schema::create('TB_POS_GRADUACAO', function (Blueprint $table): void {
+            $table->increments('PK_POS_GRADUACAO');
+            $table->string('NO_POS_GRADUACAO_PT', 100)->nullable();
+            $table->string('NO_POS_GRADUACAO_EN', 100)->nullable();
+            $table->integer('TP_POS_GRADUACAO')->nullable();
+        });
+
+        Schema::create('TB_CERTIFICACAO_PROFISSIONAL', function (Blueprint $table): void {
+            $table->increments('PK_CERTIFICACAO_PROFISSIONAL');
+            $table->unsignedInteger('FK_DOMINIO_CONHECIMENTO')->nullable();
+            $table->string('NO_CERTIFICACAO_PROFISSIONAL', 100)->nullable();
+        });
+
+        Schema::create('TB_PROFICIENCIA_INGLES', function (Blueprint $table): void {
+            $table->increments('PK_PROFICIENCIA_INGLES');
+            $table->string('NO_PROFICIENCIA_INGLES_PT', 40)->nullable();
+            $table->string('NO_PROFICIENCIA_INGLES_EN', 40)->nullable();
+        });
+
+        Schema::create('TB_EXPERIENCIA_ATUACAO', function (Blueprint $table): void {
+            $table->increments('PK_EXPERIENCIA_ATUACAO');
+            $table->string('DS_EXPERIENCIA_ATUACAO_PT', 20)->nullable();
+            $table->string('DS_EXPERIENCIA_ATUACAO_EN', 30)->nullable();
+        });
+
+        Schema::create('TB_TIPO_PERFIL', function (Blueprint $table): void {
+            $table->increments('PK_TIPO_PERFIL');
+            $table->string('NO_TIPO_PERFIL', 20)->nullable();
+        });
+
+        Schema::create('TB_USUARIO', function (Blueprint $table): void {
+            $table->increments('PK_USUARIO');
+            $table->unsignedInteger('FK_TIPO_PERFIL')->nullable();
+            $table->integer('FK_TIPO_USUARIO')->nullable();
+            $table->string('NO_USUARIO', 50)->nullable();
+            $table->string('DS_EMAIL', 100)->nullable();
+            $table->string('DS_SENHA', 255)->nullable();
+            $table->integer('ST_ATIVO')->nullable();
+        });
+
+        Schema::create('TB_JORNADA', function (Blueprint $table): void {
+            $table->increments('PK_JORNADA');
+            $table->unsignedInteger('FK_USUARIO')->nullable();
+            $table->unsignedInteger('FK_PERFIS_JORNADA')->nullable();
+            $table->unsignedInteger('FK_EXPERIENCIA_PROFISSIONAL')->nullable();
+            $table->unsignedInteger('FK_ATUACAO_PERFIL')->nullable();
+            $table->unsignedInteger('FK_PROFICIENCIA_INGLES')->nullable();
+            $table->unsignedInteger('FK_CURSO_SUPERIOR')->nullable();
+            $table->unsignedInteger('FK_POS_GRADUACAO')->nullable();
+            $table->timestamp('DH_CRIADO_EM')->nullable();
+            $table->timestamp('DH_FIM')->nullable();
+        });
+    }
+
+    private function seedLegacyJornadaSchema(): void
+    {
+        foreach ([
+            1 => ['Privacidade', 'Privacy'],
+            2 => ['Segurança da Informação', 'Information Security'],
+            3 => ['Conjunta (Privacidade/Segurança)', 'Joint (Privacy/security)'],
+        ] as $id => [$namePt, $nameEn]) {
+            DB::table('TB_DOMINIO_CONHECIMENTO')->insert([
+                'PK_DOMINIO_CONHECIMENTO' => $id,
+                'NO_DOMINIO_CONHECIMENTO_PT' => $namePt,
+                'NO_DOMINIO_CONHECIMENTO_EN' => $nameEn,
+            ]);
+        }
+
+        foreach ([
+            18 => 'Alta Administração',
+            20 => 'Usuário',
+        ] as $id => $name) {
+            DB::table('TB_PERFIS_JORNADA')->insert([
+                'PK_PERFIS_JORNADA' => $id,
+                'FK_DOMINIO_CONHECIMENTO' => 3,
+                'NO_PERFIS_PT' => $name,
+                'NO_PERFIS_EN' => $name,
+            ]);
+        }
+
+        foreach ($this->legacyKnowledgeAreas() as $id => $name) {
+            DB::table('TB_AREA_CONHECIMENTO')->insert([
+                'PK_AREA_CONHECIMENTO' => $id,
+                'NO_AREA_CONHECIMENTO_PT' => $name,
+            ]);
+        }
+
+        foreach ([
+            1 => ['Básico - Leitura', 'Basic - Reading'],
+            2 => ['Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing'],
+            3 => ['Avançado - Fluente', 'Advanced - Fluent'],
+        ] as $id => [$namePt, $nameEn]) {
+            DB::table('TB_PROFICIENCIA_INGLES')->insert([
+                'PK_PROFICIENCIA_INGLES' => $id,
+                'NO_PROFICIENCIA_INGLES_PT' => $namePt,
+                'NO_PROFICIENCIA_INGLES_EN' => $nameEn,
+            ]);
+        }
+
+        DB::table('TB_CURSO_SUPERIOR')->insert([
+            'PK_CURSO_SUPERIOR' => 1,
+            'NO_CURSO_SUPERIOR_PT' => 'Direito',
+            'NO_CURSO_SUPERIOR_EN' => 'Law',
+            'TP_CURSO_SUPERIOR' => 1,
+        ]);
+        DB::table('TB_POS_GRADUACAO')->insert([
+            'PK_POS_GRADUACAO' => 1,
+            'NO_POS_GRADUACAO_PT' => 'Governança de Privacidade',
+            'NO_POS_GRADUACAO_EN' => 'Privacy Governance',
+            'TP_POS_GRADUACAO' => 3,
+        ]);
+        DB::table('TB_TIPO_PERFIL')->insert(['PK_TIPO_PERFIL' => 1, 'NO_TIPO_PERFIL' => 'Usuário']);
+        DB::table('TB_USUARIO')->insert([
+            'PK_USUARIO' => 1,
+            'FK_TIPO_PERFIL' => 1,
+            'NO_USUARIO' => 'Maria Silva',
+            'DS_EMAIL' => 'maria@example.com',
+            'ST_ATIVO' => 1,
+        ]);
+        DB::table('TB_JORNADA')->insert([
+            'PK_JORNADA' => 1,
+            'FK_USUARIO' => 1,
+            'FK_PERFIS_JORNADA' => 20,
+            'FK_PROFICIENCIA_INGLES' => 2,
+            'FK_CURSO_SUPERIOR' => 1,
+            'FK_POS_GRADUACAO' => 1,
+        ]);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function legacyKnowledgeAreas(): array
+    {
+        return [
+            1 => 'Gestão de Privacidade',
+            2 => 'Estratégias de Privacidade',
+            3 => 'Documentos Orientativos',
+            4 => 'Gestão de Riscos e Conformidade',
+            5 => 'Conhecimentos em Tecnologia da Informação',
+            6 => 'Privacy By Design',
+            7 => 'Gestão de Segurança da Informação',
+            8 => 'Gestão de Riscos',
+            9 => 'Gestão do Uso dos Recursos Operacionais e de Comunicações',
+            10 => 'Tratamento da Informação',
+            11 => 'Gestão de Ativos',
+            12 => 'Gestão de Incidentes Cibernéticos',
+            13 => 'Gestão de Continuidade',
+            14 => 'Segurança de Controle de Acesso',
+            15 => 'Security By Design',
+            16 => 'Gestão de Mudança',
+            17 => 'Gestão de Conformidade',
+        ];
     }
 }

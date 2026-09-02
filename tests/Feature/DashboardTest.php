@@ -43,13 +43,23 @@ class DashboardTest extends TestCase
             'NO_SUBCRITERIO_PT' => 'Basico',
             'NO_SUBCRITERIO_EN' => 'Basic',
         ]);
+        $graduation = $criterion->subcriteria()->create([
+            'NO_SUBCRITERIO_PT' => 'Graduação',
+            'NO_SUBCRITERIO_EN' => 'Graduation',
+        ]);
+        $postgraduate = $criterion->subcriteria()->create([
+            'NO_SUBCRITERIO_PT' => 'Pós-Graduação',
+            'NO_SUBCRITERIO_EN' => 'Postgraduate',
+        ]);
         $higherEducation = HigherEducationCourse::create([
-            'FK_SUBCRITERIOS' => $criterion->subcriteria()->create([
-                'NO_SUBCRITERIO_PT' => 'Graduação',
-                'NO_SUBCRITERIO_EN' => 'Graduation',
-            ])->PK_SUBCRITERIOS,
+            'FK_SUBCRITERIOS' => $graduation->PK_SUBCRITERIOS,
             'NO_CURSO_SUPERIOR_PT' => 'Direito',
             'NO_CURSO_SUPERIOR_EN' => 'Law',
+        ]);
+        $secondHigherEducation = HigherEducationCourse::create([
+            'FK_SUBCRITERIOS' => $postgraduate->PK_SUBCRITERIOS,
+            'NO_CURSO_SUPERIOR_PT' => 'Segurança da Informação',
+            'NO_CURSO_SUPERIOR_EN' => 'Information Security',
         ]);
 
         $oldestCompleted = $this->createJourney(
@@ -81,7 +91,10 @@ class DashboardTest extends TestCase
                 'FK_SUBCRITERIOS_INGLES' => $english->PK_SUBCRITERIOS,
             ],
         );
-        $latestCompleted->higherEducationCourses()->attach($higherEducation->PK_CURSO_SUPERIOR);
+        $latestCompleted->higherEducationCourses()->attach([
+            $higherEducation->PK_CURSO_SUPERIOR,
+            $secondHigherEducation->PK_CURSO_SUPERIOR,
+        ]);
         $unfinished = $this->createJourney($user, $journeyProfile, '2026-07-05 08:00:00', null);
         $this->createJourney($otherUser, $journeyProfile, '2026-07-06 08:00:00', '2026-07-06 09:00:00');
 
@@ -113,7 +126,19 @@ class DashboardTest extends TestCase
             )
             ->assertJsonPath('data.journeys.latest_journey.professional_experience.description_pt', '1 ano')
             ->assertJsonPath('data.journeys.latest_journey.english_proficiency.name_pt', 'Basico')
+            ->assertJsonCount(2, 'data.journeys.latest_journey.higher_education_courses')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.0.id', $higherEducation->PK_CURSO_SUPERIOR)
             ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.0.name_pt', 'Direito')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.0.name_en', 'Law')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.0.subcriterion.id', $graduation->PK_SUBCRITERIOS)
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.0.subcriterion.name_pt', 'Graduação')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.0.subcriterion.name_en', 'Graduation')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.1.id', $secondHigherEducation->PK_CURSO_SUPERIOR)
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.1.name_pt', 'Segurança da Informação')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.1.name_en', 'Information Security')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.1.subcriterion.id', $postgraduate->PK_SUBCRITERIOS)
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.1.subcriterion.name_pt', 'Pós-Graduação')
+            ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.1.subcriterion.name_en', 'Postgraduate')
             ->assertJsonCount(3, 'data.journeys.recent_journeys')
             ->assertJsonPath('data.journeys.recent_journeys.0.id', $secondCompleted->PK_JORNADA)
             ->assertJsonPath('data.journeys.recent_journeys.1.id', $thirdCompleted->PK_JORNADA)

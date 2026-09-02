@@ -62,7 +62,9 @@ class Journey extends JornadaModel
             'FK_CURSO_SUPERIOR',
             'PK_JORNADA',
             'PK_CURSO_SUPERIOR',
-        )->withPivot('PK_CURSOS_SUPERIORES_JORNADA');
+        )
+            ->withPivot('PK_CURSOS_SUPERIORES_JORNADA')
+            ->orderBy('TB_CURSO_SUPERIOR.PK_CURSO_SUPERIOR');
     }
 
     public function acquiredKnowledges(): HasMany
