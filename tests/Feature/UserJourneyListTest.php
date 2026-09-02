@@ -125,8 +125,8 @@ class UserJourneyListTest extends TestCase
             ->getJson("/api/users/{$user->PK_USUARIO}/journeys?page=0&per_page=101")
             ->assertUnprocessable()
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Parametros de paginacao invalidos.')
-            ->assertJsonPath('code', 'INVALID_PAGINATION_PARAMETERS')
+            ->assertJsonPath('message', 'Validation error.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonPath('errors.page.0', 'A pagina atual deve ser maior ou igual a 1.')
             ->assertJsonPath('errors.per_page.0', 'A quantidade de registros por pagina nao pode ser maior que 100.');
     }
@@ -244,8 +244,8 @@ class UserJourneyListTest extends TestCase
                 'code',
             ])
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Parametros de filtro invalidos.')
-            ->assertJsonPath('code', 'INVALID_JOURNEY_FILTERS')
+            ->assertJsonPath('message', 'Validation error.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonPath('errors.status.0', 'A situacao da jornada deve ser completed ou ongoing.')
             ->assertJsonPath('errors.journey_profile_id.0', 'O perfil de jornada informado nao existe.')
             ->assertJsonPath('errors.started_from.0', 'A data inicial minima deve estar no formato Y-m-d.')

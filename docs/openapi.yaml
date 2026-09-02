@@ -7,41 +7,19 @@ servers:
   - url: http://localhost:8030/api
     description: Ambiente local via Docker
 tags:
-  - name: Health
-    description: Endpoints de disponibilidade da API
   - name: Auth
     description: Endpoints publicos de cadastro e autenticacao
   - name: Dashboard
     description: Endpoints de dados do painel inicial do usuario
-  - name: Competencies
-    description: Exemplo removivel de CRUD usando MVC, Services e Repositories
   - name: JourneyProfiles
     description: Consulta de tipos de jornada usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
-  - name: Users
-    description: Endpoints de cadastro e gestao de usuarios
+  # - name: Users
+  #   description: Endpoints de cadastro e gestao de usuarios
   - name: Journeys
     description: Endpoints de consulta das jornadas dos usuarios
 paths:
-  /health:
-    get:
-      tags:
-        - Health
-      summary: Verifica se a API esta disponivel
-      operationId: getHealth
-      responses:
-        "200":
-          description: API disponivel
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthResponse"
-              examples:
-                ok:
-                  value:
-                    status: ok
-                    service: jornada-capacitacao-api
   /template-example:
     get:
       tags:
@@ -751,7 +729,7 @@ paths:
                     errors: []
                     code: USER_NOT_FOUND
         "422":
-          description: Parametros de paginacao ou filtros invalidos
+          description: Erro de validacao
           content:
             application/json:
               schema:
@@ -760,21 +738,21 @@ paths:
                 invalidPagination:
                   value:
                     success: false
-                    message: Parametros de paginacao invalidos.
+                    message: Validation error.
                     errors:
                       page:
                         - A pagina atual deve ser maior ou igual a 1.
-                    code: INVALID_PAGINATION_PARAMETERS
+                    code: VALIDATION_ERROR
                 invalidFilters:
                   value:
                     success: false
-                    message: Parametros de filtro invalidos.
+                    message: Validation error.
                     errors:
                       status:
                         - A situacao da jornada deve ser completed ou ongoing.
                       started_from:
                         - A data inicial minima deve estar no formato Y-m-d.
-                    code: INVALID_JOURNEY_FILTERS
+                    code: VALIDATION_ERROR
         "500":
           description: Erro interno do servidor
           content:
@@ -788,105 +766,217 @@ paths:
                     message: Nao foi possivel buscar as jornadas no momento.
                     errors: []
                     code: JOURNEYS_SEARCH_FAILED
-  /competencies:
+  /journeys/{journey}:
     get:
       tags:
-        - Competencies
-      summary: Lista competencias
-      operationId: listCompetencies
+        - Journeys
+      summary: Busca o detalhe de uma jornada por ID
+      description: Retorna o detalhe completo de uma jornada, incluindo respostas do questionario, conhecimentos adquiridos e certificacoes profissionais. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      operationId: getJourneyDetail
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
       responses:
         "200":
-          description: Lista de competencias cadastradas
+          description: Jornada encontrada com sucesso
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompetencyListResponse"
-    post:
-      tags:
-        - Competencies
-      summary: Cria uma competencia
-      operationId: createCompetency
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CompetencyPayload"
-            examples:
-              privacy:
-                value:
-                  name: Privacidade de dados
-                  description: Conceitos essenciais de protecao de dados pessoais.
-      responses:
-        "201":
-          description: Competencia criada
+                $ref: "#/components/schemas/UserJourneyDetailResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Jornada encontrada com sucesso.
+                    data:
+                      id: 10
+                      user:
+                        id: 2
+                        name: Maria Silva
+                        email: maria.silva@example.com
+                        organization: Jornada
+                        sector: Capacitacao
+                        registration: "123"
+                        profile_type:
+                          id: 3
+                          name: Aluno
+                        user_type_id: 2
+                        is_active: true
+                      journey_profile:
+                        id: 1
+                        name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                        name_en: Data Protection Officer
+                        description_pt: Privacidade e Seguranca
+                        description_en: Privacy and Security
+                        knowledge_domain:
+                          id: 1
+                          name_pt: Privacidade
+                          name_en: Privacy
+                        competencies:
+                          - id: 1
+                            origin_pt: Referencial
+                            origin_en: Reference
+                            name_pt: LGPD
+                            name_en: LGPD
+                            description_pt: Fundamentos da LGPD
+                            description_en: LGPD fundamentals
+                            knowledge_domain:
+                              id: 1
+                              name_pt: Privacidade
+                              name_en: Privacy
+                            knowledge_area:
+                              id: 1
+                              name_pt: Governanca
+                              name_en: Governance
+                            difficulty:
+                              id: 1
+                              name_pt: Basico
+                              name_en: Basic
+                      started_at: "2026-07-23 16:30:00"
+                      finished_at: null
+                      status: ongoing
+                      is_completed: false
+                      answers:
+                        professional_experience:
+                          id: 1
+                          description_pt: 1 a 3 anos
+                          description_en: 1 to 3 years
+                        profile_experience:
+                          id: 1
+                          description_pt: 1 a 3 anos
+                          description_en: 1 to 3 years
+                        english_proficiency:
+                          id: 1
+                          name_pt: Intermediario
+                          name_en: Intermediate
+                        higher_education_course:
+                          id: 1
+                          name_pt: Direito
+                          name_en: Law
+                          type: 1
+                        postgraduate_course:
+                          id: 1
+                          name_pt: Seguranca
+                          name_en: Security
+                          type: 1
+                      acquired_knowledges:
+                        - id: 1
+                          type_acquired: 1
+                          is_acquired: true
+                          competency:
+                            id: 1
+                            origin_pt: Referencial
+                            origin_en: Reference
+                            name_pt: LGPD
+                            name_en: LGPD
+                            description_pt: Fundamentos da LGPD
+                            description_en: LGPD fundamentals
+                            knowledge_domain:
+                              id: 1
+                              name_pt: Privacidade
+                              name_en: Privacy
+                            knowledge_area:
+                              id: 1
+                              name_pt: Governanca
+                              name_en: Governance
+                            difficulty:
+                              id: 1
+                              name_pt: Basico
+                              name_en: Basic
+                      professional_certifications:
+                        - id: 1
+                          name: CIPM
+                          pivot_id: 1
+                          knowledge_domain:
+                            id: 1
+                            name_pt: Privacidade
+                            name_en: Privacy
+                      summary:
+                        acquired_knowledges_count: 1
+                        professional_certifications_count: 1
+        "401":
+          description: Usuario nao autenticado
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompetencyResponse"
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Usuario sem permissao para visualizar esta jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "404":
+          description: Jornada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada concluida com dados obrigatorios incompletos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                incompleteJourney:
+                  value:
+                    success: false
+                    message: Jornada concluida possui dados obrigatorios incompletos.
+                    errors:
+                      fields:
+                        - professional_experience
+                    code: INCOMPLETE_JOURNEY
         "422":
-          description: Erro de validacao
+          description: Identificador de jornada invalido
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
-  /competencies/{id}:
-    parameters:
-      - $ref: "#/components/parameters/CompetencyId"
-    get:
-      tags:
-        - Competencies
-      summary: Busca uma competencia por ID
-      operationId: getCompetency
-      responses:
-        "200":
-          description: Competencia encontrada
+              examples:
+                invalidIdentifier:
+                  value:
+                    success: false
+                    message: Identificador da jornada invalido.
+                    errors:
+                      journey:
+                        - O identificador da jornada deve ser um numero inteiro maior ou igual a 1.
+                    code: INVALID_JOURNEY_IDENTIFIER
+        "500":
+          description: Erro interno do servidor
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CompetencyResponse"
-        "404":
-          description: Competencia nao encontrada
-    put:
-      tags:
-        - Competencies
-      summary: Atualiza uma competencia
-      operationId: updateCompetency
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CompetencyPayload"
-      responses:
-        "200":
-          description: Competencia atualizada
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompetencyResponse"
-        "404":
-          description: Competencia nao encontrada
-        "422":
-          description: Erro de validacao
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardValidationError"
-    delete:
-      tags:
-        - Competencies
-      summary: Remove uma competencia
-      operationId: deleteCompetency
-      responses:
-        "200":
-          description: Competencia removida
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EmptySuccessResponse"
-        "404":
-          description: Competencia nao encontrada
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar os dados da jornada no momento.
+                    errors: []
+                    code: JOURNEY_SEARCH_FAILED
   /journey-profiles:
     parameters:
       - name: page
@@ -927,11 +1017,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardError"
         "422":
-          description: Parametros de paginacao invalidos
+          description: Erro de validacao
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidPagination:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      page:
+                        - A pagina atual deve ser maior ou igual a 1.
+                    code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:
       - $ref: "#/components/parameters/JourneyProfileId"
@@ -977,14 +1076,6 @@ components:
       schema:
         type: string
       example: test-csrf-token
-    CompetencyId:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: integer
-        minimum: 1
-      example: 1
     JourneyProfileId:
       name: id
       in: path
@@ -1002,19 +1093,16 @@ components:
         type: integer
         minimum: 1
       example: 2
+    JourneyId:
+      name: journey
+      in: path
+      required: true
+      description: Identificador da jornada que sera detalhada.
+      schema:
+        type: integer
+        minimum: 1
+      example: 10
   schemas:
-    HealthResponse:
-      type: object
-      required:
-        - status
-        - service
-      properties:
-        status:
-          type: string
-          example: ok
-        service:
-          type: string
-          example: jornada-capacitacao-api
     TemplateExampleSuccessResponse:
       type: object
       required:
@@ -1095,38 +1183,6 @@ components:
         has_next_page:
           type: boolean
           example: true
-    CompetencyListResponse:
-      type: object
-      required:
-        - success
-        - message
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: Competencies retrieved successfully.
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Competency"
-    CompetencyResponse:
-      type: object
-      required:
-        - success
-        - message
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: Competency retrieved successfully.
-        data:
-          $ref: "#/components/schemas/Competency"
     EmptySuccessResponse:
       type: object
       required:
@@ -1139,7 +1195,7 @@ components:
           example: true
         message:
           type: string
-          example: Competency deleted successfully.
+          example: Logout realizado com sucesso.
         data:
           type: "null"
           example: null
@@ -1563,6 +1619,348 @@ components:
         user_id:
           type: integer
           example: 2
+    UserJourneyDetailResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornada encontrada com sucesso.
+        data:
+          $ref: "#/components/schemas/UserJourneyDetail"
+    UserJourneyDetail:
+      type: object
+      required:
+        - id
+        - user
+        - journey_profile
+        - started_at
+        - finished_at
+        - status
+        - is_completed
+        - answers
+        - acquired_knowledges
+        - professional_certifications
+        - summary
+      properties:
+        id:
+          type: integer
+          example: 10
+        user:
+          $ref: "#/components/schemas/UserJourneyDetailUser"
+        journey_profile:
+          $ref: "#/components/schemas/UserJourneyDetailProfile"
+        started_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 16:30:00"
+        finished_at:
+          type:
+            - string
+            - "null"
+          example: null
+        status:
+          type: string
+          enum:
+            - completed
+            - ongoing
+          example: ongoing
+        is_completed:
+          type: boolean
+          example: false
+        answers:
+          $ref: "#/components/schemas/UserJourneyAnswers"
+        acquired_knowledges:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyAcquiredKnowledge"
+        professional_certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyProfessionalCertification"
+        summary:
+          $ref: "#/components/schemas/UserJourneySummary"
+    UserJourneyDetailUser:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 2
+        name:
+          type:
+            - string
+            - "null"
+          example: Maria Silva
+        email:
+          type:
+            - string
+            - "null"
+          example: maria.silva@example.com
+        organization:
+          type:
+            - string
+            - "null"
+          example: Jornada
+        sector:
+          type:
+            - string
+            - "null"
+          example: Capacitacao
+        registration:
+          type:
+            - string
+            - "null"
+          example: "123"
+        profile_type:
+          $ref: "#/components/schemas/UserJourneySimpleOption"
+        user_type_id:
+          type:
+            - integer
+            - "null"
+          example: 2
+        is_active:
+          type: boolean
+          example: true
+    UserJourneyDetailProfile:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Encarregado
+        name_en:
+          type:
+            - string
+            - "null"
+          example: DPO
+        description_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade e Seguranca
+        description_en:
+          type:
+            - string
+            - "null"
+          example: Privacy and Security
+        knowledge_domain:
+          $ref: "#/components/schemas/UserJourneyKnowledgeDomain"
+        competencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyCompetency"
+    UserJourneyAnswers:
+      type: object
+      properties:
+        professional_experience:
+          $ref: "#/components/schemas/UserJourneyExperienceOption"
+        profile_experience:
+          $ref: "#/components/schemas/UserJourneyExperienceOption"
+        english_proficiency:
+          $ref: "#/components/schemas/UserJourneyLocalizedOption"
+        higher_education_course:
+          $ref: "#/components/schemas/UserJourneyCourseOption"
+        postgraduate_course:
+          $ref: "#/components/schemas/UserJourneyCourseOption"
+    UserJourneyAcquiredKnowledge:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type_acquired:
+          type:
+            - integer
+            - "null"
+          example: 1
+        is_acquired:
+          type: boolean
+          example: true
+        competency:
+          $ref: "#/components/schemas/UserJourneyCompetency"
+    UserJourneyProfessionalCertification:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type:
+            - string
+            - "null"
+          example: CIPM
+        pivot_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        knowledge_domain:
+          $ref: "#/components/schemas/UserJourneyKnowledgeDomain"
+    UserJourneyCompetency:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        origin_pt:
+          type:
+            - string
+            - "null"
+          example: Referencial
+        origin_en:
+          type:
+            - string
+            - "null"
+          example: Reference
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: LGPD
+        name_en:
+          type:
+            - string
+            - "null"
+          example: LGPD
+        description_pt:
+          type:
+            - string
+            - "null"
+          example: Fundamentos da LGPD
+        description_en:
+          type:
+            - string
+            - "null"
+          example: LGPD fundamentals
+        knowledge_domain:
+          $ref: "#/components/schemas/UserJourneyKnowledgeDomain"
+        knowledge_area:
+          $ref: "#/components/schemas/UserJourneyKnowledgeArea"
+        difficulty:
+          $ref: "#/components/schemas/UserJourneyLocalizedOption"
+    UserJourneyKnowledgeDomain:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Privacy
+    UserJourneyKnowledgeArea:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Governanca
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Governance
+    UserJourneySimpleOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 3
+        name:
+          type:
+            - string
+            - "null"
+          example: Aluno
+    UserJourneyLocalizedOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Intermediario
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Intermediate
+    UserJourneyExperienceOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        description_pt:
+          type:
+            - string
+            - "null"
+          example: 1 a 3 anos
+        description_en:
+          type:
+            - string
+            - "null"
+          example: 1 to 3 years
+    UserJourneyCourseOption:
+      type: object
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Direito
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Law
+        type:
+          type:
+            - integer
+            - "null"
+          example: 1
     DashboardResponse:
       type: object
       required:
@@ -1870,62 +2268,6 @@ components:
           format: password
           maxLength: 100
           example: SenhaSegura123
-    Competency:
-      type: object
-      required:
-        - id
-        - name
-        - description
-        - knowledge_domain_id
-        - knowledge_area_id
-        - difficulty_id
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: Privacidade de dados
-        description:
-          type:
-            - string
-            - "null"
-          example: Conceitos essenciais de protecao de dados pessoais.
-        knowledge_domain_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-        knowledge_area_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-        difficulty_id:
-          type:
-            - integer
-            - "null"
-          example: 1
-    CompetencyPayload:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          maxLength: 100
-          example: Privacidade de dados
-        description:
-          type:
-            - string
-            - "null"
-          maxLength: 500
-          example: Conceitos essenciais de protecao de dados pessoais.
-        knowledge_domain_id:
-          type:
-            - integer
-            - "null"
-          example: 1
     JourneyProfileListResponse:
       type: object
       required:

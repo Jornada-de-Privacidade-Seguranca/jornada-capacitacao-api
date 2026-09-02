@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\IncompleteJourneyException;
 use App\Http\Requests\ListUserJourneysRequest;
+use App\Http\Requests\ShowJourneyRequest;
+use App\Http\Resources\JourneyDetailResource;
 use App\Http\Resources\JourneyListResource;
 use App\Services\JourneyService;
 use App\Support\ApiResponse;
@@ -14,9 +17,7 @@ use Throwable;
 
 class UserJourneyController
 {
-    public function __construct(private readonly JourneyService $journeyService)
-    {
-    }
+    public function __construct(private readonly JourneyService $journeyService) {}
 
     public function index(ListUserJourneysRequest $request, int $user): JsonResponse
     {
@@ -50,6 +51,48 @@ class UserJourneyController
             resource: JourneyListResource::collection($journeys)->resolve(),
             paginator: $journeys,
             message: 'Jornadas retornadas com sucesso.',
+        );
+    }
+
+    public function show(ShowJourneyRequest $request): JsonResponse
+    {
+        try {
+            $journeyDetail = $this->journeyService->findForAuthenticatedUser(
+                authenticatedUser: $request->user(),
+                journeyId: $request->validatedJourneyId(),
+            );
+        } catch (ModelNotFoundException) {
+            return ApiResponse::error(
+                message: 'Jornada nao encontrada.',
+                status: Response::HTTP_NOT_FOUND,
+                code: 'JOURNEY_NOT_FOUND',
+            );
+        } catch (AccessDeniedHttpException) {
+            return ApiResponse::error(
+                message: 'Voce nao possui permissao para visualizar esta jornada.',
+                status: Response::HTTP_FORBIDDEN,
+                code: 'JOURNEY_FORBIDDEN',
+            );
+        } catch (IncompleteJourneyException $exception) {
+            return ApiResponse::error(
+                message: 'Jornada concluida possui dados obrigatorios incompletos.',
+                status: Response::HTTP_CONFLICT,
+                code: 'INCOMPLETE_JOURNEY',
+                errors: [
+                    'fields' => $exception->missingFields(),
+                ],
+            );
+        } catch (Throwable) {
+            return ApiResponse::error(
+                message: 'Nao foi possivel buscar os dados da jornada no momento.',
+                status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                code: 'JOURNEY_SEARCH_FAILED',
+            );
+        }
+
+        return ApiResponse::success(
+            data: new JourneyDetailResource($journeyDetail),
+            message: 'Jornada encontrada com sucesso.',
         );
     }
 }
