@@ -153,6 +153,28 @@ composer check
 
 Esse comando executa Laravel Pint, PHPStan/Larastan, PHPMD e os testes automatizados. Caso qualquer etapa falhe, o comando sera finalizado com erro e o problema devera ser corrigido antes do envio do codigo.
 
+### Integracao continua
+
+Todos os Pull Requests destinados a branch `develop` executam automaticamente as verificacoes de qualidade e os testes pelo GitHub Actions.
+
+As mesmas verificacoes podem ser executadas localmente antes do envio utilizando:
+
+```bash
+composer check
+```
+
+Relacao entre comandos locais e CI:
+
+| Local | CI |
+| --- | --- |
+| `composer quality` | `Quality` |
+| `composer test` | `Tests` |
+| `composer check` | `Quality` + `Tests` |
+
+O check `Quality` executa Laravel Pint, PHPStan/Larastan e PHPMD. O check `Tests` executa PHPUnit / Laravel Tests.
+
+Os checks `Quality` e `Tests` devem estar configurados como obrigatorios para merge na branch `develop`.
+
 ## Documentacao Swagger
 
 A especificacao OpenAPI fica em `docs/openapi.yaml`.
