@@ -155,7 +155,7 @@ Esse comando executa Laravel Pint, PHPStan/Larastan, PHPMD e os testes automatiz
 
 ### Integracao continua
 
-Todos os Pull Requests destinados a branch `develop` executam automaticamente as verificacoes de qualidade e os testes pelo GitHub Actions.
+Todos os Pull Requests destinados a branch `main` executam automaticamente as verificacoes de qualidade e os testes pelo GitHub Actions.
 
 As mesmas verificacoes podem ser executadas localmente antes do envio utilizando:
 
@@ -173,7 +173,7 @@ Relacao entre comandos locais e CI:
 
 O check `Quality` executa Laravel Pint, PHPStan/Larastan e PHPMD. O check `Tests` executa PHPUnit / Laravel Tests.
 
-Os checks `Quality` e `Tests` devem estar configurados como obrigatorios para merge na branch `develop`.
+Os checks `Quality` e `Tests` devem estar configurados como obrigatorios para merge na branch `main`.
 
 ## Documentacao Swagger
 
