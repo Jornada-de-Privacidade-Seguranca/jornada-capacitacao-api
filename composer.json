@@ -47,7 +47,8 @@
             "@php vendor/bin/phpstan analyse"
         ],
         "quality:phpmd": [
-            "@php -d error_reporting=6143 vendor/bin/phpmd app text phpmd.xml"
+            "@php -d error_reporting=6143 vendor/bin/phpmd app text phpmd.xml",
+            "@php -r \"fwrite(STDOUT, 'PHPMD passed.'.PHP_EOL);\""
         ],
         "format": [
             "@php vendor/bin/pint"
