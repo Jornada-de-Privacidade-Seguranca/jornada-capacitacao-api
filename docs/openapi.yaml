@@ -850,16 +850,21 @@ paths:
                           id: 1
                           name_pt: Intermediario
                           name_en: Intermediate
-                        higher_education_course:
-                          id: 1
-                          name_pt: Direito
-                          name_en: Law
-                          type: 1
-                        postgraduate_course:
-                          id: 1
-                          name_pt: Seguranca
-                          name_en: Security
-                          type: 1
+                        higher_education_courses:
+                          - id: 1
+                            name_pt: Direito
+                            name_en: Law
+                            subcriterion:
+                              id: 4
+                              name_pt: Graduacao
+                              name_en: Graduation
+                          - id: 2
+                            name_pt: Seguranca
+                            name_en: Security
+                            subcriterion:
+                              id: 5
+                              name_pt: Pos-Graduacao
+                              name_en: Postgraduate
                       acquired_knowledges:
                         - id: 1
                           type_acquired: 1
@@ -1773,10 +1778,10 @@ components:
           $ref: "#/components/schemas/UserJourneyExperienceOption"
         english_proficiency:
           $ref: "#/components/schemas/UserJourneyLocalizedOption"
-        higher_education_course:
-          $ref: "#/components/schemas/UserJourneyCourseOption"
-        postgraduate_course:
-          $ref: "#/components/schemas/UserJourneyCourseOption"
+        higher_education_courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyCourseOption"
     UserJourneyAcquiredKnowledge:
       type: object
       properties:
@@ -1956,11 +1961,8 @@ components:
             - string
             - "null"
           example: Law
-        type:
-          type:
-            - integer
-            - "null"
-          example: 1
+        subcriterion:
+          $ref: "#/components/schemas/UserJourneyLocalizedOption"
     DashboardResponse:
       type: object
       required:

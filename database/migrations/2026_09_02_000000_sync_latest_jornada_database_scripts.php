@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    private const EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT = 270;
+
     public function up(): void
     {
         $this->createLatestScriptTables();
@@ -337,6 +339,9 @@ return new class extends Migration
         }
 
         $currentProfileName = null;
+        $insertedRows = 0;
+        $parsedRows = 0;
+        $unresolvedProfileNames = [];
         $section = $this->fixedDataSection(
             startMarker: '-- Insert TB_PESO_CRIT_COMPETENCIA',
             endMarker: '-- Insert TB_EXPERIENCIA_ATUACAO',
@@ -348,20 +353,24 @@ return new class extends Migration
                 continue;
             }
 
-            if (
-                $currentProfileName === null
-                || preg_match(
-                    '/VALUES\s*\(\s*\d+\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\);/i',
-                    $line,
-                    $matches,
-                ) !== 1
-            ) {
+            if (preg_match(
+                '/VALUES\s*\(\s*\d+\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\);/i',
+                $line,
+                $matches,
+            ) !== 1) {
+                continue;
+            }
+
+            $parsedRows++;
+
+            if ($currentProfileName === null) {
                 continue;
             }
 
             $profileId = $this->findJourneyProfileId($currentProfileName);
 
             if ($profileId === null) {
+                $unresolvedProfileNames[$currentProfileName] = true;
                 continue;
             }
 
@@ -370,6 +379,27 @@ return new class extends Migration
                 'FK_AREA_CONHECIMENTO' => (int) $matches[1],
                 'NU_PESO_CRIT_COMPETENCIA' => (float) $matches[2],
             ]);
+            $insertedRows++;
+        }
+
+        if ($parsedRows !== self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT) {
+            throw new \RuntimeException(sprintf(
+                'Expected %d competency criterion weight rows in fixed data, parsed %d.',
+                self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT,
+                $parsedRows,
+            ));
+        }
+
+        if (
+            DB::table('TB_PERFIS_JORNADA')->count() >= 21
+            && ($insertedRows !== self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT || $unresolvedProfileNames !== [])
+        ) {
+            throw new \RuntimeException(sprintf(
+                'Expected to insert %d competency criterion weight rows, inserted %d. Unresolved profiles: %s.',
+                self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT,
+                $insertedRows,
+                implode(', ', array_keys($unresolvedProfileNames)),
+            ));
         }
     }
 
