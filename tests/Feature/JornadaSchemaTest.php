@@ -17,6 +17,7 @@ use App\Models\ProfessionalExperience;
 use App\Models\ProfileType;
 use App\Models\Subcriterion;
 use App\Models\Usuario;
+use Database\Seeders\ManualSwaggerDashboardSeeder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,14 @@ use Tests\TestCase;
 class JornadaSchemaTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const SENIOR_MANAGEMENT_1_DESCRIPTION_PT = 'Entende-se que a Alta Administração em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
+1.Ministros de Estado e Secretários, Presidentes, Vice-Presidente, Reitores, Vice-Reitores, Pró-Reitores e Comandantes das Forças Armadas, Comitê de Segurança da Informação.';
+
+    private const SENIOR_MANAGEMENT_2_DESCRIPTION_PT = 'Entende-se que a Alta Administração 2 em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
+1.Diretores, Vice-Diretores, Superintendentes, Subsecretários, Coordenadores-Gerais.
+2.Chefes de Gabinete, Subchefes e Assessores.
+3.Assessor de Controle Interno, Ouvidor. ';
 
     public function test_it_creates_jornada_tables_from_the_database_modeling(): void
     {
@@ -127,6 +136,56 @@ class JornadaSchemaTest extends TestCase
         ]);
     }
 
+    public function test_manual_swagger_dashboard_seeder_uses_latest_jornada_schema(): void
+    {
+        $this->seed(ManualSwaggerDashboardSeeder::class);
+
+        $userId = Usuario::query()->where('DS_EMAIL', 'user@jornada.local')->value('PK_USUARIO');
+        $journeyProfileId = JourneyProfile::query()
+            ->where('NO_PERFIS_PT', 'Encarregado pelo Tratamento de Dados Pessoais')
+            ->value('PK_PERFIS_JORNADA');
+        $englishSubcriterionId = Subcriterion::query()
+            ->where('NO_SUBCRITERIO_PT', 'Intermediário - Leitura e Escrita')
+            ->value('PK_SUBCRITERIOS');
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'FK_USUARIO' => $userId,
+            'FK_PERFIS_JORNADA' => $journeyProfileId,
+            'FK_SUBCRITERIOS_INGLES' => $englishSubcriterionId,
+            'DH_CRIADO_EM' => '2026-07-23 09:00:00',
+            'DH_FIM' => '2026-07-23 10:00:00',
+        ]);
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'FK_USUARIO' => $userId,
+            'FK_PERFIS_JORNADA' => $journeyProfileId,
+            'DH_CRIADO_EM' => '2026-07-24 09:00:00',
+            'DH_FIM' => null,
+        ]);
+        $this->assertDatabaseHas('TB_CURSO_SUPERIOR', [
+            'NO_CURSO_SUPERIOR_PT' => 'Direito',
+            'FK_SUBCRITERIOS' => 1,
+        ]);
+        $this->assertDatabaseHas('TB_CURSO_SUPERIOR', [
+            'NO_CURSO_SUPERIOR_PT' => 'Privacidade e Protecao de Dados',
+            'FK_SUBCRITERIOS' => 2,
+        ]);
+
+        $completedJourneyId = Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->whereNotNull('DH_FIM')
+            ->value('PK_JORNADA');
+        $courseIds = HigherEducationCourse::query()
+            ->whereIn('NO_CURSO_SUPERIOR_PT', ['Direito', 'Privacidade e Protecao de Dados'])
+            ->pluck('PK_CURSO_SUPERIOR');
+
+        foreach ($courseIds as $courseId) {
+            $this->assertDatabaseHas('RL_CURSOS_SUPERIORES_JORNADA', [
+                'FK_JORNADA' => $completedJourneyId,
+                'FK_CURSO_SUPERIOR' => $courseId,
+            ]);
+        }
+    }
+
     public function test_it_upgrades_legacy_jornada_schema_to_latest_database_scripts(): void
     {
         $defaultConnection = DB::getDefaultConnection();
@@ -171,6 +230,23 @@ class JornadaSchemaTest extends TestCase
             $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'NU_PONTUACAO_TOTAL'));
             $this->assertDatabaseCount('TB_CRITERIOS', 6);
             $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
+            $this->assertDatabaseCount('TB_PERFIS_JORNADA', 21);
+            $this->assertDatabaseCount('TB_PESO_CRIT_COMPETENCIA', 270);
+            $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
+                'FK_PERFIS_JORNADA' => 1,
+                'FK_AREA_CONHECIMENTO' => 5,
+                'NU_PESO_CRIT_COMPETENCIA' => 8,
+            ]);
+            $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
+                'FK_PERFIS_JORNADA' => 14,
+                'FK_AREA_CONHECIMENTO' => 5,
+                'NU_PESO_CRIT_COMPETENCIA' => 18.92,
+            ]);
+            $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
+                'FK_PERFIS_JORNADA' => 17,
+                'FK_AREA_CONHECIMENTO' => 5,
+                'NU_PESO_CRIT_COMPETENCIA' => 10.305,
+            ]);
             $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
                 'FK_PERFIS_JORNADA' => 20,
                 'FK_AREA_CONHECIMENTO' => 5,
@@ -179,10 +255,12 @@ class JornadaSchemaTest extends TestCase
             $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
                 'PK_PERFIS_JORNADA' => 18,
                 'NO_PERFIS_PT' => 'Alta Administração 1',
+                'DS_PERFIS_PT' => self::SENIOR_MANAGEMENT_1_DESCRIPTION_PT,
             ]);
             $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
                 'NO_PERFIS_PT' => 'Alta Administração 2',
                 'NO_PERFIS_EN' => 'Senior Management 2',
+                'DS_PERFIS_PT' => self::SENIOR_MANAGEMENT_2_DESCRIPTION_PT,
             ]);
             $this->assertDatabaseHas('TB_JORNADA', [
                 'PK_JORNADA' => 1,
@@ -384,15 +462,14 @@ class JornadaSchemaTest extends TestCase
             ]);
         }
 
-        foreach ([
-            18 => 'Alta Administração',
-            20 => 'Usuário',
-        ] as $id => $name) {
+        foreach ($this->legacyJourneyProfiles() as $id => [$domainId, $namePt, $nameEn]) {
             DB::table('TB_PERFIS_JORNADA')->insert([
                 'PK_PERFIS_JORNADA' => $id,
-                'FK_DOMINIO_CONHECIMENTO' => 3,
-                'NO_PERFIS_PT' => $name,
-                'NO_PERFIS_EN' => $name,
+                'FK_DOMINIO_CONHECIMENTO' => $domainId,
+                'NO_PERFIS_PT' => $namePt,
+                'NO_PERFIS_EN' => $nameEn,
+                'DS_PERFIS_PT' => "Descricao legada {$id}",
+                'DS_PERFIS_EN' => "Legacy description {$id}",
             ]);
         }
 
@@ -468,6 +545,35 @@ class JornadaSchemaTest extends TestCase
             15 => 'Security By Design',
             16 => 'Gestão de Mudança',
             17 => 'Gestão de Conformidade',
+        ];
+    }
+
+    /**
+     * @return array<int, array{int, string, string}>
+     */
+    private function legacyJourneyProfiles(): array
+    {
+        return [
+            1 => [1, 'Encarregado pelo Tratamento de Dados Pessoais', 'Data Protection Officer'],
+            2 => [1, 'Controlador', 'Controller'],
+            3 => [1, 'Operador', 'Processor'],
+            4 => [1, 'Titular', 'Data Subject'],
+            5 => [1, 'Equipe de Apoio ao Encarregado', 'Data Protection Officer Support Team'],
+            6 => [2, 'Gestor de Segurança da Informação', 'Information Security Manager'],
+            7 => [2, 'Agente Responsável pela Gestão dos Ativos de Informação', 'Agent Responsible for Managing Information Assets'],
+            8 => [2, 'Agente Responsável pela Gestão de Mudança nos Aspectos de Segurança da Informação', 'Agent Responsible for Managing Change Regarding Information Security Aspects'],
+            9 => [2, 'Agente Responsável pela Gestão de Riscos de Segurança da Informação', 'Agent Responsible for Information Security Risk Management'],
+            10 => [2, 'Agente Responsável pela Gestão de Continuidade de Negócios em Segurança da Informação', 'Agent Responsible for Information Security Business Continuity Management'],
+            11 => [2, 'Agente Responsável pelo uso Seguro de Mídias Sociais', 'Agent Responsible for the Safe use of Social Media'],
+            12 => [2, 'Agente Responsável pela Avaliação de Conformidade', 'Agent Responsible for the Conformity Assessment'],
+            13 => [2, 'Equipe de Administração e de Gestão de Perfis Institucionais em Mídias Sociais', 'Institutional Social Media Profile Administration and Management Team'],
+            14 => [2, 'Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR)', 'Cyber Incident Prevention, Handling, and Response Team (ETIR)'],
+            15 => [2, 'Gestor de Segurança e Credenciamento', 'Security and Accreditation Manager'],
+            16 => [3, 'Gestor de Tecnologia da Informação e Comunicação', 'Information and Communication Technology Manager'],
+            17 => [3, 'Equipe de Tecnologia da Informação', 'Information Technology Team'],
+            18 => [3, 'Alta Administração', 'Senior Management'],
+            19 => [3, 'Responsável pela Unidade de Controle Interno', 'Head of the Internal Control Unit'],
+            20 => [3, 'Usuário', 'User'],
         ];
     }
 }

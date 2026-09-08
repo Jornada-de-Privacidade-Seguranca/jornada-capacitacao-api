@@ -367,7 +367,7 @@ return new class extends Migration
                 continue;
             }
 
-            $profileId = $this->findJourneyProfileId($currentProfileName);
+            $profileId = $this->findJourneyProfileId($this->canonicalJourneyProfileName($currentProfileName));
 
             if ($profileId === null) {
                 $unresolvedProfileNames[$currentProfileName] = true;
@@ -409,22 +409,16 @@ return new class extends Migration
             return;
         }
 
-        DB::table('TB_PERFIS_JORNADA')
-            ->where('NO_PERFIS_PT', 'Alta Administração')
-            ->update([
-                'NO_PERFIS_PT' => 'Alta Administração 1',
-                'NO_PERFIS_EN' => 'Senior Management 1',
-            ]);
+        $profiles = $this->seniorManagementJourneyProfiles();
 
-        if (! DB::table('TB_PERFIS_JORNADA')->where('NO_PERFIS_PT', 'Alta Administração 2')->exists()) {
-            DB::table('TB_PERFIS_JORNADA')->insert([
-                'FK_DOMINIO_CONHECIMENTO' => 3,
-                'NO_PERFIS_PT' => 'Alta Administração 2',
-                'NO_PERFIS_EN' => 'Senior Management 2',
-                'DS_PERFIS_PT' => 'Entende-se que a Alta Administração 2 em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica.',
-                'DS_PERFIS_EN' => 'Senior management 2 in public sector bodies comprises individuals in leadership and strategic decision-making positions.',
-            ]);
-        }
+        DB::table('TB_PERFIS_JORNADA')
+            ->whereIn('NO_PERFIS_PT', ['Alta Administração', 'Alta Administração 1'])
+            ->update($profiles['Alta Administração 1']);
+
+        DB::table('TB_PERFIS_JORNADA')->updateOrInsert(
+            ['NO_PERFIS_PT' => 'Alta Administração 2'],
+            $profiles['Alta Administração 2'],
+        );
     }
 
     private function findJourneyProfileId(string $profileName): ?int
@@ -434,6 +428,46 @@ return new class extends Migration
             ->value('PK_PERFIS_JORNADA');
 
         return $profileId === null ? null : (int) $profileId;
+    }
+
+    private function canonicalJourneyProfileName(string $profileName): string
+    {
+        return [
+            'Equipe de TI' => 'Equipe de Tecnologia da Informação',
+            'ETIR' => 'Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR)',
+            'Encarregado de Dados' => 'Encarregado pelo Tratamento de Dados Pessoais',
+        ][$profileName] ?? $profileName;
+    }
+
+    /**
+     * @return array<string, array{FK_DOMINIO_CONHECIMENTO: int, NO_PERFIS_PT: string, NO_PERFIS_EN: string, DS_PERFIS_PT: string, DS_PERFIS_EN: string}>
+     */
+    private function seniorManagementJourneyProfiles(): array
+    {
+        return [
+            'Alta Administração 1' => [
+                'FK_DOMINIO_CONHECIMENTO' => 3,
+                'NO_PERFIS_PT' => 'Alta Administração 1',
+                'NO_PERFIS_EN' => 'Senior Management 1',
+                'DS_PERFIS_PT' => 'Entende-se que a Alta Administração em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
+1.Ministros de Estado e Secretários, Presidentes, Vice-Presidente, Reitores, Vice-Reitores, Pró-Reitores e Comandantes das Forças Armadas, Comitê de Segurança da Informação.',
+                'DS_PERFIS_EN' => 'Senior management in public sector bodies is understood to comprise individuals in leadership and strategic decision-making positions who represent the public administration and are responsible for guiding privacy and data protection policy. This includes:
+1.Ministers of State and Secretaries, Presidents, Vice-Presidents, Rectors, Vice-Rectors, Pro-Rectors, Armed Forces Commanders, and the Information Security Committee.',
+            ],
+            'Alta Administração 2' => [
+                'FK_DOMINIO_CONHECIMENTO' => 3,
+                'NO_PERFIS_PT' => 'Alta Administração 2',
+                'NO_PERFIS_EN' => 'Senior Management 2',
+                'DS_PERFIS_PT' => 'Entende-se que a Alta Administração 2 em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
+1.Diretores, Vice-Diretores, Superintendentes, Subsecretários, Coordenadores-Gerais.
+2.Chefes de Gabinete, Subchefes e Assessores.
+3.Assessor de Controle Interno, Ouvidor. ',
+                'DS_PERFIS_EN' => 'Senior management 2 in public sector bodies is understood to comprise individuals in leadership and strategic decision-making positions who represent the public administration and are responsible for guiding privacy and data protection policy. This includes:
+1.Directors, Deputy Directors, Superintendents, Undersecretaries, and General Coordinators.
+2.Chiefs of Staff, Deputy Chiefs of Staff, and Advisors.
+3.Internal Control Advisor and Ombudsman.',
+            ],
+        ];
     }
 
     private function findSubcriterionId(?string $namePt, ?string $nameEn): ?int
