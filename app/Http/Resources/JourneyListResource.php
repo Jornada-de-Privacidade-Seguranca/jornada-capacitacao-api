@@ -2,9 +2,16 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Journey;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Journey
+ *
+ * @property-read int|null $acquired_knowledges_count
+ * @property-read int|null $professional_certifications_count
+ */
 class JourneyListResource extends JsonResource
 {
     public function toArray(Request $request): array

@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use RuntimeException;
 
-class InactiveUserAccountException extends RuntimeException
-{
-}
+class InactiveUserAccountException extends RuntimeException {}

@@ -12,16 +12,14 @@ class UserRegistrationService
 {
     private const STATUS_PENDING_ACTIVATION = 2;
 
-    public function __construct(private readonly UserRepositoryInterface $userRepository)
-    {
-    }
+    public function __construct(private readonly UserRepositoryInterface $userRepository) {}
 
     public function register(array $data): Usuario
     {
         $email = strtolower(trim($data['email']));
 
         if ($this->userRepository->existsByEmail($email)) {
-            throw new AccountAlreadyExistsException();
+            throw new AccountAlreadyExistsException;
         }
 
         $registrationNumber = isset($data['registration_number']) ? trim((string) $data['registration_number']) : null;

@@ -10,9 +10,7 @@ use Illuminate\Http\Request;
 
 class DashboardController
 {
-    public function __construct(private readonly DashboardService $dashboardService)
-    {
-    }
+    public function __construct(private readonly DashboardService $dashboardService) {}
 
     public function __invoke(Request $request): JsonResponse
     {

@@ -19,17 +19,12 @@ return new class extends Migration
             }
         });
 
-        if (DB::connection()->getDriverName() === 'pgsql') {
-            DB::statement('ALTER TABLE "TB_PROFICIENCIA_INGLES" ALTER COLUMN "NO_PROFICIENCIA_INGLES_PT" TYPE VARCHAR(40)');
-            DB::statement('ALTER TABLE "TB_PROFICIENCIA_INGLES" ALTER COLUMN "NO_PROFICIENCIA_INGLES_EN" TYPE VARCHAR(40)');
-            DB::statement('ALTER TABLE "TB_EXPERIENCIA_ATUACAO" ALTER COLUMN "DS_EXPERIENCIA_ATUACAO_EN" TYPE VARCHAR(30)');
-        }
-
         $hasFixedJourneyProfiles = DB::table('TB_PERFIS_JORNADA')
             ->where('NO_PERFIS_PT', 'Encarregado pelo Tratamento de Dados Pessoais')
             ->exists();
 
         if (! $hasFixedJourneyProfiles) {
+            $this->ensureLegacyFixedReferenceTables();
             $this->insertFixedReferenceData();
         }
     }
@@ -43,12 +38,8 @@ return new class extends Migration
     {
         DB::transaction(function (): void {
             $this->upsertKnowledgeDomains();
-            $this->restartSequence('TB_PERFIS_JORNADA_PK_PERFIS_JORNADA_seq', 1, false);
 
-            $sql = file_get_contents(database_path('sql/jornada_fixed_data.sql'));
-            $sql = preg_replace('/^INSERT INTO "TB_DOMINIO_CONHECIMENTO".*;\R?/m', '', $sql);
-
-            DB::unprepared($sql);
+            DB::unprepared(file_get_contents(database_path('sql/jornada_fixed_data_2026_08_legacy.sql')));
 
             $this->syncSequenceWithTable(
                 sequence: 'TB_DOMINIO_CONHECIMENTO_PK_DOMINIO_CONHECIMENTO_seq',
@@ -60,7 +51,53 @@ return new class extends Migration
                 table: 'TB_PERFIS_JORNADA',
                 primaryKey: 'PK_PERFIS_JORNADA',
             );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_AREA_CONHECIMENTO_PK_AREA_CONHECIMENTO_seq',
+                table: 'TB_AREA_CONHECIMENTO',
+                primaryKey: 'PK_AREA_CONHECIMENTO',
+            );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_DIFICULDADE_PK_DIFICULDADE_seq',
+                table: 'TB_DIFICULDADE',
+                primaryKey: 'PK_DIFICULDADE',
+            );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_EXPERIENCIA_ATUACAO_PK_EXPERIENCIA_ATUACAO_seq',
+                table: 'TB_EXPERIENCIA_ATUACAO',
+                primaryKey: 'PK_EXPERIENCIA_ATUACAO',
+            );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_TIPO_PERFIL_PK_TIPO_PERFIL_seq',
+                table: 'TB_TIPO_PERFIL',
+                primaryKey: 'PK_TIPO_PERFIL',
+            );
         });
+    }
+
+    private function ensureLegacyFixedReferenceTables(): void
+    {
+        if (! Schema::hasTable('TB_DIFICULDADE')) {
+            Schema::create('TB_DIFICULDADE', function (Blueprint $table): void {
+                $table->increments('PK_DIFICULDADE');
+                $table->string('NO_DIFICULDADE_PT', 20)->nullable();
+                $table->string('NO_DIFICULDADE_EN', 20)->nullable();
+            });
+        }
+
+        if (! Schema::hasTable('TB_EXPERIENCIA_ATUACAO')) {
+            Schema::create('TB_EXPERIENCIA_ATUACAO', function (Blueprint $table): void {
+                $table->increments('PK_EXPERIENCIA_ATUACAO');
+                $table->string('DS_EXPERIENCIA_ATUACAO_PT', 20)->nullable();
+                $table->string('DS_EXPERIENCIA_ATUACAO_EN', 30)->nullable();
+            });
+        }
+
+        if (! Schema::hasTable('TB_TIPO_PERFIL')) {
+            Schema::create('TB_TIPO_PERFIL', function (Blueprint $table): void {
+                $table->increments('PK_TIPO_PERFIL');
+                $table->string('NO_TIPO_PERFIL', 20)->nullable();
+            });
+        }
     }
 
     private function upsertKnowledgeDomains(): void
@@ -83,23 +120,9 @@ return new class extends Migration
         );
     }
 
-    private function restartSequence(string $sequence, int $value, bool $isCalled): void
-    {
-        if (DB::connection()->getDriverName() !== 'pgsql') {
-            return;
-        }
-
-        DB::statement(sprintf(
-            'SELECT setval(\'"%s"\', %d, %s)',
-            $sequence,
-            $value,
-            $isCalled ? 'true' : 'false',
-        ));
-    }
-
     private function syncSequenceWithTable(string $sequence, string $table, string $primaryKey): void
     {
-        if (DB::connection()->getDriverName() !== 'pgsql') {
+        if (DB::connection()->getDriverName() !== 'pgsql' || ! Schema::hasTable($table)) {
             return;
         }
 

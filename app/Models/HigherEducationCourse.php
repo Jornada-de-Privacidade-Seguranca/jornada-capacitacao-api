@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class HigherEducationCourse extends JornadaModel
 {
@@ -12,18 +12,25 @@ class HigherEducationCourse extends JornadaModel
     protected $primaryKey = 'PK_CURSO_SUPERIOR';
 
     protected $fillable = [
+        'FK_SUBCRITERIOS',
         'NO_CURSO_SUPERIOR_PT',
         'NO_CURSO_SUPERIOR_EN',
-        'TP_CURSO_SUPERIOR',
     ];
 
-    public function journeys(): HasMany
+    public function subcriterion(): BelongsTo
     {
-        return $this->hasMany(Journey::class, 'FK_CURSO_SUPERIOR', 'PK_CURSO_SUPERIOR');
+        return $this->belongsTo(Subcriterion::class, 'FK_SUBCRITERIOS', 'PK_SUBCRITERIOS');
     }
 
-    public function type(): BelongsTo
+    public function journeys(): BelongsToMany
     {
-        return $this->belongsTo(Subcriterio::class, 'TP_CURSO_SUPERIOR', 'PK_SUBCRITERIOS');
+        return $this->belongsToMany(
+            Journey::class,
+            'RL_CURSOS_SUPERIORES_JORNADA',
+            'FK_CURSO_SUPERIOR',
+            'FK_JORNADA',
+            'PK_CURSO_SUPERIOR',
+            'PK_JORNADA',
+        )->withPivot('PK_CURSOS_SUPERIORES_JORNADA');
     }
 }

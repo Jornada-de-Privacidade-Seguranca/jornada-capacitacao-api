@@ -8,9 +8,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class JourneyProfileService
 {
-    public function __construct(private readonly JourneyProfileRepositoryInterface $journeyProfileRepository)
-    {
-    }
+    public function __construct(private readonly JourneyProfileRepositoryInterface $journeyProfileRepository) {}
 
     public function list(int $page, int $perPage): LengthAwarePaginator
     {

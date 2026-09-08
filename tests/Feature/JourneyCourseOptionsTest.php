@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
-use App\Models\Subcriterio;
+use App\Models\Subcriterion;
 use App\Models\Usuario;
 use App\Services\JourneyCourseOptionsService;
 use Exception;
@@ -43,7 +43,7 @@ class JourneyCourseOptionsTest extends TestCase
         HigherEducationCourse::create([
             'NO_CURSO_SUPERIOR_PT' => 'Curso Sem Tipo',
             'NO_CURSO_SUPERIOR_EN' => 'Course Without Type',
-            'TP_CURSO_SUPERIOR' => null,
+            'FK_SUBCRITERIOS' => null,
         ]);
 
         $this->actingAs($user)
@@ -146,11 +146,11 @@ class JourneyCourseOptionsTest extends TestCase
         ]);
     }
 
-    private function subcriterio(string $namePt, string $nameEn): Subcriterio
+    private function subcriterio(string $namePt, string $nameEn): Subcriterion
     {
-        return Subcriterio::create([
-            'NO_SUBCRITERIOS_PT' => $namePt,
-            'NO_SUBCRITERIOS_EN' => $nameEn,
+        return Subcriterion::create([
+            'NO_SUBCRITERIO_PT' => $namePt,
+            'NO_SUBCRITERIO_EN' => $nameEn,
         ]);
     }
 
@@ -159,7 +159,7 @@ class JourneyCourseOptionsTest extends TestCase
         return HigherEducationCourse::create([
             'NO_CURSO_SUPERIOR_PT' => $namePt,
             'NO_CURSO_SUPERIOR_EN' => $nameEn,
-            'TP_CURSO_SUPERIOR' => $typeId,
+            'FK_SUBCRITERIOS' => $typeId,
         ]);
     }
 }

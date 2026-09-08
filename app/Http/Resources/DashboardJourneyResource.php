@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Journey;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Journey
+ */
 class DashboardJourneyResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -39,22 +43,20 @@ class DashboardJourneyResource extends JsonResource
                 'description_en' => $this->profileExperience?->DS_EXPERIENCIA_ATUACAO_EN,
             ],
             'english_proficiency' => [
-                'id' => $this->englishProficiency?->PK_PROFICIENCIA_INGLES,
-                'name_pt' => $this->englishProficiency?->NO_PROFICIENCIA_INGLES_PT,
-                'name_en' => $this->englishProficiency?->NO_PROFICIENCIA_INGLES_EN,
+                'id' => $this->englishSubcriterion?->PK_SUBCRITERIOS,
+                'name_pt' => $this->englishSubcriterion?->NO_SUBCRITERIO_PT,
+                'name_en' => $this->englishSubcriterion?->NO_SUBCRITERIO_EN,
             ],
-            'higher_education_course' => [
-                'id' => $this->higherEducationCourse?->PK_CURSO_SUPERIOR,
-                'name_pt' => $this->higherEducationCourse?->NO_CURSO_SUPERIOR_PT,
-                'name_en' => $this->higherEducationCourse?->NO_CURSO_SUPERIOR_EN,
-                'type' => $this->higherEducationCourse?->TP_CURSO_SUPERIOR,
-            ],
-            'postgraduate_course' => [
-                'id' => $this->postgraduateCourse?->PK_POS_GRADUACAO,
-                'name_pt' => $this->postgraduateCourse?->NO_POS_GRADUACAO_PT,
-                'name_en' => $this->postgraduateCourse?->NO_POS_GRADUACAO_EN,
-                'type' => $this->postgraduateCourse?->TP_POS_GRADUACAO,
-            ],
+            'higher_education_courses' => $this->higherEducationCourses->map(fn ($course): array => [
+                'id' => $course->PK_CURSO_SUPERIOR,
+                'name_pt' => $course->NO_CURSO_SUPERIOR_PT,
+                'name_en' => $course->NO_CURSO_SUPERIOR_EN,
+                'subcriterion' => [
+                    'id' => $course->subcriterion?->PK_SUBCRITERIOS,
+                    'name_pt' => $course->subcriterion?->NO_SUBCRITERIO_PT,
+                    'name_en' => $course->subcriterion?->NO_SUBCRITERIO_EN,
+                ],
+            ])->values()->all(),
         ];
     }
 }

@@ -13,9 +13,7 @@ use Throwable;
 
 class JourneyCourseOptionsController
 {
-    public function __construct(private readonly JourneyCourseOptionsService $journeyCourseOptionsService)
-    {
-    }
+    public function __construct(private readonly JourneyCourseOptionsService $journeyCourseOptionsService) {}
 
     public function __invoke(ListJourneyCourseOptionsRequest $request): JsonResponse
     {

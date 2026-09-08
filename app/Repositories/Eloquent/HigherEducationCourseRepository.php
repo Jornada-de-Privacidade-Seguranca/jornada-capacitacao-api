@@ -12,9 +12,9 @@ class HigherEducationCourseRepository implements HigherEducationCourseRepository
     public function listAvailable(?int $typeId): Collection
     {
         return HigherEducationCourse::query()
-            ->with('type')
+            ->with('subcriterion')
             ->when($typeId !== null, function (Builder $query) use ($typeId): void {
-                $query->where('TP_CURSO_SUPERIOR', $typeId);
+                $query->where('FK_SUBCRITERIOS', $typeId);
             })
             ->orderBy('NO_CURSO_SUPERIOR_PT')
             ->get();

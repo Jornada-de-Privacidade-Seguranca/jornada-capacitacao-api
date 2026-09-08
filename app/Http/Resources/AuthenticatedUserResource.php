@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Usuario
+ */
 class AuthenticatedUserResource extends JsonResource
 {
     private const ADMIN_USER_TYPE = 1;

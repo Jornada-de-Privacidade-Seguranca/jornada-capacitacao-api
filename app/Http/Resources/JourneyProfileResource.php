@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\JourneyProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin JourneyProfile
+ */
 class JourneyProfileResource extends JsonResource
 {
     public function toArray(Request $request): array

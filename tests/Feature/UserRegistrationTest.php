@@ -130,11 +130,11 @@ class UserRegistrationTest extends TestCase
                     'email',
                     'password',
                     'organization',
-                'department',
-                'registration_number',
-                'profile_type_id',
-            ],
-        ]);
+                    'department',
+                    'registration_number',
+                    'profile_type_id',
+                ],
+            ]);
     }
 
     public function test_it_rejects_invalid_payload(): void
