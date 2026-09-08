@@ -17,9 +17,8 @@ class Journey extends JornadaModel
         'FK_PERFIS_JORNADA',
         'FK_EXPERIENCIA_PROFISSIONAL',
         'FK_ATUACAO_PERFIL',
-        'FK_PROFICIENCIA_INGLES',
-        'FK_CURSO_SUPERIOR',
-        'FK_POS_GRADUACAO',
+        'FK_SUBCRITERIOS_INGLES',
+        'NU_PONTUACAO_TOTAL',
         'DH_CRIADO_EM',
         'DH_FIM',
     ];
@@ -49,19 +48,23 @@ class Journey extends JornadaModel
         return $this->belongsTo(ProfessionalExperience::class, 'FK_ATUACAO_PERFIL', 'PK_EXPERIENCIA_ATUACAO');
     }
 
-    public function englishProficiency(): BelongsTo
+    public function englishSubcriterion(): BelongsTo
     {
-        return $this->belongsTo(EnglishProficiency::class, 'FK_PROFICIENCIA_INGLES', 'PK_PROFICIENCIA_INGLES');
+        return $this->belongsTo(Subcriterion::class, 'FK_SUBCRITERIOS_INGLES', 'PK_SUBCRITERIOS');
     }
 
-    public function higherEducationCourse(): BelongsTo
+    public function higherEducationCourses(): BelongsToMany
     {
-        return $this->belongsTo(HigherEducationCourse::class, 'FK_CURSO_SUPERIOR', 'PK_CURSO_SUPERIOR');
-    }
-
-    public function postgraduateCourse(): BelongsTo
-    {
-        return $this->belongsTo(PostgraduateCourse::class, 'FK_POS_GRADUACAO', 'PK_POS_GRADUACAO');
+        return $this->belongsToMany(
+            HigherEducationCourse::class,
+            'RL_CURSOS_SUPERIORES_JORNADA',
+            'FK_JORNADA',
+            'FK_CURSO_SUPERIOR',
+            'PK_JORNADA',
+            'PK_CURSO_SUPERIOR',
+        )
+            ->withPivot('PK_CURSOS_SUPERIORES_JORNADA')
+            ->orderBy('TB_CURSO_SUPERIOR.PK_CURSO_SUPERIOR');
     }
 
     public function acquiredKnowledges(): HasMany
