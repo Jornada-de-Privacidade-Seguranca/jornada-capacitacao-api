@@ -24,15 +24,18 @@ A documentacao Swagger ficara disponivel em `http://localhost:8031`.
 ## Teste inicial
 
 ```bash
-curl http://localhost:8030/api/health
+curl http://localhost:8030/api/auth/csrf-token
 ```
 
 Resposta esperada:
 
 ```json
 {
-  "status": "ok",
-  "service": "jornada-capacitacao-api"
+  "success": true,
+  "message": "Token CSRF gerado com sucesso.",
+  "data": {
+    "csrf_token": "..."
+  }
 }
 ```
 
@@ -44,6 +47,134 @@ docker compose exec app php artisan test
 
 Os testes usam SQLite em memoria por meio do `phpunit.xml`.
 
+## Testes e qualidade de codigo
+
+Instale as dependencias do projeto antes de executar as validacoes locais:
+
+```bash
+composer install
+```
+
+Quando estiver usando Docker, execute os comandos dentro do container da aplicacao:
+
+```bash
+docker compose exec app composer check
+```
+
+### Testes
+
+Execute os testes automatizados com:
+
+```bash
+composer test
+```
+
+Comando equivalente:
+
+```bash
+php artisan test
+```
+
+Os testes usam `APP_ENV=testing` e SQLite em memoria conforme configurado em `phpunit.xml`.
+
+### Formatacao
+
+Verifique a formatacao sem modificar arquivos:
+
+```bash
+composer quality:pint
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/pint --test
+```
+
+Para corrigir a formatacao localmente, use:
+
+```bash
+composer format
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/pint
+```
+
+Esse comando modifica arquivos e nao faz parte da validacao completa automatica.
+
+### Analise estatica
+
+Execute PHPStan com Larastan:
+
+```bash
+composer quality:phpstan
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/phpstan analyse
+```
+
+### Code smells
+
+Execute PHPMD:
+
+```bash
+composer quality:phpmd
+```
+
+Comando equivalente:
+
+```bash
+vendor/bin/phpmd app text phpmd.xml
+```
+
+### Qualidade
+
+Execute todas as verificacoes de qualidade:
+
+```bash
+composer quality
+```
+
+Esse comando executa Laravel Pint, PHPStan/Larastan e PHPMD.
+
+### Validacao completa
+
+Antes de abrir ou atualizar um Pull Request, execute:
+
+```bash
+composer check
+```
+
+Esse comando executa Laravel Pint, PHPStan/Larastan, PHPMD e os testes automatizados. Caso qualquer etapa falhe, o comando sera finalizado com erro e o problema devera ser corrigido antes do envio do codigo.
+
+### Integracao continua
+
+Todos os Pull Requests destinados a branch `main` executam automaticamente as verificacoes de qualidade e os testes pelo GitHub Actions.
+
+As mesmas verificacoes podem ser executadas localmente antes do envio utilizando:
+
+```bash
+composer check
+```
+
+Relacao entre comandos locais e CI:
+
+| Local | CI |
+| --- | --- |
+| `composer quality` | `Quality` |
+| `composer test` | `Tests` |
+| `composer check` | `Quality` + `Tests` |
+
+O check `Quality` executa Laravel Pint, PHPStan/Larastan e PHPMD. O check `Tests` executa PHPUnit / Laravel Tests.
+
+Os checks `Quality` e `Tests` devem estar configurados como obrigatorios para merge na branch `main`.
+
 ## Documentacao Swagger
 
 A especificacao OpenAPI fica em `docs/openapi.yaml`.
@@ -54,10 +185,7 @@ Com os containers ativos, acesse:
 http://localhost:8031
 ```
 
-O Swagger UI carrega a documentacao dos endpoints iniciais:
-
-- `GET /api/health`
-- CRUD de `/api/competencies`
+O Swagger UI carrega a documentacao dos endpoints disponiveis da API.
 
 ## Frontend
 
@@ -67,7 +195,7 @@ No frontend Next, configure:
 NEXT_PUBLIC_API_URL=http://localhost:8030/api
 ```
 
-O helper `src/lib/api.ts` chama `GET ${NEXT_PUBLIC_API_URL}/health`.
+Use os endpoints documentados no Swagger como contrato de integracao.
 
 ## Arquitetura
 
@@ -84,9 +212,12 @@ Ao adicionar uma entidade, crie migration, model, repository interface, reposito
 
 ## Endpoints iniciais
 
-- `GET /api/health`
-- `GET /api/competencies`
-- `POST /api/competencies`
-- `GET /api/competencies/{id}`
-- `PUT /api/competencies/{id}`
-- `DELETE /api/competencies/{id}`
+- `POST /api/auth/register`
+- `GET /api/auth/csrf-token`
+- `POST /api/auth/login`
+- `GET /api/me`
+- `GET /api/dashboard`
+- `POST /api/auth/logout`
+- `GET /api/journey-profiles`
+- `GET /api/journey-profiles/{id}`
+- `GET /api/users/{user}/journeys`

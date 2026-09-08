@@ -12,9 +12,7 @@ class LoginService
 {
     private const STATUS_ACTIVE = 1;
 
-    public function __construct(private readonly UserRepositoryInterface $userRepository)
-    {
-    }
+    public function __construct(private readonly UserRepositoryInterface $userRepository) {}
 
     public function authenticate(array $credentials): Usuario
     {
@@ -22,11 +20,11 @@ class LoginService
         $user = $this->userRepository->findByEmail($email);
 
         if ($user === null || ! Hash::check($credentials['password'], (string) $user->DS_SENHA)) {
-            throw new InvalidLoginCredentialsException();
+            throw new InvalidLoginCredentialsException;
         }
 
         if ((int) $user->ST_ATIVO !== self::STATUS_ACTIVE) {
-            throw new InactiveUserAccountException();
+            throw new InactiveUserAccountException;
         }
 
         return $user;

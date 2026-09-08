@@ -14,6 +14,7 @@ class ProfessionalCertification extends JornadaModel
     protected $fillable = [
         'FK_DOMINIO_CONHECIMENTO',
         'NO_CERTIFICACAO_PROFISSIONAL',
+        'NO_EMISSOR_CERTIFICACAO',
     ];
 
     public function knowledgeDomain(): BelongsTo

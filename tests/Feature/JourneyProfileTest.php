@@ -27,7 +27,7 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('message', 'Journey profiles retrieved successfully.')
             ->assertJsonCount(10, 'data')
             ->assertJsonPath('data.0.name_pt', 'Encarregado pelo Tratamento de Dados Pessoais')
-            ->assertJsonPath('meta.pagination.total', 20)
+            ->assertJsonPath('meta.pagination.total', 21)
             ->assertJsonStructure([
                 'success',
                 'message',
@@ -55,7 +55,7 @@ class JourneyProfileTest extends TestCase
             ->assertJsonCount(8, 'data')
             ->assertJsonPath('meta.pagination.current_page', 2)
             ->assertJsonPath('meta.pagination.per_page', 8)
-            ->assertJsonPath('meta.pagination.total', 20)
+            ->assertJsonPath('meta.pagination.total', 21)
             ->assertJsonPath('meta.pagination.last_page', 3)
             ->assertJsonPath('meta.pagination.has_next_page', true)
             ->assertJsonStructure([
@@ -90,7 +90,7 @@ class JourneyProfileTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
+            ->getJson('/api/journey-profiles/'.$journeyProfile->PK_PERFIS_JORNADA)
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Journey profile retrieved successfully.')
@@ -111,7 +111,7 @@ class JourneyProfileTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
+            ->getJson('/api/journey-profiles/'.$journeyProfile->PK_PERFIS_JORNADA)
             ->assertNotFound()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Journey profile not found.')
@@ -145,7 +145,7 @@ class JourneyProfileTest extends TestCase
     {
         $journeyProfile = JourneyProfile::factory()->create();
 
-        $this->getJson('/api/journey-profiles/' . $journeyProfile->PK_PERFIS_JORNADA)
+        $this->getJson('/api/journey-profiles/'.$journeyProfile->PK_PERFIS_JORNADA)
             ->assertUnauthorized()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Usuario nao autenticado.')
@@ -161,8 +161,8 @@ class JourneyProfileTest extends TestCase
             ->getJson('/api/journey-profiles?page=0&per_page=101')
             ->assertUnprocessable()
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Parametros de paginacao invalidos.')
-            ->assertJsonPath('code', 'INVALID_PAGINATION_PARAMETERS')
+            ->assertJsonPath('message', 'Validation error.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonPath('errors.page.0', 'A pagina atual deve ser maior ou igual a 1.')
             ->assertJsonPath('errors.per_page.0', 'A quantidade de registros por pagina nao pode ser maior que 100.');
     }

@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Journey;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin Journey
+ */
 class JourneyDetailResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -23,8 +27,7 @@ class JourneyDetailResource extends JsonResource
                 'professional_experience' => $this->professionalExperience(),
                 'profile_experience' => $this->profileExperience(),
                 'english_proficiency' => $this->englishProficiency(),
-                'higher_education_course' => $this->higherEducationCourse(),
-                'postgraduate_course' => $this->postgraduateCourse(),
+                'higher_education_courses' => $this->higherEducationCourses(),
             ],
             'acquired_knowledges' => $this->acquiredKnowledges
                 ->map(fn ($acquiredKnowledge): array => [
@@ -113,43 +116,28 @@ class JourneyDetailResource extends JsonResource
 
     private function englishProficiency(): ?array
     {
-        if ($this->englishProficiency === null) {
+        if ($this->englishSubcriterion === null) {
             return null;
         }
 
         return [
-            'id' => $this->englishProficiency->PK_PROFICIENCIA_INGLES,
-            'name_pt' => $this->englishProficiency->NO_PROFICIENCIA_INGLES_PT,
-            'name_en' => $this->englishProficiency->NO_PROFICIENCIA_INGLES_EN,
+            'id' => $this->englishSubcriterion->PK_SUBCRITERIOS,
+            'name_pt' => $this->englishSubcriterion->NO_SUBCRITERIO_PT,
+            'name_en' => $this->englishSubcriterion->NO_SUBCRITERIO_EN,
         ];
     }
 
-    private function higherEducationCourse(): ?array
+    private function higherEducationCourses(): array
     {
-        if ($this->higherEducationCourse === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->higherEducationCourse->PK_CURSO_SUPERIOR,
-            'name_pt' => $this->higherEducationCourse->NO_CURSO_SUPERIOR_PT,
-            'name_en' => $this->higherEducationCourse->NO_CURSO_SUPERIOR_EN,
-            'type' => $this->higherEducationCourse->TP_CURSO_SUPERIOR,
-        ];
-    }
-
-    private function postgraduateCourse(): ?array
-    {
-        if ($this->postgraduateCourse === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->postgraduateCourse->PK_POS_GRADUACAO,
-            'name_pt' => $this->postgraduateCourse->NO_POS_GRADUACAO_PT,
-            'name_en' => $this->postgraduateCourse->NO_POS_GRADUACAO_EN,
-            'type' => $this->postgraduateCourse->TP_POS_GRADUACAO,
-        ];
+        return $this->higherEducationCourses
+            ->map(fn ($course): array => [
+                'id' => $course->PK_CURSO_SUPERIOR,
+                'name_pt' => $course->NO_CURSO_SUPERIOR_PT,
+                'name_en' => $course->NO_CURSO_SUPERIOR_EN,
+                'subcriterion' => $this->subcriterion($course->subcriterion),
+            ])
+            ->values()
+            ->all();
     }
 
     private function competency(mixed $competency): ?array
@@ -182,6 +170,19 @@ class JourneyDetailResource extends JsonResource
             'id' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
             'name_pt' => $knowledgeDomain->NO_DOMINIO_CONHECIMENTO_PT,
             'name_en' => $knowledgeDomain->NO_DOMINIO_CONHECIMENTO_EN,
+        ];
+    }
+
+    private function subcriterion(mixed $subcriterion): ?array
+    {
+        if ($subcriterion === null) {
+            return null;
+        }
+
+        return [
+            'id' => $subcriterion->PK_SUBCRITERIOS,
+            'name_pt' => $subcriterion->NO_SUBCRITERIO_PT,
+            'name_en' => $subcriterion->NO_SUBCRITERIO_EN,
         ];
     }
 

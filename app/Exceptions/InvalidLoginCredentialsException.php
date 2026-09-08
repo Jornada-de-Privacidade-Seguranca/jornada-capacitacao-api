@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use RuntimeException;
 
-class InvalidLoginCredentialsException extends RuntimeException
-{
-}
+class InvalidLoginCredentialsException extends RuntimeException {}

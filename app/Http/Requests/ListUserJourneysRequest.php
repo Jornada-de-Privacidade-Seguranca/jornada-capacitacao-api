@@ -60,17 +60,10 @@ class ListUserJourneysRequest extends FormRequest
 
     protected function failedValidation(Validator $validator): void
     {
-        $errorFields = array_keys($validator->errors()->toArray());
-        $hasOnlyPaginationErrors = empty(array_diff($errorFields, ['page', 'per_page']));
-
         throw new HttpResponseException(ApiResponse::error(
-            message: $hasOnlyPaginationErrors
-                ? 'Parametros de paginacao invalidos.'
-                : 'Parametros de filtro invalidos.',
+            message: 'Validation error.',
             status: Response::HTTP_UNPROCESSABLE_ENTITY,
-            code: $hasOnlyPaginationErrors
-                ? 'INVALID_PAGINATION_PARAMETERS'
-                : 'INVALID_JOURNEY_FILTERS',
+            code: 'VALIDATION_ERROR',
             errors: $validator->errors()->toArray(),
         ));
     }

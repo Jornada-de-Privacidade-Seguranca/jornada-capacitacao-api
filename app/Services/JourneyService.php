@@ -128,6 +128,10 @@ class JourneyService
             }
         }
 
+        if ($journey->higherEducationCourses->isEmpty()) {
+            $missingFields[] = 'answers.higher_education_courses';
+        }
+
         if ($journey->journeyProfile !== null && $journey->journeyProfile->knowledgeDomain === null) {
             $missingFields[] = 'journey_profile.knowledge_domain';
         }
@@ -151,9 +155,7 @@ class JourneyService
             'journeyProfile' => 'journey_profile',
             'professionalExperience' => 'answers.professional_experience',
             'profileExperience' => 'answers.profile_experience',
-            'englishProficiency' => 'answers.english_proficiency',
-            'higherEducationCourse' => 'answers.higher_education_course',
-            'postgraduateCourse' => 'answers.postgraduate_course',
+            'englishSubcriterion' => 'answers.english_proficiency',
         ];
     }
 }

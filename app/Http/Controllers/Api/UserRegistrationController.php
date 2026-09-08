@@ -14,9 +14,7 @@ class UserRegistrationController
 {
     private const SUCCESS_MESSAGE = 'Cadastro realizado com sucesso. Sua conta foi criada, mas ainda precisa ser ativada por um administrador do sistema para permitir o acesso.';
 
-    public function __construct(private readonly UserRegistrationService $userRegistrationService)
-    {
-    }
+    public function __construct(private readonly UserRegistrationService $userRegistrationService) {}
 
     public function __invoke(RegisterUserRequest $request): JsonResponse
     {
