@@ -24,6 +24,7 @@ return new class extends Migration
             ->exists();
 
         if (! $hasFixedJourneyProfiles) {
+            $this->ensureLegacyFixedReferenceTables();
             $this->insertFixedReferenceData();
         }
     }
@@ -71,6 +72,32 @@ return new class extends Migration
                 primaryKey: 'PK_TIPO_PERFIL',
             );
         });
+    }
+
+    private function ensureLegacyFixedReferenceTables(): void
+    {
+        if (! Schema::hasTable('TB_DIFICULDADE')) {
+            Schema::create('TB_DIFICULDADE', function (Blueprint $table): void {
+                $table->increments('PK_DIFICULDADE');
+                $table->string('NO_DIFICULDADE_PT', 20)->nullable();
+                $table->string('NO_DIFICULDADE_EN', 20)->nullable();
+            });
+        }
+
+        if (! Schema::hasTable('TB_EXPERIENCIA_ATUACAO')) {
+            Schema::create('TB_EXPERIENCIA_ATUACAO', function (Blueprint $table): void {
+                $table->increments('PK_EXPERIENCIA_ATUACAO');
+                $table->string('DS_EXPERIENCIA_ATUACAO_PT', 20)->nullable();
+                $table->string('DS_EXPERIENCIA_ATUACAO_EN', 30)->nullable();
+            });
+        }
+
+        if (! Schema::hasTable('TB_TIPO_PERFIL')) {
+            Schema::create('TB_TIPO_PERFIL', function (Blueprint $table): void {
+                $table->increments('PK_TIPO_PERFIL');
+                $table->string('NO_TIPO_PERFIL', 20)->nullable();
+            });
+        }
     }
 
     private function upsertKnowledgeDomains(): void
