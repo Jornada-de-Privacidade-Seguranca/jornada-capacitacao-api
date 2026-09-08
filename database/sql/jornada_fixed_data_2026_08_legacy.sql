@@ -1,0 +1,63 @@
+-- Legacy-compatible fixed data used by the 2026_08 migration.
+-- Do not replace this with jornada_fixed_data.sql; that file targets the latest schema.
+
+-- Insert TB_PERFIS_JORNADA
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (1, 1, 'Encarregado pelo Tratamento de Dados Pessoais', 'Data Protection Officer');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (2, 1, 'Controlador', 'Controller');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (3, 1, 'Operador', 'Processor');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (4, 1, 'Titular', 'Data Subject');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (5, 1, 'Equipe de Apoio ao Encarregado', 'Data Protection Officer Support Team');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (6, 2, 'Gestor de Segurança da Informação', 'Information Security Manager');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (7, 2, 'Agente Responsável pela Gestão dos Ativos de Informação', 'Agent Responsible for Managing Information Assets');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (8, 2, 'Agente Responsável pela Gestão de Mudança nos Aspectos de Segurança da Informação', 'Agent Responsible for Managing Change Regarding Information Security Aspects');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (9, 2, 'Agente Responsável pela Gestão de Riscos de Segurança da Informação', 'Agent Responsible for Information Security Risk Management');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (10, 2, 'Agente Responsável pela Gestão de Continuidade de Negócios em Segurança da Informação', 'Agent Responsible for Information Security Business Continuity Management');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (11, 2, 'Agente Responsável pelo uso Seguro de Mídias Sociais', 'Agent Responsible for the Safe use of Social Media');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (12, 2, 'Agente Responsável pela Avaliação de Conformidade', 'Agent Responsible for the Conformity Assessment');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (13, 2, 'Equipe de Administração e de Gestão de Perfis Institucionais em Mídias Sociais', 'Institutional Social Media Profile Administration and Management Team');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (14, 2, 'Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR)', 'Cyber Incident Prevention, Handling, and Response Team (ETIR)');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (15, 2, 'Gestor de Segurança e Credenciamento', 'Security and Accreditation Manager');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (16, 3, 'Gestor de Tecnologia da Informação e Comunicação', 'Information and Communication Technology Manager');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (17, 3, 'Equipe de Tecnologia da Informação', 'Information Technology Team');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (18, 3, 'Alta Administração', 'Senior Management');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (19, 3, 'Responsável pela Unidade de Controle Interno', 'Head of the Internal Control Unit');
+INSERT INTO "TB_PERFIS_JORNADA" ("PK_PERFIS_JORNADA", "FK_DOMINIO_CONHECIMENTO", "NO_PERFIS_PT", "NO_PERFIS_EN") VALUES (20, 3, 'Usuário', 'User');
+
+-- Insert TB_AREA_CONHECIMENTO
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (1, 'Gestão de Privacidade', 'Privacy Management');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (2, 'Estratégias de Privacidade', 'Privacy Strategies');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (3, 'Documentos Orientativos', 'Guidance Documents');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (4, 'Gestão de Riscos e Conformidade', 'Risk Management and Compliance');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (5, 'Conhecimentos em Tecnologia da Informação', 'Knowledge of Information Technology');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (6, 'Privacy By Design', 'Privacy By Design');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (7, 'Gestão de Segurança da Informação', 'Information Security Management');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (8, 'Gestão de Riscos', 'Risk Management');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (9, 'Gestão do Uso dos Recursos Operacionais e de Comunicações', 'Management of Operational and Communication Resource Usage');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (10, 'Tratamento da Informação', 'Data Handling');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (11, 'Gestão de Ativos', 'Asset Management');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (12, 'Gestão de Incidentes Cibernéticos', 'Cyber Incident Management');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (13, 'Gestão de Continuidade', 'Continuity Management');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (14, 'Segurança de Controle de Acesso', 'Access Control Security');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (15, 'Security By Design', 'Security By Design');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (16, 'Gestão de Mudança', 'Change Management');
+INSERT INTO "TB_AREA_CONHECIMENTO" ("PK_AREA_CONHECIMENTO", "NO_AREA_CONHECIMENTO_PT", "NO_AREA_CONHECIMENTO_EN") VALUES (17, 'Gestão de Conformidade', 'Compliance Management');
+
+-- Insert TB_DIFICULDADE
+INSERT INTO "TB_DIFICULDADE" ("PK_DIFICULDADE", "NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES (1, 'Iniciante', 'Beginner');
+INSERT INTO "TB_DIFICULDADE" ("PK_DIFICULDADE", "NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES (2, 'Básico', 'Basic');
+INSERT INTO "TB_DIFICULDADE" ("PK_DIFICULDADE", "NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES (3, 'Intermediário', 'Intermediary');
+INSERT INTO "TB_DIFICULDADE" ("PK_DIFICULDADE", "NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES (4, 'Avançado', 'Advanced');
+INSERT INTO "TB_DIFICULDADE" ("PK_DIFICULDADE", "NO_DIFICULDADE_PT", "NO_DIFICULDADE_EN") VALUES (5, 'Especialista', 'Specialist');
+
+-- Insert TB_EXPERIENCIA_ATUACAO
+INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("PK_EXPERIENCIA_ATUACAO", "DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES (1, 'Menos de 1 ano', 'Less than 1 year');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("PK_EXPERIENCIA_ATUACAO", "DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES (2, 'Entre 1 e 3 anos', 'Between 1 and 3 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("PK_EXPERIENCIA_ATUACAO", "DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES (3, 'Entre 4 e 6 anos', 'Between 4 and 6 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("PK_EXPERIENCIA_ATUACAO", "DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES (4, 'Entre 7 e 10 anos', 'Between 7 and 10 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("PK_EXPERIENCIA_ATUACAO", "DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES (5, 'Mais de 10 anos', 'More than 10 years');
+INSERT INTO "TB_EXPERIENCIA_ATUACAO" ("PK_EXPERIENCIA_ATUACAO", "DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCIA_ATUACAO_EN") VALUES (6, 'Nenhum', 'None');
+
+-- Insert TB_TIPO_PERFIL
+INSERT INTO "TB_TIPO_PERFIL" ("PK_TIPO_PERFIL", "NO_TIPO_PERFIL") VALUES (1, 'Administrador');
+INSERT INTO "TB_TIPO_PERFIL" ("PK_TIPO_PERFIL", "NO_TIPO_PERFIL") VALUES (2, 'Gestor');
+INSERT INTO "TB_TIPO_PERFIL" ("PK_TIPO_PERFIL", "NO_TIPO_PERFIL") VALUES (3, 'Usuário');

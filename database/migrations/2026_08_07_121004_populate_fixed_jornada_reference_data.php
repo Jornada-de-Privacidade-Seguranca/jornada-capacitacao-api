@@ -37,12 +37,8 @@ return new class extends Migration
     {
         DB::transaction(function (): void {
             $this->upsertKnowledgeDomains();
-            $this->restartSequence('TB_PERFIS_JORNADA_PK_PERFIS_JORNADA_seq', 1, false);
 
-            $sql = file_get_contents(database_path('sql/jornada_fixed_data.sql'));
-            $sql = preg_replace('/^INSERT INTO "TB_DOMINIO_CONHECIMENTO".*;\R?/m', '', $sql);
-
-            DB::unprepared($sql);
+            DB::unprepared(file_get_contents(database_path('sql/jornada_fixed_data_2026_08_legacy.sql')));
 
             $this->syncSequenceWithTable(
                 sequence: 'TB_DOMINIO_CONHECIMENTO_PK_DOMINIO_CONHECIMENTO_seq',
@@ -55,19 +51,24 @@ return new class extends Migration
                 primaryKey: 'PK_PERFIS_JORNADA',
             );
             $this->syncSequenceWithTable(
-                sequence: 'TB_CRITERIOS_PK_CRITERIOS_seq',
-                table: 'TB_CRITERIOS',
-                primaryKey: 'PK_CRITERIOS',
+                sequence: 'TB_AREA_CONHECIMENTO_PK_AREA_CONHECIMENTO_seq',
+                table: 'TB_AREA_CONHECIMENTO',
+                primaryKey: 'PK_AREA_CONHECIMENTO',
             );
             $this->syncSequenceWithTable(
-                sequence: 'TB_SUBCRITERIOS_PK_SUBCRITERIOS_seq',
-                table: 'TB_SUBCRITERIOS',
-                primaryKey: 'PK_SUBCRITERIOS',
+                sequence: 'TB_DIFICULDADE_PK_DIFICULDADE_seq',
+                table: 'TB_DIFICULDADE',
+                primaryKey: 'PK_DIFICULDADE',
             );
             $this->syncSequenceWithTable(
-                sequence: 'TB_PESO_CRIT_COMPETENCIA_PK_PESO_CRIT_COMPETENCIA_seq',
-                table: 'TB_PESO_CRIT_COMPETENCIA',
-                primaryKey: 'PK_PESO_CRIT_COMPETENCIA',
+                sequence: 'TB_EXPERIENCIA_ATUACAO_PK_EXPERIENCIA_ATUACAO_seq',
+                table: 'TB_EXPERIENCIA_ATUACAO',
+                primaryKey: 'PK_EXPERIENCIA_ATUACAO',
+            );
+            $this->syncSequenceWithTable(
+                sequence: 'TB_TIPO_PERFIL_PK_TIPO_PERFIL_seq',
+                table: 'TB_TIPO_PERFIL',
+                primaryKey: 'PK_TIPO_PERFIL',
             );
         });
     }
@@ -92,23 +93,9 @@ return new class extends Migration
         );
     }
 
-    private function restartSequence(string $sequence, int $value, bool $isCalled): void
-    {
-        if (DB::connection()->getDriverName() !== 'pgsql') {
-            return;
-        }
-
-        DB::statement(sprintf(
-            'SELECT setval(\'"%s"\', %d, %s)',
-            $sequence,
-            $value,
-            $isCalled ? 'true' : 'false',
-        ));
-    }
-
     private function syncSequenceWithTable(string $sequence, string $table, string $primaryKey): void
     {
-        if (DB::connection()->getDriverName() !== 'pgsql') {
+        if (DB::connection()->getDriverName() !== 'pgsql' || ! Schema::hasTable($table)) {
             return;
         }
 

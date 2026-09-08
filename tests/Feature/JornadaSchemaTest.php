@@ -186,6 +186,80 @@ class JornadaSchemaTest extends TestCase
         }
     }
 
+    public function test_it_runs_2026_08_fixed_data_migration_on_empty_legacy_schema_before_latest_upgrade(): void
+    {
+        $defaultConnection = DB::getDefaultConnection();
+        $database = storage_path('framework/testing/legacy_2026_08_upgrade.sqlite');
+
+        if (! is_dir(dirname($database))) {
+            mkdir(dirname($database), 0777, true);
+        }
+
+        @unlink($database);
+        touch($database);
+
+        config()->set('database.connections.legacy_2026_08_upgrade', [
+            'driver' => 'sqlite',
+            'database' => $database,
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ]);
+
+        DB::purge('legacy_2026_08_upgrade');
+        DB::setDefaultConnection('legacy_2026_08_upgrade');
+
+        try {
+            $this->createLegacyJornadaSchema();
+
+            $fixedDataMigration = require database_path('migrations/2026_08_07_121004_populate_fixed_jornada_reference_data.php');
+            $fixedDataMigration->up();
+
+            $this->assertFalse(Schema::hasTable('TB_CRITERIOS'));
+            $this->assertFalse(Schema::hasTable('TB_SUBCRITERIOS'));
+            $this->assertFalse(Schema::hasTable('TB_PESO_CRIT_COMPETENCIA'));
+            $this->assertDatabaseCount('TB_PERFIS_JORNADA', 20);
+            $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 17);
+            $this->assertDatabaseCount('TB_DIFICULDADE', 5);
+            $this->assertDatabaseCount('TB_EXPERIENCIA_ATUACAO', 6);
+            $this->assertDatabaseCount('TB_TIPO_PERFIL', 3);
+            $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
+                'PK_PERFIS_JORNADA' => 1,
+                'NO_PERFIS_PT' => 'Encarregado pelo Tratamento de Dados Pessoais',
+            ]);
+            $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
+                'PK_PERFIS_JORNADA' => 18,
+                'NO_PERFIS_PT' => 'Alta Administração',
+            ]);
+
+            $latestScriptMigration = require database_path('migrations/2026_09_02_000000_sync_latest_jornada_database_scripts.php');
+            $latestScriptMigration->up();
+
+            $this->assertDatabaseCount('TB_PERFIS_JORNADA', 21);
+            $this->assertDatabaseCount('TB_CRITERIOS', 6);
+            $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
+            $this->assertDatabaseCount('TB_PESO_CRIT_COMPETENCIA', 270);
+            $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
+                'FK_PERFIS_JORNADA' => 1,
+                'FK_AREA_CONHECIMENTO' => 5,
+                'NU_PESO_CRIT_COMPETENCIA' => 8,
+            ]);
+            $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
+                'PK_PERFIS_JORNADA' => 18,
+                'NO_PERFIS_PT' => 'Alta Administração 1',
+                'DS_PERFIS_PT' => self::SENIOR_MANAGEMENT_1_DESCRIPTION_PT,
+            ]);
+            $this->assertDatabaseHas('TB_PERFIS_JORNADA', [
+                'NO_PERFIS_PT' => 'Alta Administração 2',
+                'DS_PERFIS_PT' => self::SENIOR_MANAGEMENT_2_DESCRIPTION_PT,
+            ]);
+        } finally {
+            DB::disconnect('legacy_2026_08_upgrade');
+            DB::setDefaultConnection($defaultConnection);
+            DB::purge('legacy_2026_08_upgrade');
+            @unlink($database);
+        }
+    }
+
     public function test_it_upgrades_legacy_jornada_schema_to_latest_database_scripts(): void
     {
         $defaultConnection = DB::getDefaultConnection();
