@@ -16,9 +16,7 @@ use Illuminate\Http\Response;
 // competencias forem implementados.
 class CompetencyController
 {
-    public function __construct(private readonly CompetencyService $competencyService)
-    {
-    }
+    public function __construct(private readonly CompetencyService $competencyService) {}
 
     public function index(): JsonResponse
     {

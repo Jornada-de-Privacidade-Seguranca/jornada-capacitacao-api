@@ -350,6 +350,7 @@ return new class extends Migration
         foreach (preg_split('/\R/', $section) as $line) {
             if (preg_match('/^--\s*(.+)$/', trim($line), $matches) === 1) {
                 $currentProfileName = trim($matches[1]);
+
                 continue;
             }
 
@@ -371,6 +372,7 @@ return new class extends Migration
 
             if ($profileId === null) {
                 $unresolvedProfileNames[$currentProfileName] = true;
+
                 continue;
             }
 
@@ -383,7 +385,7 @@ return new class extends Migration
         }
 
         if ($parsedRows !== self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT) {
-            throw new \RuntimeException(sprintf(
+            throw new RuntimeException(sprintf(
                 'Expected %d competency criterion weight rows in fixed data, parsed %d.',
                 self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT,
                 $parsedRows,
@@ -394,7 +396,7 @@ return new class extends Migration
             DB::table('TB_PERFIS_JORNADA')->count() >= 21
             && ($insertedRows !== self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT || $unresolvedProfileNames !== [])
         ) {
-            throw new \RuntimeException(sprintf(
+            throw new RuntimeException(sprintf(
                 'Expected to insert %d competency criterion weight rows, inserted %d. Unresolved profiles: %s.',
                 self::EXPECTED_COMPETENCY_CRITERION_WEIGHT_COUNT,
                 $insertedRows,

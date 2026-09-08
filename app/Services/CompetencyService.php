@@ -8,9 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class CompetencyService
 {
-    public function __construct(private readonly CompetencyRepositoryInterface $competencyRepository)
-    {
-    }
+    public function __construct(private readonly CompetencyRepositoryInterface $competencyRepository) {}
 
     public function list(): Collection
     {

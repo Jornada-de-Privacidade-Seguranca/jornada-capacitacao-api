@@ -6,9 +6,7 @@ use App\Repositories\Contracts\TemplateExampleRepositoryInterface;
 
 class TemplateExampleService
 {
-    public function __construct(private readonly TemplateExampleRepositoryInterface $templateExampleRepository)
-    {
-    }
+    public function __construct(private readonly TemplateExampleRepositoryInterface $templateExampleRepository) {}
 
     public function show(?string $context, bool $includeSteps): array
     {
