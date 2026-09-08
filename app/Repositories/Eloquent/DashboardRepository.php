@@ -47,9 +47,8 @@ class DashboardRepository implements DashboardRepositoryInterface
                 'journeyProfile.knowledgeDomain',
                 'professionalExperience',
                 'profileExperience',
-                'englishProficiency',
-                'higherEducationCourse',
-                'postgraduateCourse',
+                'englishSubcriterion',
+                'higherEducationCourses.subcriterion',
             ])
             ->where('FK_USUARIO', $userId)
             ->orderByDesc('DH_CRIADO_EM')

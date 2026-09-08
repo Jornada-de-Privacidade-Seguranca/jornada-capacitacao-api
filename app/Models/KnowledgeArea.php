@@ -13,6 +13,8 @@ class KnowledgeArea extends JornadaModel
     protected $fillable = [
         'NO_AREA_CONHECIMENTO_PT',
         'NO_AREA_CONHECIMENTO_EN',
+        'DS_AREA_CONHECIMENTO_PT',
+        'DS_AREA_CONHECIMENTO_EN',
     ];
 
     public function competencies(): HasMany

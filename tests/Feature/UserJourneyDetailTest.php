@@ -4,16 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\AcquiredKnowledge;
 use App\Models\Competency;
+use App\Models\Criterion;
 use App\Models\Difficulty;
-use App\Models\EnglishProficiency;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
 use App\Models\JourneyProfile;
 use App\Models\KnowledgeArea;
 use App\Models\KnowledgeDomain;
-use App\Models\PostgraduateCourse;
 use App\Models\ProfessionalCertification;
 use App\Models\ProfessionalExperience;
+use App\Models\Subcriterion;
 use App\Models\Usuario;
 use App\Services\JourneyService;
 use Exception;
@@ -49,8 +49,11 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.answers.professional_experience.description_pt', '1 a 3 anos')
             ->assertJsonPath('data.answers.profile_experience.description_pt', 'Mais de 5 anos')
             ->assertJsonPath('data.answers.english_proficiency.name_pt', 'Intermediario')
-            ->assertJsonPath('data.answers.higher_education_course.name_pt', 'Direito')
-            ->assertJsonPath('data.answers.postgraduate_course.name_pt', 'Especializacao')
+            ->assertJsonCount(2, 'data.answers.higher_education_courses')
+            ->assertJsonPath('data.answers.higher_education_courses.0.name_pt', 'Direito')
+            ->assertJsonPath('data.answers.higher_education_courses.0.subcriterion.name_pt', 'Graduacao')
+            ->assertJsonPath('data.answers.higher_education_courses.1.name_pt', 'Especializacao')
+            ->assertJsonPath('data.answers.higher_education_courses.1.subcriterion.name_pt', 'Pos-Graduacao')
             ->assertJsonPath('data.acquired_knowledges.0.type_acquired', 1)
             ->assertJsonPath('data.acquired_knowledges.0.is_acquired', true)
             ->assertJsonPath('data.acquired_knowledges.0.competency.name_pt', 'LGPD')
@@ -77,8 +80,9 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.answers.professional_experience.description_pt', '1 a 3 anos')
             ->assertJsonPath('data.answers.profile_experience.description_pt', 'Mais de 5 anos')
             ->assertJsonPath('data.answers.english_proficiency.name_pt', 'Intermediario')
-            ->assertJsonPath('data.answers.higher_education_course.name_pt', 'Direito')
-            ->assertJsonPath('data.answers.postgraduate_course.name_pt', 'Especializacao');
+            ->assertJsonCount(2, 'data.answers.higher_education_courses')
+            ->assertJsonPath('data.answers.higher_education_courses.0.name_pt', 'Direito')
+            ->assertJsonPath('data.answers.higher_education_courses.1.name_pt', 'Especializacao');
     }
 
     public function test_it_rejects_completed_journey_with_missing_required_data(): void
@@ -101,8 +105,7 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('errors.fields.1', 'answers.professional_experience')
             ->assertJsonPath('errors.fields.2', 'answers.profile_experience')
             ->assertJsonPath('errors.fields.3', 'answers.english_proficiency')
-            ->assertJsonPath('errors.fields.4', 'answers.higher_education_course')
-            ->assertJsonPath('errors.fields.5', 'answers.postgraduate_course');
+            ->assertJsonPath('errors.fields.4', 'answers.higher_education_courses');
     }
 
     public function test_it_rejects_completed_journey_when_journey_profile_knowledge_domain_is_missing(): void
@@ -263,19 +266,34 @@ class UserJourneyDetailTest extends TestCase
             'DS_EXPERIENCIA_ATUACAO_PT' => 'Mais de 5 anos',
             'DS_EXPERIENCIA_ATUACAO_EN' => 'More than 5 years',
         ]);
-        $englishProficiency = EnglishProficiency::create([
-            'NO_PROFICIENCIA_INGLES_PT' => 'Intermediario',
-            'NO_PROFICIENCIA_INGLES_EN' => 'Intermediate',
+        $criterion = Criterion::create([
+            'NO_CRITERIO_PT' => 'Formacao Academica',
+            'NO_CRITERIO_EN' => 'Education',
+        ]);
+        $englishProficiency = Subcriterion::create([
+            'FK_CRITERIOS' => $criterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => 'Intermediario',
+            'NO_SUBCRITERIO_EN' => 'Intermediate',
+        ]);
+        $graduation = Subcriterion::create([
+            'FK_CRITERIOS' => $criterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => 'Graduacao',
+            'NO_SUBCRITERIO_EN' => 'Graduation',
+        ]);
+        $postgraduate = Subcriterion::create([
+            'FK_CRITERIOS' => $criterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => 'Pos-Graduacao',
+            'NO_SUBCRITERIO_EN' => 'Postgraduate',
         ]);
         $higherEducationCourse = HigherEducationCourse::create([
+            'FK_SUBCRITERIOS' => $graduation->PK_SUBCRITERIOS,
             'NO_CURSO_SUPERIOR_PT' => 'Direito',
             'NO_CURSO_SUPERIOR_EN' => 'Law',
-            'TP_CURSO_SUPERIOR' => 1,
         ]);
-        $postgraduateCourse = PostgraduateCourse::create([
-            'NO_POS_GRADUACAO_PT' => 'Especializacao',
-            'NO_POS_GRADUACAO_EN' => 'Specialization',
-            'TP_POS_GRADUACAO' => 1,
+        $postgraduateCourse = HigherEducationCourse::create([
+            'FK_SUBCRITERIOS' => $postgraduate->PK_SUBCRITERIOS,
+            'NO_CURSO_SUPERIOR_PT' => 'Especializacao',
+            'NO_CURSO_SUPERIOR_EN' => 'Specialization',
         ]);
 
         $journey = Journey::create([
@@ -283,11 +301,13 @@ class UserJourneyDetailTest extends TestCase
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
             'FK_EXPERIENCIA_PROFISSIONAL' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
             'FK_ATUACAO_PERFIL' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
-            'FK_PROFICIENCIA_INGLES' => $englishProficiency->PK_PROFICIENCIA_INGLES,
-            'FK_CURSO_SUPERIOR' => $higherEducationCourse->PK_CURSO_SUPERIOR,
-            'FK_POS_GRADUACAO' => $postgraduateCourse->PK_POS_GRADUACAO,
+            'FK_SUBCRITERIOS_INGLES' => $englishProficiency->PK_SUBCRITERIOS,
             'DH_CRIADO_EM' => $startedAt,
             'DH_FIM' => $finishedAt,
+        ]);
+        $journey->higherEducationCourses()->attach([
+            $higherEducationCourse->PK_CURSO_SUPERIOR,
+            $postgraduateCourse->PK_CURSO_SUPERIOR,
         ]);
 
         AcquiredKnowledge::create([
