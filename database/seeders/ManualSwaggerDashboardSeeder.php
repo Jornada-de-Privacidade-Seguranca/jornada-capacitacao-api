@@ -5,15 +5,14 @@ namespace Database\Seeders;
 use App\Models\AcquiredKnowledge;
 use App\Models\Competency;
 use App\Models\Difficulty;
-use App\Models\EnglishProficiency;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
 use App\Models\JourneyProfile;
 use App\Models\KnowledgeArea;
 use App\Models\KnowledgeDomain;
-use App\Models\PostgraduateCourse;
 use App\Models\ProfessionalCertification;
 use App\Models\ProfessionalExperience;
+use App\Models\Subcriterion;
 use App\Models\Usuario;
 use Illuminate\Database\Seeder;
 use RuntimeException;
@@ -43,9 +42,13 @@ class ManualSwaggerDashboardSeeder extends Seeder
 
         $professionalExperience = $this->experience('Entre 4 e 6 anos');
         $profileExperience = $this->experience('Entre 1 e 3 anos');
-        $englishProficiency = $this->englishProficiency('Intermediário - Leitura e Escrita');
-        $higherEducationCourse = $this->higherEducationCourse();
-        $postgraduateCourse = $this->postgraduateCourse();
+        $englishSubcriterion = $this->subcriterion('Intermediário - Leitura e Escrita');
+        $higherEducationCourse = $this->higherEducationCourse('Direito', 'Law', 'Graduação');
+        $postgraduateCourse = $this->higherEducationCourse(
+            'Privacidade e Protecao de Dados',
+            'Privacy and Data Protection',
+            'Pós-Graduação',
+        );
 
         $completedJourney = Journey::query()->updateOrCreate(
             [
@@ -56,12 +59,14 @@ class ManualSwaggerDashboardSeeder extends Seeder
             [
                 'FK_EXPERIENCIA_PROFISSIONAL' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
                 'FK_ATUACAO_PERFIL' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
-                'FK_PROFICIENCIA_INGLES' => $englishProficiency->PK_PROFICIENCIA_INGLES,
-                'FK_CURSO_SUPERIOR' => $higherEducationCourse->PK_CURSO_SUPERIOR,
-                'FK_POS_GRADUACAO' => $postgraduateCourse->PK_POS_GRADUACAO,
+                'FK_SUBCRITERIOS_INGLES' => $englishSubcriterion->PK_SUBCRITERIOS,
                 'DH_FIM' => '2026-07-23 10:00:00',
             ],
         );
+        $completedJourney->higherEducationCourses()->syncWithoutDetaching([
+            $higherEducationCourse->PK_CURSO_SUPERIOR,
+            $postgraduateCourse->PK_CURSO_SUPERIOR,
+        ]);
 
         $this->seedCompetencies($journeyProfile, $completedJourney);
         $this->seedCertification($completedJourney);
@@ -179,37 +184,28 @@ class ManualSwaggerDashboardSeeder extends Seeder
         return $experience;
     }
 
-    private function englishProficiency(string $name): EnglishProficiency
+    private function subcriterion(string $name): Subcriterion
     {
-        $englishProficiency = EnglishProficiency::query()
-            ->where('NO_PROFICIENCIA_INGLES_PT', $name)
+        $subcriterion = Subcriterion::query()
+            ->where('NO_SUBCRITERIO_PT', $name)
             ->first();
 
-        if ($englishProficiency === null) {
-            throw new RuntimeException("Proficiencia {$name} nao encontrada.");
+        if ($subcriterion === null) {
+            throw new RuntimeException("Subcriterio {$name} nao encontrado.");
         }
 
-        return $englishProficiency;
+        return $subcriterion;
     }
 
-    private function higherEducationCourse(): HigherEducationCourse
+    private function higherEducationCourse(string $namePt, string $nameEn, string $subcriterionName): HigherEducationCourse
     {
-        return HigherEducationCourse::query()->firstOrCreate(
-            ['NO_CURSO_SUPERIOR_PT' => 'Direito'],
-            [
-                'NO_CURSO_SUPERIOR_EN' => 'Law',
-                'TP_CURSO_SUPERIOR' => 1,
-            ],
-        );
-    }
+        $subcriterion = $this->subcriterion($subcriterionName);
 
-    private function postgraduateCourse(): PostgraduateCourse
-    {
-        return PostgraduateCourse::query()->firstOrCreate(
-            ['NO_POS_GRADUACAO_PT' => 'Privacidade e Protecao de Dados'],
+        return HigherEducationCourse::query()->updateOrCreate(
+            ['NO_CURSO_SUPERIOR_PT' => $namePt],
             [
-                'NO_POS_GRADUACAO_EN' => 'Privacy and Data Protection',
-                'TP_POS_GRADUACAO' => 1,
+                'FK_SUBCRITERIOS' => $subcriterion->PK_SUBCRITERIOS,
+                'NO_CURSO_SUPERIOR_EN' => $nameEn,
             ],
         );
     }
