@@ -73,7 +73,7 @@ class JornadaSchemaTest extends TestCase
         $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 17);
         $this->assertDatabaseCount('TB_DIFICULDADE', 5);
         $this->assertDatabaseCount('TB_CRITERIOS', 6);
-        $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
+        $this->assertDatabaseCount('TB_SUBCRITERIOS', 10);
         $this->assertDatabaseCount('TB_PESO_CRIT_COMPETENCIA', 270);
         $this->assertDatabaseCount('TB_EXPERIENCIA_ATUACAO', 6);
         $this->assertDatabaseCount('TB_TIPO_PERFIL', 3);
@@ -114,6 +114,13 @@ class JornadaSchemaTest extends TestCase
             'FK_CRITERIOS' => 4,
             'NO_SUBCRITERIO_PT' => 'Avançado - Fluente',
             'NU_PESO_SUBCRITERIO' => 63.335,
+        ]);
+        $this->assertDatabaseHas('TB_SUBCRITERIOS', [
+            'PK_SUBCRITERIOS' => 10,
+            'FK_CRITERIOS' => 4,
+            'NO_SUBCRITERIO_PT' => 'Nenhum',
+            'NO_SUBCRITERIO_EN' => 'None',
+            'NU_PESO_SUBCRITERIO' => 0,
         ]);
         $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
             'PK_PESO_CRIT_COMPETENCIA' => 270,
@@ -236,7 +243,7 @@ class JornadaSchemaTest extends TestCase
 
             $this->assertDatabaseCount('TB_PERFIS_JORNADA', 21);
             $this->assertDatabaseCount('TB_CRITERIOS', 6);
-            $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
+            $this->assertDatabaseCount('TB_SUBCRITERIOS', 10);
             $this->assertDatabaseCount('TB_PESO_CRIT_COMPETENCIA', 270);
             $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
                 'FK_PERFIS_JORNADA' => 1,
@@ -303,7 +310,7 @@ class JornadaSchemaTest extends TestCase
             $this->assertTrue(Schema::hasColumn('TB_CERTIFICACAO_PROFISSIONAL', 'NO_EMISSOR_CERTIFICACAO'));
             $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'NU_PONTUACAO_TOTAL'));
             $this->assertDatabaseCount('TB_CRITERIOS', 6);
-            $this->assertDatabaseCount('TB_SUBCRITERIOS', 9);
+            $this->assertDatabaseCount('TB_SUBCRITERIOS', 10);
             $this->assertDatabaseCount('TB_PERFIS_JORNADA', 21);
             $this->assertDatabaseCount('TB_PESO_CRIT_COMPETENCIA', 270);
             $this->assertDatabaseHas('TB_PESO_CRIT_COMPETENCIA', [
