@@ -9,5 +9,7 @@ interface SubcriterionRepositoryInterface
 {
     public function all(): Collection;
 
+    public function allByCriterionNamePt(string $criterionNamePt): Collection;
+
     public function findOrFail(int $id): Subcriterion;
 }

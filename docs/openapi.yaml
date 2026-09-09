@@ -982,6 +982,93 @@ paths:
                     message: Nao foi possivel buscar os dados da jornada no momento.
                     errors: []
                     code: JOURNEY_SEARCH_FAILED
+  /journeys/current/general-data/options:
+    get:
+      tags:
+        - Journeys
+      summary: Lista opcoes dos dados gerais da jornada atual
+      description: Retorna opcoes exibiveis de ingles, experiencia profissional e tempo de atuacao no perfil para a jornada em andamento do usuario autenticado. Pesos, valores AHP e pontuacoes nao sao retornados.
+      operationId: listCurrentJourneyGeneralDataOptions
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Opcoes de dados gerais encontradas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyGeneralDataOptionsResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Opcoes de dados gerais encontradas com sucesso.
+                    data:
+                      journey_id: 12
+                      english_levels:
+                        - id: 7
+                          name_pt: Básico - Leitura
+                          name_en: Basic - Reading
+                        - id: 10
+                          name_pt: Nenhum
+                          name_en: None
+                      professional_experiences:
+                        - id: 1
+                          description_pt: Menos de 1 ano
+                          description_en: Less than 1 year
+                      profile_experiences:
+                        - id: 1
+                          description_pt: Menos de 1 ano
+                          description_en: Less than 1 year
+                      required_fields:
+                        english_level: true
+                        professional_experience: true
+                        profile_experience: true
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Jornada atual nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Jornada atual nao encontrada.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "409":
+          description: Opcoes obrigatorias nao configuradas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                optionsNotConfigured:
+                  value:
+                    success: false
+                    message: Opcoes de dados gerais nao configuradas.
+                    errors: []
+                    code: GENERAL_DATA_OPTIONS_NOT_CONFIGURED
+        "500":
+          description: Erro interno ao buscar opcoes dos dados gerais
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unexpected:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as opcoes de dados gerais no momento.
+                    errors: []
+                    code: GENERAL_DATA_OPTIONS_SEARCH_FAILED
   /journey-profiles:
     parameters:
       - name: page
@@ -1963,6 +2050,63 @@ components:
           example: Law
         subcriterion:
           $ref: "#/components/schemas/UserJourneyLocalizedOption"
+    JourneyGeneralDataOptionsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Opcoes de dados gerais encontradas com sucesso.
+        data:
+          $ref: "#/components/schemas/JourneyGeneralDataOptions"
+    JourneyGeneralDataOptions:
+      type: object
+      required:
+        - journey_id
+        - english_levels
+        - professional_experiences
+        - profile_experiences
+        - required_fields
+      properties:
+        journey_id:
+          type: integer
+          example: 12
+        english_levels:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyLocalizedOption"
+        professional_experiences:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyExperienceOption"
+        profile_experiences:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyExperienceOption"
+        required_fields:
+          $ref: "#/components/schemas/JourneyGeneralDataRequiredFields"
+    JourneyGeneralDataRequiredFields:
+      type: object
+      required:
+        - english_level
+        - professional_experience
+        - profile_experience
+      properties:
+        english_level:
+          type: boolean
+          example: true
+        professional_experience:
+          type: boolean
+          example: true
+        profile_experience:
+          type: boolean
+          example: true
     DashboardResponse:
       type: object
       required:

@@ -32,6 +32,10 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(DashboardRepositoryInterface::class, DashboardRepository::class);
         $this->app->bind(JourneyProfileRepositoryInterface::class, JourneyProfileRepository::class);
         $this->app->bind(JourneyRepositoryInterface::class, JourneyRepository::class);
+        $this->app->bind(
+            'App\Repositories\Contracts\ProfessionalExperienceRepositoryInterface',
+            'App\Repositories\Eloquent\ProfessionalExperienceRepository',
+        );
         $this->app->bind(SubcriterionRepositoryInterface::class, SubcriterionRepository::class);
         $this->app->bind(TemplateExampleRepositoryInterface::class, TemplateExampleRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);

@@ -16,6 +16,16 @@ class SubcriterionRepository implements SubcriterionRepositoryInterface
             ->get();
     }
 
+    public function allByCriterionNamePt(string $criterionNamePt): Collection
+    {
+        return Subcriterion::query()
+            ->whereHas('criterion', function ($query) use ($criterionNamePt): void {
+                $query->where('NO_CRITERIO_PT', $criterionNamePt);
+            })
+            ->orderBy('PK_SUBCRITERIOS')
+            ->get();
+    }
+
     public function findOrFail(int $id): Subcriterion
     {
         return Subcriterion::query()
