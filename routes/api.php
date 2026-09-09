@@ -29,6 +29,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
     Route::apiResource('journey-profiles', JourneyProfileController::class)
         ->only(['index', 'show'])
         ->middleware(AuthenticateSessionUser::class);
+    Route::get('/journeys/current/general-data', [UserJourneyController::class, 'currentGeneralData'])->middleware(AuthenticateSessionUser::class);
     Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
     Route::get('/journeys/{journey}', [UserJourneyController::class, 'show'])->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);

@@ -766,6 +766,93 @@ paths:
                     message: Nao foi possivel buscar as jornadas no momento.
                     errors: []
                     code: JOURNEYS_SEARCH_FAILED
+  /journeys/current/general-data:
+    get:
+      tags:
+        - Journeys
+      summary: Consulta os dados gerais salvos na jornada atual
+      description: Retorna os dados gerais ja salvos na jornada em andamento do usuario autenticado. Campos ainda nao preenchidos retornam null. A resposta nao inclui pesos, pontuacoes ou valores calculados.
+      operationId: getCurrentJourneyGeneralData
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Dados gerais da jornada recuperados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentJourneyGeneralDataResponse"
+              examples:
+                complete:
+                  value:
+                    success: true
+                    message: Dados gerais da jornada recuperados com sucesso.
+                    data:
+                      journey_id: 10
+                      english_level:
+                        id: 8
+                        name_pt: Intermediario - Leitura e Escrita
+                        name_en: Intermediary - Reading and Writing
+                      professional_experience:
+                        id: 2
+                        description_pt: Entre 1 e 3 anos
+                        description_en: Between 1 and 3 years
+                      profile_experience:
+                        id: 4
+                        description_pt: Entre 7 e 10 anos
+                        description_en: Between 7 and 10 years
+                      is_complete: true
+                      status: ongoing
+                empty:
+                  value:
+                    success: true
+                    message: Dados gerais da jornada recuperados com sucesso.
+                    data:
+                      journey_id: 10
+                      english_level: null
+                      professional_experience: null
+                      profile_experience: null
+                      is_complete: false
+                      status: ongoing
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Jornada em andamento nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                currentJourneyNotFound:
+                  value:
+                    success: false
+                    message: Jornada em andamento nao encontrada.
+                    errors: []
+                    code: CURRENT_JOURNEY_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar os dados gerais da jornada no momento.
+                    errors: []
+                    code: CURRENT_JOURNEY_GENERAL_DATA_SEARCH_FAILED
   /journeys/{journey}:
     get:
       tags:
@@ -1624,6 +1711,55 @@ components:
         user_id:
           type: integer
           example: 2
+    CurrentJourneyGeneralDataResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Dados gerais da jornada recuperados com sucesso.
+        data:
+          $ref: "#/components/schemas/CurrentJourneyGeneralData"
+    CurrentJourneyGeneralData:
+      type: object
+      required:
+        - journey_id
+        - english_level
+        - professional_experience
+        - profile_experience
+        - is_complete
+        - status
+      properties:
+        journey_id:
+          type: integer
+          example: 10
+        english_level:
+          oneOf:
+            - $ref: "#/components/schemas/UserJourneyLocalizedOption"
+            - type: "null"
+        professional_experience:
+          oneOf:
+            - $ref: "#/components/schemas/UserJourneyExperienceOption"
+            - type: "null"
+        profile_experience:
+          oneOf:
+            - $ref: "#/components/schemas/UserJourneyExperienceOption"
+            - type: "null"
+        is_complete:
+          type: boolean
+          example: true
+        status:
+          type: string
+          enum:
+            - completed
+            - ongoing
+          example: ongoing
     UserJourneyDetailResponse:
       type: object
       required:

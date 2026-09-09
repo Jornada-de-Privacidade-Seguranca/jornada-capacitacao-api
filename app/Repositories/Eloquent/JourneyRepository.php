@@ -8,6 +8,21 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
+    public function findCurrentGeneralDataByUser(int $userId): ?Journey
+    {
+        return Journey::query()
+            ->with([
+                'englishSubcriterion',
+                'professionalExperience',
+                'profileExperience',
+            ])
+            ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_FIM')
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA')
+            ->first();
+    }
+
     public function findDetailedById(int $journeyId): ?Journey
     {
         return Journey::query()

@@ -57,6 +57,17 @@ class JourneyService
         return $journey;
     }
 
+    public function findCurrentGeneralData(Usuario $authenticatedUser): Journey
+    {
+        $journey = $this->journeyRepository->findCurrentGeneralDataByUser((int) $authenticatedUser->PK_USUARIO);
+
+        if ($journey === null) {
+            throw new ModelNotFoundException;
+        }
+
+        return $journey;
+    }
+
     private function canViewUserJourneys(Usuario $authenticatedUser, Usuario $requestedUser): bool
     {
         if ((int) $authenticatedUser->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE) {

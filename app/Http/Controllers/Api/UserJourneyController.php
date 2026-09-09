@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\IncompleteJourneyException;
 use App\Http\Requests\ListUserJourneysRequest;
 use App\Http\Requests\ShowJourneyRequest;
+use App\Http\Resources\CurrentJourneyGeneralDataResource;
 use App\Http\Resources\JourneyDetailResource;
 use App\Http\Resources\JourneyListResource;
 use App\Services\JourneyService;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
@@ -18,6 +20,30 @@ use Throwable;
 class UserJourneyController
 {
     public function __construct(private readonly JourneyService $journeyService) {}
+
+    public function currentGeneralData(Request $request): JsonResponse
+    {
+        try {
+            $journey = $this->journeyService->findCurrentGeneralData($request->user());
+        } catch (ModelNotFoundException) {
+            return ApiResponse::error(
+                message: 'Jornada em andamento nao encontrada.',
+                status: Response::HTTP_NOT_FOUND,
+                code: 'CURRENT_JOURNEY_NOT_FOUND',
+            );
+        } catch (Throwable) {
+            return ApiResponse::error(
+                message: 'Nao foi possivel buscar os dados gerais da jornada no momento.',
+                status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                code: 'CURRENT_JOURNEY_GENERAL_DATA_SEARCH_FAILED',
+            );
+        }
+
+        return ApiResponse::success(
+            data: (new CurrentJourneyGeneralDataResource($journey))->resolve(),
+            message: 'Dados gerais da jornada recuperados com sucesso.',
+        );
+    }
 
     public function index(ListUserJourneysRequest $request, int $user): JsonResponse
     {
