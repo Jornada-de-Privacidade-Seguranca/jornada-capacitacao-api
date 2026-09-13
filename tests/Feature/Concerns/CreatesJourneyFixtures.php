@@ -53,7 +53,7 @@ trait CreatesJourneyFixtures
         return ProfessionalExperience::create(['DS_EXPERIENCIA_ATUACAO_PT' => $description]);
     }
 
-    private function subcriterion(string $description, string $criterionNamePt = 'Nivel de Proficiencia - Ingles'): Subcriterion
+    private function subcriterion(string $description, string $criterionNamePt = 'Nível de Proficiência - Inglês'): Subcriterion
     {
         $criterion = Criterion::create(['NO_CRITERIO_PT' => $criterionNamePt]);
 

@@ -7,6 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 
 class UpdateJourneyAnswersRequest extends FormRequest
 {
@@ -28,7 +29,17 @@ class UpdateJourneyAnswersRequest extends FormRequest
             'journey' => ['bail', 'required', 'regex:/^[0-9]+$/', 'integer', 'min:1'],
             'professional_experience_id' => ['sometimes', 'integer', 'exists:TB_EXPERIENCIA_ATUACAO,PK_EXPERIENCIA_ATUACAO'],
             'profile_experience_id' => ['sometimes', 'integer', 'exists:TB_EXPERIENCIA_ATUACAO,PK_EXPERIENCIA_ATUACAO'],
-            'english_proficiency_id' => ['sometimes', 'integer', 'exists:TB_SUBCRITERIOS,PK_SUBCRITERIOS'],
+            'english_proficiency_id' => [
+                'sometimes',
+                'integer',
+                Rule::exists('TB_SUBCRITERIOS', 'PK_SUBCRITERIOS')->where(
+                    fn ($query) => $query->whereIn('FK_CRITERIOS', function ($subQuery): void {
+                        $subQuery->select('PK_CRITERIOS')
+                            ->from('TB_CRITERIOS')
+                            ->where('NO_CRITERIO_PT', 'Nível de Proficiência - Inglês');
+                    }),
+                ),
+            ],
         ];
     }
 

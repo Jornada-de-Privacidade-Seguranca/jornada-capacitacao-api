@@ -98,6 +98,22 @@ class UserJourneyUpdateAnswersTest extends TestCase
             ->assertJsonPath('code', 'JOURNEY_ALREADY_FINISHED');
     }
 
+    public function test_it_rejects_a_subcriterion_that_is_not_an_english_proficiency_level(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $journey = $this->journey($user, $profile, '2026-08-01 09:00:00');
+        $graduationSubcriterion = $this->subcriterion('Graduacao', 'Formacao Academica');
+
+        $this->actingAs($user)->withCsrfToken()
+            ->patchJson("/api/journeys/{$journey->PK_JORNADA}/answers", [
+                'english_proficiency_id' => $graduationSubcriterion->PK_SUBCRITERIOS,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.english_proficiency_id.0', 'A proficiencia em ingles informada nao existe.');
+    }
+
     public function test_it_rejects_invalid_data(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
