@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use RuntimeException;
 
-class JourneyProfileNotFoundException extends RuntimeException
-{
-}
+class JourneyProfileNotFoundException extends RuntimeException {}

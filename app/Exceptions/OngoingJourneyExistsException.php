@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use RuntimeException;
 
-class OngoingJourneyExistsException extends RuntimeException
-{
-}
+class OngoingJourneyExistsException extends RuntimeException {}

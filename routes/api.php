@@ -3,6 +3,10 @@
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CsrfTokenController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\JourneyAnswersController;
+use App\Http\Controllers\Api\JourneyCertificationsController;
+use App\Http\Controllers\Api\JourneyCompetenciesController;
+use App\Http\Controllers\Api\JourneyCoursesController;
 use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
@@ -32,5 +36,9 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
     Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
     Route::post('/users/{user}/journeys', [UserJourneyController::class, 'store'])->middleware(AuthenticateSessionUser::class);
     Route::get('/journeys/{journey}', [UserJourneyController::class, 'show'])->middleware(AuthenticateSessionUser::class);
+    Route::patch('/journeys/{journey}/answers', JourneyAnswersController::class)->middleware(AuthenticateSessionUser::class);
+    Route::post('/journeys/{journey}/courses', JourneyCoursesController::class)->middleware(AuthenticateSessionUser::class);
+    Route::post('/journeys/{journey}/certifications', JourneyCertificationsController::class)->middleware(AuthenticateSessionUser::class);
+    Route::post('/journeys/{journey}/competencies', JourneyCompetenciesController::class)->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
 });

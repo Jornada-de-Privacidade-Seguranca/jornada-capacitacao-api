@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Models\AcquiredKnowledge;
 use App\Models\Journey;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -87,6 +88,38 @@ class JourneyRepository implements JourneyRepositoryInterface
 
     public function create(array $data): Journey
     {
-        return Journey::query()->create($data);
+        $journey = Journey::query()->create($data);
+
+        return $journey->load(['usuario', 'journeyProfile.knowledgeDomain']);
+    }
+
+    public function update(Journey $journey, array $data): void
+    {
+        $journey->update($data);
+    }
+
+    public function attachCourses(Journey $journey, array $courseIds): void
+    {
+        $journey->higherEducationCourses()->syncWithoutDetaching($courseIds);
+    }
+
+    public function attachCertifications(Journey $journey, array $certificationIds): void
+    {
+        $journey->professionalCertifications()->syncWithoutDetaching($certificationIds);
+    }
+
+    public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void
+    {
+        foreach ($competencies as $competency) {
+            AcquiredKnowledge::query()->updateOrCreate(
+                [
+                    'FK_JORNADA' => $journey->PK_JORNADA,
+                    'FK_COMPETENCIAS' => $competency['competency_id'],
+                ],
+                [
+                    'TP_ADQUIRIDO' => $competency['is_acquired'] ? 1 : 0,
+                ],
+            );
+        }
     }
 }

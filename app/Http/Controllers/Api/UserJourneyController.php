@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Exceptions\JourneyProfileNotFoundException;
-use App\Http\Requests\StoreUserJourneyRequest;
 use App\Exceptions\IncompleteJourneyException;
+use App\Exceptions\JourneyProfileNotFoundException;
 use App\Exceptions\OngoingJourneyExistsException;
 use App\Http\Requests\ListUserJourneysRequest;
 use App\Http\Requests\ShowJourneyRequest;
+use App\Http\Requests\StoreUserJourneyRequest;
 use App\Http\Resources\JourneyDetailResource;
 use App\Http\Resources\JourneyListResource;
 use App\Services\JourneyService;

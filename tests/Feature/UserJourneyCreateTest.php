@@ -2,19 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\Journey;
-use App\Models\JourneyProfile;
-use App\Models\KnowledgeDomain;
-use App\Models\ProfessionalExperience;
-use App\Models\Usuario;
 use App\Services\JourneyService;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use Tests\Feature\Concerns\CreatesJourneyFixtures;
 use Tests\TestCase;
 
 class UserJourneyCreateTest extends TestCase
 {
+    use CreatesJourneyFixtures;
     use RefreshDatabase;
 
     public function test_common_user_starts_a_new_journey_for_self(): void
@@ -43,25 +40,6 @@ class UserJourneyCreateTest extends TestCase
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
             'DH_FIM' => null,
-        ]);
-    }
-
-    public function test_it_stores_optional_journey_related_fields(): void
-    {
-        $user = $this->activeUser('Maria Silva', 2);
-        $profile = $this->journeyProfile('Privacidade');
-        $experience = ProfessionalExperience::create(['DS_EXPERIENCIA_ATUACAO_PT' => 'Junior']);
-
-        $this->actingAs($user)->withCsrfToken()
-            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
-                'journey_profile_id' => $profile->PK_PERFIS_JORNADA,
-                'professional_experience_id' => $experience->PK_EXPERIENCIA_ATUACAO,
-            ])
-            ->assertCreated();
-
-        $this->assertDatabaseHas('TB_JORNADA', [
-            'FK_USUARIO' => $user->PK_USUARIO,
-            'FK_EXPERIENCIA_PROFISSIONAL' => $experience->PK_EXPERIENCIA_ATUACAO,
         ]);
     }
 
@@ -167,18 +145,16 @@ class UserJourneyCreateTest extends TestCase
     public function test_it_rejects_invalid_data(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
-        $profile = $this->journeyProfile('Privacidade');
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
-                'journey_profile_id' => $profile->PK_PERFIS_JORNADA,
-                'professional_experience_id' => 999999,
+                'journey_profile_id' => 'abc',
             ])
             ->assertUnprocessable()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Dados invalidos.')
             ->assertJsonPath('code', 'VALIDATION_ERROR')
-            ->assertJsonPath('errors.professional_experience_id.0', 'A experiencia profissional informada nao existe.');
+            ->assertJsonPath('errors.journey_profile_id.0', 'O perfil de jornada deve ser um numero inteiro.');
     }
 
     public function test_it_prevents_creating_new_journey_when_user_has_ongoing_journey(): void
@@ -229,38 +205,5 @@ class UserJourneyCreateTest extends TestCase
             ->assertJsonPath('message', 'Nao foi possivel iniciar a jornada no momento.')
             ->assertJsonPath('code', 'JOURNEY_CREATION_FAILED')
             ->assertJsonPath('errors', []);
-    }
-
-    private function activeUser(string $name, int $userType): Usuario
-    {
-        return Usuario::create([
-            'FK_TIPO_USUARIO' => $userType,
-            'NO_USUARIO' => $name,
-            'DS_EMAIL' => strtolower(str_replace(' ', '.', $name)).'@example.com',
-            'ST_ATIVO' => 1,
-        ]);
-    }
-
-    private function journeyProfile(string $description): JourneyProfile
-    {
-        $knowledgeDomain = KnowledgeDomain::create([
-            'NO_DOMINIO_CONHECIMENTO_PT' => $description,
-        ]);
-
-        return JourneyProfile::create([
-            'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
-            'NO_PERFIS_PT' => $description,
-            'DS_PERFIS_PT' => $description,
-        ]);
-    }
-
-    private function journey(Usuario $user, JourneyProfile $profile, string $startedAt, ?string $finishedAt = null): Journey
-    {
-        return Journey::create([
-            'FK_USUARIO' => $user->PK_USUARIO,
-            'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
-            'DH_CRIADO_EM' => $startedAt,
-            'DH_FIM' => $finishedAt,
-        ]);
     }
 }

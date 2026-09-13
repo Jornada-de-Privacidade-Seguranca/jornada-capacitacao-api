@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
+use App\Exceptions\IncompleteJourneyException;
+use App\Exceptions\JourneyAlreadyFinishedException;
 use App\Exceptions\JourneyProfileNotFoundException;
 use App\Exceptions\OngoingJourneyExistsException;
-use App\Exceptions\IncompleteJourneyException;
 use App\Models\Journey;
 use App\Models\Usuario;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
@@ -12,6 +13,7 @@ use App\Repositories\Contracts\JourneyRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class JourneyService
@@ -22,8 +24,7 @@ class JourneyService
         private readonly JourneyRepositoryInterface $journeyRepository,
         private readonly UserRepositoryInterface $userRepository,
         private readonly JourneyProfileRepositoryInterface $journeyProfileRepository,
-    ) {
-    }
+    ) {}
 
     public function listForUser(Usuario $authenticatedUser, int $userId, array $filters): LengthAwarePaginator
     {
@@ -50,35 +51,75 @@ class JourneyService
         $requestedUser = $this->userRepository->findById($userId);
 
         if ($requestedUser === null) {
-            throw new ModelNotFoundException();
+            throw new ModelNotFoundException;
         }
 
         if (! $this->canViewUserJourneys($authenticatedUser, $requestedUser)) {
-            throw new AccessDeniedHttpException();
+            throw new AccessDeniedHttpException;
         }
 
         try {
             $this->journeyProfileRepository->findOrFail((int) $data['journey_profile_id']);
         } catch (ModelNotFoundException) {
-            throw new JourneyProfileNotFoundException();
+            throw new JourneyProfileNotFoundException;
         }
 
-        if ($this->journeyRepository->hasOngoingJourney((int) $requestedUser->PK_USUARIO)) {
-            throw new OngoingJourneyExistsException();
-        }
+        return DB::transaction(function () use ($requestedUser, $data) {
+            $this->userRepository->lockForUpdate((int) $requestedUser->PK_USUARIO);
 
-        return $this->journeyRepository->create([
-            'FK_USUARIO' => $requestedUser->PK_USUARIO,
-            'FK_PERFIS_JORNADA' => $data['journey_profile_id'],
-            'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'] ?? null,
-            'FK_ATUACAO_PERFIL' => $data['profile_experience_id'] ?? null,
-            'FK_PROFICIENCIA_INGLES' => $data['english_proficiency_id'] ?? null,
-            'FK_CURSO_SUPERIOR' => $data['higher_education_course_id'] ?? null,
-            'FK_POS_GRADUACAO' => $data['postgraduate_course_id'] ?? null,
-            'DH_CRIADO_EM' => now(),
-            'DH_FIM' => null,
-        ]);
+            if ($this->journeyRepository->hasOngoingJourney((int) $requestedUser->PK_USUARIO)) {
+                throw new OngoingJourneyExistsException;
+            }
+
+            return $this->journeyRepository->create([
+                'FK_USUARIO' => $requestedUser->PK_USUARIO,
+                'FK_PERFIS_JORNADA' => $data['journey_profile_id'],
+                'DH_CRIADO_EM' => now(),
+                'DH_FIM' => null,
+            ]);
+        });
     }
+
+    public function updateAnswers(Usuario $authenticatedUser, int $journeyId, array $data): Journey
+    {
+        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+
+        $this->journeyRepository->update($journey, [
+            'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'] ?? $journey->FK_EXPERIENCIA_PROFISSIONAL,
+            'FK_ATUACAO_PERFIL' => $data['profile_experience_id'] ?? $journey->FK_ATUACAO_PERFIL,
+            'FK_SUBCRITERIOS_INGLES' => $data['english_proficiency_id'] ?? $journey->FK_SUBCRITERIOS_INGLES,
+        ]);
+
+        return $this->journeyRepository->findDetailedById($journeyId);
+    }
+
+    public function attachCourses(Usuario $authenticatedUser, int $journeyId, array $courseIds): Journey
+    {
+        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+
+        $this->journeyRepository->attachCourses($journey, $courseIds);
+
+        return $this->journeyRepository->findDetailedById($journeyId);
+    }
+
+    public function attachCertifications(Usuario $authenticatedUser, int $journeyId, array $certificationIds): Journey
+    {
+        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+
+        $this->journeyRepository->attachCertifications($journey, $certificationIds);
+
+        return $this->journeyRepository->findDetailedById($journeyId);
+    }
+
+    public function recordCompetencies(Usuario $authenticatedUser, int $journeyId, array $competencies): Journey
+    {
+        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+
+        $this->journeyRepository->upsertAcquiredKnowledges($journey, $competencies);
+
+        return $this->journeyRepository->findDetailedById($journeyId);
+    }
+
     public function findForAuthenticatedUser(Usuario $authenticatedUser, int $journeyId): Journey
     {
         $journey = $this->journeyRepository->findDetailedById($journeyId);
@@ -112,6 +153,25 @@ class JourneyService
         }
 
         return (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
+    }
+
+    private function resolveJourneyForManagement(Usuario $authenticatedUser, int $journeyId): Journey
+    {
+        $journey = $this->journeyRepository->findDetailedById($journeyId);
+
+        if ($journey === null) {
+            throw new ModelNotFoundException;
+        }
+
+        if (! $this->canViewJourney($authenticatedUser, $journey)) {
+            throw new AccessDeniedHttpException;
+        }
+
+        if ($journey->DH_FIM !== null) {
+            throw new JourneyAlreadyFinishedException;
+        }
+
+        return $journey;
     }
 
     private function ensureCompletedJourneyHasRequiredData(Journey $journey): void
