@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthenticatedUserController;
+use App\Http\Controllers\Api\CertificationOptionController;
 use App\Http\Controllers\Api\CsrfTokenController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JourneyProfileController;
@@ -24,12 +25,15 @@ Route::get('/template-example', TemplateExampleController::class);
 Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group(function (): void {
     Route::get('/auth/csrf-token', CsrfTokenController::class);
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
-    Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
-    Route::get('/dashboard', DashboardController::class)->middleware(AuthenticateSessionUser::class);
-    Route::apiResource('journey-profiles', JourneyProfileController::class)
-        ->only(['index', 'show'])
-        ->middleware(AuthenticateSessionUser::class);
-    Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
-    Route::get('/journeys/{journey}', [UserJourneyController::class, 'show'])->middleware(AuthenticateSessionUser::class);
-    Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
+
+    Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
+        Route::get('/me', AuthenticatedUserController::class);
+        Route::get('/dashboard', DashboardController::class);
+        Route::apiResource('journey-profiles', JourneyProfileController::class)
+            ->only(['index', 'show']);
+        Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index']);
+        Route::get('/journeys/current/certifications/options', CertificationOptionController::class);
+        Route::get('/journeys/{journey}', [UserJourneyController::class, 'show']);
+        Route::post('/auth/logout', LogoutController::class);
+    });
 });

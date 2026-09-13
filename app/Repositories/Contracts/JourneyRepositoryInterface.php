@@ -10,4 +10,6 @@ interface JourneyRepositoryInterface
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator;
 
     public function findDetailedById(int $journeyId): ?Journey;
+
+    public function findOngoingByUser(int $userId): ?Journey;
 }
