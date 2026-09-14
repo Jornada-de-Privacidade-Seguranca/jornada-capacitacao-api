@@ -12,4 +12,11 @@ interface JourneyRepositoryInterface
     public function findDetailedById(int $journeyId): ?Journey;
 
     public function findOngoingByUser(int $userId): ?Journey;
+
+    public function findOngoingWithCertificationsByUser(int $userId): ?Journey;
+
+    /**
+     * @param  array<int, int>  $certificationIds
+     */
+    public function syncProfessionalCertifications(Journey $journey, array $certificationIds): Journey;
 }
