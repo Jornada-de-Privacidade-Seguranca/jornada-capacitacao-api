@@ -19,4 +19,11 @@ class CriterionRepository implements CriterionRepositoryInterface
     {
         return Criterion::query()->findOrFail($id);
     }
+
+    public function findEnglishCriterionId(): ?int
+    {
+        return Criterion::query()
+            ->where('NO_CRITERIO_EN', 'Proficiency Level - English')
+            ->value('PK_CRITERIOS');
+    }
 }

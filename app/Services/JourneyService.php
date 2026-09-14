@@ -5,10 +5,14 @@ namespace App\Services;
 use App\Exceptions\IncompleteJourneyException;
 use App\Models\Journey;
 use App\Models\Usuario;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
+use App\Repositories\Contracts\ProfessionalExperienceRepositoryInterface;
+use App\Repositories\Contracts\SubcriterionRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class JourneyService
@@ -17,6 +21,9 @@ class JourneyService
 
     public function __construct(
         private readonly JourneyRepositoryInterface $journeyRepository,
+        private readonly CriterionRepositoryInterface $criterionRepository,
+        private readonly ProfessionalExperienceRepositoryInterface $professionalExperienceRepository,
+        private readonly SubcriterionRepositoryInterface $subcriterionRepository,
         private readonly UserRepositoryInterface $userRepository,
     ) {}
 
@@ -55,6 +62,78 @@ class JourneyService
         $this->ensureCompletedJourneyHasRequiredData($journey);
 
         return $journey;
+    }
+
+    public function getCurrentGeneralDataOptions(Usuario $authenticatedUser): array
+    {
+        $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
+
+        if ($journey === null) {
+            throw new ModelNotFoundException;
+        }
+
+        $englishCriterionId = $this->criterionRepository->findEnglishCriterionId();
+
+        if ($englishCriterionId === null) {
+            throw new ModelNotFoundException;
+        }
+
+        $experienceOptions = $this->professionalExperienceRepository
+            ->allOrdered()
+            ->map(fn ($experience): array => [
+                'id' => $experience->PK_EXPERIENCIA_ATUACAO,
+                'description_pt' => $experience->DS_EXPERIENCIA_ATUACAO_PT,
+                'description_en' => $experience->DS_EXPERIENCIA_ATUACAO_EN,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'journey_id' => $journey->PK_JORNADA,
+            'status' => 'ongoing',
+            'fields' => [
+                'english_level' => [
+                    'required' => true,
+                    'options' => $this->subcriterionRepository
+                        ->allByCriterionId($englishCriterionId)
+                        ->map(fn ($subcriterion): array => [
+                            'id' => $subcriterion->PK_SUBCRITERIOS,
+                            'name_pt' => $subcriterion->NO_SUBCRITERIO_PT,
+                            'name_en' => $subcriterion->NO_SUBCRITERIO_EN,
+                        ])
+                        ->values()
+                        ->all(),
+                ],
+                'professional_experience' => [
+                    'required' => true,
+                    'options' => $experienceOptions,
+                ],
+                'profile_experience' => [
+                    'required' => true,
+                    'options' => $experienceOptions,
+                ],
+            ],
+        ];
+    }
+
+    public function updateCurrentGeneralData(Usuario $authenticatedUser, array $data): Journey
+    {
+        $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
+
+        if ($journey === null) {
+            throw new ModelNotFoundException;
+        }
+
+        $englishSubcriterion = $this->subcriterionRepository->findOrFail((int) $data['english_level_id']);
+        $englishCriterionId = $this->criterionRepository->findEnglishCriterionId();
+
+        if ($englishCriterionId === null || (int) $englishSubcriterion->FK_CRITERIOS !== $englishCriterionId) {
+            throw ValidationException::withMessages([
+                'english_level_id' => ['O nivel de ingles informado nao pertence ao criterio de ingles.'],
+            ]);
+        }
+
+        return $this->journeyRepository->updateGeneralData($journey, $data);
     }
 
     private function canViewUserJourneys(Usuario $authenticatedUser, Usuario $requestedUser): bool

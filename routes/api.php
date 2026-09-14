@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CsrfTokenController;
+use App\Http\Controllers\Api\CurrentJourneyGeneralDataController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\LoginController;
@@ -31,5 +32,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
         ->middleware(AuthenticateSessionUser::class);
     Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
     Route::get('/journeys/{journey}', [UserJourneyController::class, 'show'])->middleware(AuthenticateSessionUser::class);
+    Route::get('/journeys/current/general-data/options', [CurrentJourneyGeneralDataController::class, 'options'])->middleware(AuthenticateSessionUser::class);
+    Route::put('/journeys/current/general-data', [CurrentJourneyGeneralDataController::class, 'update'])->middleware(AuthenticateSessionUser::class);
     Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
 });
