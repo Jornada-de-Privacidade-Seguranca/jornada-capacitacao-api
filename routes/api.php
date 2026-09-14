@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CertificationOptionController;
 use App\Http\Controllers\Api\CsrfTokenController;
+use App\Http\Controllers\Api\CurrentJourneyCompetencyController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\LoginController;
@@ -33,6 +34,9 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
             ->only(['index', 'show']);
         Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index']);
         Route::get('/journeys/current/certifications/options', CertificationOptionController::class);
+        Route::get('/journeys/current/competencies/options', [CurrentJourneyCompetencyController::class, 'options']);
+        Route::get('/journeys/current/competencies', [CurrentJourneyCompetencyController::class, 'show']);
+        Route::put('/journeys/current/competencies', [CurrentJourneyCompetencyController::class, 'update']);
         Route::get('/journeys/{journey}', [UserJourneyController::class, 'show']);
         Route::post('/auth/logout', LogoutController::class);
     });
