@@ -194,6 +194,31 @@ class CurrentJourneyCompetenciesTest extends TestCase
         ]);
     }
 
+    public function test_it_accepts_empty_competency_answers_to_clear_the_step(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $journey = $this->createJourney($user, $profile, finishedAt: null);
+        $competency = $this->createCompetency();
+
+        $this->attachCompetencyToProfile($profile, $competency);
+        $this->createAnswer($journey, $competency, acquired: true);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/competencies', [
+                'competencies' => [],
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.is_complete', false)
+            ->assertJsonCount(0, 'data.competencies');
+
+        $this->assertDatabaseMissing('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'FK_JORNADA' => $journey->PK_JORNADA,
+            'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
+        ]);
+    }
+
     public function test_it_rejects_divergent_duplicate_competencies(): void
     {
         $user = $this->activeUser();

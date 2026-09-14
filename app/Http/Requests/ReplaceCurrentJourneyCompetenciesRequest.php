@@ -19,7 +19,7 @@ class ReplaceCurrentJourneyCompetenciesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'competencies' => ['required', 'array'],
+            'competencies' => ['present', 'array'],
             'competencies.*.competency_id' => ['required', 'integer'],
             'competencies.*.acquired' => ['required', 'boolean'],
         ];

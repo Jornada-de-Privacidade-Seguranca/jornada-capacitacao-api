@@ -55,6 +55,17 @@
 - Testar autenticacao/autorizacao quando o endpoint exigir usuario, permissao ou papel especifico.
 - Testar codigos de erro importantes, especialmente validacao, nao encontrado, nao autorizado e proibido.
 
+## Testes manuais de endpoints
+
+- Ao concluir uma tarefa que crie ou altere endpoints, quando for tecnicamente possivel e seguro, executar tambem uma verificacao manual chamando cada endpoint criado ou alterado pela rota HTTP real da aplicacao, por exemplo via `curl`, cliente HTTP equivalente ou navegador quando for uma rota `GET`.
+- A verificacao manual nao substitui testes automatizados; ela deve complementar os testes de Feature e os criterios de qualidade do projeto.
+- Antes dos testes manuais, identificar o ambiente que sera afetado. Preferir ambiente local, container da aplicacao ou ambiente `testing` isolado quando o fluxo permitir.
+- Endpoints mutaveis (`POST`, `PUT`, `PATCH` ou `DELETE`) devem ser testados manualmente somente por meio das rotas oficiais da aplicacao, respeitando autenticacao, sessao e CSRF quando aplicavel.
+- Nao executar alteracoes diretas no banco para preparar, corrigir ou limpar dados de testes manuais.
+- Quando o teste manual de endpoint mutavel puder persistir dados fora de um ambiente `testing` isolado, a execucao exige autorizacao humana explicita para aquela operacao e seu escopo.
+- Se nao for possivel testar manualmente algum endpoint por falta de credenciais, dados, ambiente, autorizacao, dependencia externa ou risco de persistencia indevida, registrar claramente o motivo.
+- Ao finalizar a tarefa, informar a verificacao de todos os endpoints criados ou alterados, incluindo metodo HTTP, rota, resultado esperado, resultado observado e se houve ou nao persistencia causada pelo fluxo oficial da aplicacao.
+
 ## Organizacao
 
 - Nomear testes pelo comportamento: `test_it_creates_a_competency`, `test_it_rejects_invalid_payload`.
@@ -67,6 +78,7 @@
 ## Execucao obrigatoria
 
 - Antes de concluir uma tarefa, executar ao menos os testes afetados pela mudanca.
+- Antes de concluir uma tarefa que crie ou altere endpoints, quando possivel e seguro, executar testes manuais dos endpoints afetados e registrar a verificacao de cada endpoint no relatorio final.
 - Quando a mudanca tocar comportamento compartilhado ou infraestrutura, executar a suite completa com:
 
 ```bash

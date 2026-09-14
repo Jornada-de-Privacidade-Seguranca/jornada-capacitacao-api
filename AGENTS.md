@@ -11,6 +11,7 @@
 - Registrar bindings de repositories em `app/Providers/RepositoryServiceProvider.php`.
 - Manter `docs/openapi.yaml` atualizado quando endpoints publicos forem criados ou alterados.
 - Apos realizar qualquer tarefa que crie ou altere uma funcionalidade, criar ou atualizar testes automatizados para cobrir a feature afetada seguindo as regras de `Tests.MD`.
+- Ao concluir tarefa que crie ou altere endpoints, quando for tecnicamente possivel e seguro, alem dos testes automatizados, executar testes manuais chamando os endpoints afetados pela rota HTTP real da aplicacao e verificar individualmente todos os endpoints criados ou alterados na tarefa, conforme `Tests.MD`.
 - Nao commitar `.env`.
 - Nao alterar banco de producao.
 - Nao executar comandos destrutivos.
@@ -33,4 +34,3 @@ Quando a aplicação utilizar autenticação baseada em sessão/cookie:
 * Caso uma nova rota mutável autenticada por cookie seja necessária e a proteção CSRF ainda não esteja configurada, apresentar o problema e a solução proposta antes de implementar a rota.
 * Não remover ou desabilitar proteção CSRF apenas para fazer uma rota funcionar.
 * Caso o modelo de autenticação seja alterado de cookie/session para Bearer Token, reavaliar esta regra conforme o novo modelo de autenticação.
-
