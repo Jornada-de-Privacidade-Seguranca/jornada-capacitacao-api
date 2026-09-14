@@ -7,9 +7,12 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 
 class ListJourneyCourseOptionsRequest extends FormRequest
 {
+    private const ACADEMIC_CRITERION_ID = 2;
+
     public function authorize(): bool
     {
         return true;
@@ -18,7 +21,12 @@ class ListJourneyCourseOptionsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type_id' => ['sometimes', 'integer', 'min:1', 'exists:TB_SUBCRITERIOS,PK_SUBCRITERIOS'],
+            'type_id' => [
+                'sometimes',
+                'integer',
+                'min:1',
+                Rule::exists('TB_SUBCRITERIOS', 'PK_SUBCRITERIOS')->where('FK_CRITERIOS', self::ACADEMIC_CRITERION_ID),
+            ],
         ];
     }
 

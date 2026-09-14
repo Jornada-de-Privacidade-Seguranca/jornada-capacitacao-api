@@ -995,7 +995,7 @@ paths:
         - name: type_id
           in: query
           required: false
-          description: Filtra os cursos pelo identificador do tipo/subcriterio cadastrado em TB_SUBCRITERIOS.
+          description: Filtra os cursos pelo identificador do tipo/subcriterio cadastrado em TB_SUBCRITERIOS. Aceita apenas subcriterios de formacao academica (Graduacao, Pos-Graduacao, Mestrado, Doutorado); um subcriterio existente mas de outra categoria, como experiencia profissional ou ingles, retorna 422 INVALID_COURSE_TYPE.
           schema:
             type: integer
             minimum: 1

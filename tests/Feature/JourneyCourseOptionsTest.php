@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Criterion;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
 use App\Models\Subcriterion;
@@ -111,6 +112,29 @@ class JourneyCourseOptionsTest extends TestCase
             ->assertJsonPath('errors.type_id.0', 'Tipo de curso informado e invalido.');
     }
 
+    public function test_it_rejects_type_filter_for_a_non_academic_subcriterion(): void
+    {
+        $user = $this->activeUser('Maria Silva');
+        $this->ongoingJourney($user);
+        $criterion = Criterion::create([
+            'NO_CRITERIO_PT' => 'Experiência Profissional',
+            'NO_CRITERIO_EN' => 'Professional Experience',
+        ]);
+        $nonAcademicSubcriterion = Subcriterion::create([
+            'FK_CRITERIOS' => $criterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => 'Tempo de Experiência Profissional',
+            'NO_SUBCRITERIO_EN' => 'Years of Professional Experience',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/current/courses/options?type_id={$nonAcademicSubcriterion->PK_SUBCRITERIOS}")
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Tipo de curso informado e invalido.')
+            ->assertJsonPath('code', 'INVALID_COURSE_TYPE')
+            ->assertJsonPath('errors.type_id.0', 'Tipo de curso informado e invalido.');
+    }
+
     public function test_it_returns_standard_error_when_course_search_fails(): void
     {
         $user = $this->activeUser('Maria Silva');
@@ -148,7 +172,12 @@ class JourneyCourseOptionsTest extends TestCase
 
     private function subcriterio(string $namePt, string $nameEn): Subcriterion
     {
+        $academicCriterion = Criterion::query()
+            ->where('NO_CRITERIO_PT', 'Formação Acadêmica')
+            ->firstOrFail();
+
         return Subcriterion::create([
+            'FK_CRITERIOS' => $academicCriterion->PK_CRITERIOS,
             'NO_SUBCRITERIO_PT' => $namePt,
             'NO_SUBCRITERIO_EN' => $nameEn,
         ]);
