@@ -35,6 +35,7 @@ class JourneyListResource extends JsonResource
             'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
             'status' => $isCompleted ? 'completed' : 'ongoing',
             'is_completed' => $isCompleted,
+            'score' => $this->NU_PONTUACAO_TOTAL,
             'summary' => [
                 'acquired_knowledges_count' => $this->acquired_knowledges_count ?? 0,
                 'professional_certifications_count' => $this->professional_certifications_count ?? 0,

@@ -79,6 +79,26 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('meta.pagination.has_next_page', false);
     }
 
+    public function test_it_returns_stored_score_for_completed_journey_list_items(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $journey = $this->journey(
+            user: $user,
+            profile: $profile,
+            startedAt: '2026-07-23 16:30:00',
+            finishedAt: '2026-07-23 17:30:00',
+            score: 126.329,
+        );
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys")
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $journey->PK_JORNADA)
+            ->assertJsonPath('data.0.status', 'completed')
+            ->assertJsonPath('data.0.score', 126.329);
+    }
+
     public function test_common_user_cannot_list_journeys_from_another_user(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -307,11 +327,17 @@ class UserJourneyListTest extends TestCase
         ]);
     }
 
-    private function journey(Usuario $user, JourneyProfile $profile, string $startedAt, ?string $finishedAt = null): Journey
-    {
+    private function journey(
+        Usuario $user,
+        JourneyProfile $profile,
+        string $startedAt,
+        ?string $finishedAt = null,
+        ?float $score = null,
+    ): Journey {
         return Journey::create([
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'NU_PONTUACAO_TOTAL' => $score,
             'DH_CRIADO_EM' => $startedAt,
             'DH_FIM' => $finishedAt,
         ]);

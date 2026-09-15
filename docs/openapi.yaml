@@ -676,6 +676,7 @@ paths:
                         finished_at: null
                         status: ongoing
                         is_completed: false
+                        score: null
                         summary:
                           acquired_knowledges_count: 8
                           professional_certifications_count: 2
@@ -837,6 +838,7 @@ paths:
                       finished_at: null
                       status: ongoing
                       is_completed: false
+                      score: null
                       answers:
                         professional_experience:
                           id: 1
@@ -1594,6 +1596,7 @@ components:
         - finished_at
         - status
         - is_completed
+        - score
         - summary
         - detail
       properties:
@@ -1629,6 +1632,12 @@ components:
         is_completed:
           type: boolean
           example: false
+        score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 126.329
         summary:
           $ref: "#/components/schemas/UserJourneySummary"
         detail:
@@ -1721,6 +1730,7 @@ components:
         - finished_at
         - status
         - is_completed
+        - score
         - answers
         - acquired_knowledges
         - professional_certifications
@@ -1752,6 +1762,12 @@ components:
         is_completed:
           type: boolean
           example: false
+        score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 126.329
         answers:
           $ref: "#/components/schemas/UserJourneyAnswers"
         acquired_knowledges:
