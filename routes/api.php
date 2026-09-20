@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthenticatedUserController;
+use App\Http\Controllers\Api\CertificationOptionController;
 use App\Http\Controllers\Api\CsrfTokenController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JourneyAnswersController;
@@ -28,17 +29,20 @@ Route::get('/template-example', TemplateExampleController::class);
 Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group(function (): void {
     Route::get('/auth/csrf-token', CsrfTokenController::class);
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
-    Route::get('/me', AuthenticatedUserController::class)->middleware(AuthenticateSessionUser::class);
-    Route::get('/dashboard', DashboardController::class)->middleware(AuthenticateSessionUser::class);
-    Route::apiResource('journey-profiles', JourneyProfileController::class)
-        ->only(['index', 'show'])
-        ->middleware(AuthenticateSessionUser::class);
-    Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index'])->middleware(AuthenticateSessionUser::class);
-    Route::post('/users/{user}/journeys', [UserJourneyController::class, 'store'])->middleware(AuthenticateSessionUser::class);
-    Route::get('/journeys/{journey}', [UserJourneyController::class, 'show'])->middleware(AuthenticateSessionUser::class);
-    Route::patch('/journeys/{journey}/answers', JourneyAnswersController::class)->middleware(AuthenticateSessionUser::class);
-    Route::post('/journeys/{journey}/courses', JourneyCoursesController::class)->middleware(AuthenticateSessionUser::class);
-    Route::post('/journeys/{journey}/certifications', JourneyCertificationsController::class)->middleware(AuthenticateSessionUser::class);
-    Route::post('/journeys/{journey}/competencies', JourneyCompetenciesController::class)->middleware(AuthenticateSessionUser::class);
-    Route::post('/auth/logout', LogoutController::class)->middleware(AuthenticateSessionUser::class);
+
+    Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
+        Route::get('/me', AuthenticatedUserController::class);
+        Route::get('/dashboard', DashboardController::class);
+        Route::apiResource('journey-profiles', JourneyProfileController::class)
+            ->only(['index', 'show']);
+        Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index']);
+        Route::get('/journeys/current/certifications/options', CertificationOptionController::class);
+        Route::get('/journeys/{journey}', [UserJourneyController::class, 'show']);
+        Route::post('/users/{user}/journeys', [UserJourneyController::class, 'store']);
+        Route::patch('/journeys/{journey}/answers', JourneyAnswersController::class);
+        Route::post('/journeys/{journey}/courses', JourneyCoursesController::class);
+        Route::post('/journeys/{journey}/certifications', JourneyCertificationsController::class);
+        Route::post('/journeys/{journey}/competencies', JourneyCompetenciesController::class);
+        Route::post('/auth/logout', LogoutController::class);
+    });
 });

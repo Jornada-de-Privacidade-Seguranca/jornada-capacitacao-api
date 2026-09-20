@@ -1493,6 +1493,78 @@ paths:
                     message: Nao foi possivel buscar os dados da jornada no momento.
                     errors: []
                     code: JOURNEY_SEARCH_FAILED
+  /journeys/current/certifications/options:
+    get:
+      tags:
+        - Journeys
+      summary: Lista certificacoes profissionais disponiveis para selecao na jornada em andamento
+      description: Retorna as certificacoes profissionais cadastradas para selecao na jornada em andamento do usuario autenticado.
+      operationId: listCertificationOptions
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Certificacoes disponiveis encontradas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationOptionListResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Certificacoes disponiveis encontradas com sucesso.
+                    data:
+                      - id: 1
+                        name: CIPM
+                        issuer: IAPP
+                        knowledge_domain:
+                          id: 1
+                          name_pt: Privacidade
+                          name_en: Privacy
+                      - id: 2
+                        name: CISSP
+                        issuer: ISC2
+                        knowledge_domain: null
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Nao existe jornada em andamento para este usuario.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as certificacoes disponiveis no momento.
+                    errors: []
+                    code: CERTIFICATION_OPTIONS_SEARCH_FAILED
   /journey-profiles:
     parameters:
       - name: page
@@ -2858,6 +2930,62 @@ components:
           format: password
           maxLength: 100
           example: SenhaSegura123
+    CertificationOptionListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Certificacoes disponiveis encontradas com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CertificationOption"
+    CertificationOption:
+      type: object
+      required:
+        - id
+        - name
+        - issuer
+        - knowledge_domain
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type:
+            - string
+            - "null"
+          example: CIPM
+        issuer:
+          type:
+            - string
+            - "null"
+          example: IAPP
+        knowledge_domain:
+          type:
+            - object
+            - "null"
+          properties:
+            id:
+              type: integer
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
     JourneyProfileListResponse:
       type: object
       required:

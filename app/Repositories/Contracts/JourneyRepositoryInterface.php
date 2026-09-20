@@ -22,4 +22,6 @@ interface JourneyRepositoryInterface
     public function attachCertifications(Journey $journey, array $certificationIds): void;
 
     public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void;
+    
+    public function findOngoingByUser(int $userId): ?Journey;
 }

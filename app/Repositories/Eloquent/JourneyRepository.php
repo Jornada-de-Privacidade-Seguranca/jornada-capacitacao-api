@@ -31,6 +31,16 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->first();
     }
 
+    public function findOngoingByUser(int $userId): ?Journey
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_FIM')
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA')
+            ->first();
+    }
+
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator
     {
         $query = Journey::query()

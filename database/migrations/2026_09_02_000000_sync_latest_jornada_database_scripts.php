@@ -728,6 +728,7 @@ return new class extends Migration
             7 => ['FK_CRITERIOS' => 4, 'NO_SUBCRITERIO_PT' => 'Básico - Leitura', 'NO_SUBCRITERIO_EN' => 'Basic - Reading', 'NU_PESO_SUBCRITERIO' => 10.616],
             8 => ['FK_CRITERIOS' => 4, 'NO_SUBCRITERIO_PT' => 'Intermediário - Leitura e Escrita', 'NO_SUBCRITERIO_EN' => 'Intermediary - Reading and Writing', 'NU_PESO_SUBCRITERIO' => 26.05],
             9 => ['FK_CRITERIOS' => 4, 'NO_SUBCRITERIO_PT' => 'Avançado - Fluente', 'NO_SUBCRITERIO_EN' => 'Advanced - Fluent', 'NU_PESO_SUBCRITERIO' => 63.335],
+            10 => ['FK_CRITERIOS' => 4, 'NO_SUBCRITERIO_PT' => 'Nenhum', 'NO_SUBCRITERIO_EN' => 'None', 'NU_PESO_SUBCRITERIO' => 0],
         ];
     }
 
