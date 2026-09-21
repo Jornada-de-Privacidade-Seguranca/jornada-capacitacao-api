@@ -16,8 +16,8 @@ class UserJourneyRecordCompetenciesTest extends TestCase
         $user = $this->activeUser('Maria Silva', 2);
         $profile = $this->journeyProfile('Privacidade');
         $journey = $this->journey($user, $profile, '2026-08-01 09:00:00');
-        $acquired = $this->competency('LGPD Fundamentos');
-        $notAcquired = $this->competency('ISO 27001 Avancado');
+        $acquired = $this->competency('LGPD Fundamentos', $profile);
+        $notAcquired = $this->competency('ISO 27001 Avancado', $profile);
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson("/api/journeys/{$journey->PK_JORNADA}/competencies", [
@@ -49,7 +49,7 @@ class UserJourneyRecordCompetenciesTest extends TestCase
         $user = $this->activeUser('Maria Silva', 2);
         $profile = $this->journeyProfile('Privacidade');
         $journey = $this->journey($user, $profile, '2026-08-01 09:00:00');
-        $competency = $this->competency('LGPD Fundamentos');
+        $competency = $this->competency('LGPD Fundamentos', $profile);
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson("/api/journeys/{$journey->PK_JORNADA}/competencies", [
@@ -115,6 +115,27 @@ class UserJourneyRecordCompetenciesTest extends TestCase
             ->assertJsonPath('code', 'JOURNEY_ALREADY_FINISHED');
     }
 
+    public function test_it_rejects_a_competency_that_does_not_belong_to_the_journey_profile(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $otherProfile = $this->journeyProfile('Seguranca da Informacao');
+        $journey = $this->journey($user, $profile, '2026-08-01 09:00:00');
+        $competency = $this->competency('ISO 27001 Avancado', $otherProfile);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson("/api/journeys/{$journey->PK_JORNADA}/competencies", [
+                'competencies' => [['competency_id' => $competency->PK_COMPETENCIAS, 'is_acquired' => true]],
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'COMPETENCY_NOT_IN_JOURNEY_PROFILE');
+
+        $this->assertDatabaseMissing('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'FK_JORNADA' => $journey->PK_JORNADA,
+            'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
+        ]);
+    }
+
     public function test_it_rejects_empty_competency_list(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -154,5 +175,20 @@ class UserJourneyRecordCompetenciesTest extends TestCase
             ->postJson('/api/journeys/1/competencies', ['competencies' => [['competency_id' => 1, 'is_acquired' => true]]])
             ->assertUnauthorized()
             ->assertJsonPath('code', 'UNAUTHENTICATED');
+    }
+
+    public function test_it_rejects_request_without_csrf_token(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $journey = $this->journey($user, $profile, '2026-08-01 09:00:00');
+        $competency = $this->competency('LGPD Fundamentos', $profile);
+
+        $this->actingAs($user)
+            ->postJson("/api/journeys/{$journey->PK_JORNADA}/competencies", [
+                'competencies' => [['competency_id' => $competency->PK_COMPETENCIAS, 'is_acquired' => true]],
+            ])
+            ->assertStatus(419)
+            ->assertJsonPath('code', 'CSRF_TOKEN_MISMATCH');
     }
 }

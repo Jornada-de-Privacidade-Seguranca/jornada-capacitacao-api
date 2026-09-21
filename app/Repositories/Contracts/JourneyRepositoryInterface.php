@@ -24,4 +24,6 @@ interface JourneyRepositoryInterface
     public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void;
 
     public function findOngoingByUser(int $userId): ?Journey;
+
+    public function competencyIdsBelongToProfile(int $journeyProfileId, array $competencyIds): bool;
 }

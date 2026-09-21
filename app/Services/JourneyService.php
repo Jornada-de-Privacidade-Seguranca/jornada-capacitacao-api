@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\IncompleteJourneyException;
 use App\Exceptions\JourneyAlreadyFinishedException;
 use App\Exceptions\JourneyProfileNotFoundException;
@@ -114,6 +115,12 @@ class JourneyService
     public function recordCompetencies(Usuario $authenticatedUser, int $journeyId, array $competencies): Journey
     {
         $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+
+        $competencyIds = array_column($competencies, 'competency_id');
+
+        if (! $this->journeyRepository->competencyIdsBelongToProfile((int) $journey->FK_PERFIS_JORNADA, $competencyIds)) {
+            throw new CompetencyNotInJourneyProfileException;
+        }
 
         $this->journeyRepository->upsertAcquiredKnowledges($journey, $competencies);
 

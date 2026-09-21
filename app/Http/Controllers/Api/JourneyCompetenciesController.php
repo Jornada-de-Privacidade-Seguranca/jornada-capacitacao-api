@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\JourneyAlreadyFinishedException;
 use App\Http\Requests\RecordJourneyCompetenciesRequest;
 use App\Http\Resources\JourneyDetailResource;
@@ -42,6 +43,12 @@ class JourneyCompetenciesController
                 message: 'Jornada ja finalizada nao pode ser alterada.',
                 status: Response::HTTP_CONFLICT,
                 code: 'JOURNEY_ALREADY_FINISHED',
+            );
+        } catch (CompetencyNotInJourneyProfileException) {
+            return ApiResponse::error(
+                message: 'A competencia informada nao pertence ao perfil desta jornada.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+                code: 'COMPETENCY_NOT_IN_JOURNEY_PROFILE',
             );
         } catch (Throwable) {
             return ApiResponse::error(

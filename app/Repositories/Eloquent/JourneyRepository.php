@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\AcquiredKnowledge;
 use App\Models\Journey;
+use App\Models\ProfileCompetency;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -131,5 +132,18 @@ class JourneyRepository implements JourneyRepositoryInterface
                 ],
             );
         }
+    }
+
+    public function competencyIdsBelongToProfile(int $journeyProfileId, array $competencyIds): bool
+    {
+        $distinctCompetencyIds = array_unique($competencyIds);
+
+        $matchingCount = ProfileCompetency::query()
+            ->where('FK_PERFIS_JORNADA', $journeyProfileId)
+            ->whereIn('FK_COMPETENCIAS', $distinctCompetencyIds)
+            ->distinct()
+            ->count('FK_COMPETENCIAS');
+
+        return $matchingCount === count($distinctCompetencyIds);
     }
 }

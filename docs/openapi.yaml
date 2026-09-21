@@ -1249,11 +1249,11 @@ paths:
                     errors: []
                     code: JOURNEY_ALREADY_FINISHED
         "422":
-          description: Erro de validacao
+          description: Erro de validacao ou competencia fora do perfil da jornada
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StandardValidationError"
+                $ref: "#/components/schemas/StandardError"
               examples:
                 invalidData:
                   value:
@@ -1263,6 +1263,12 @@ paths:
                       competencies:
                         - Informe ao menos uma competencia.
                     code: VALIDATION_ERROR
+                competencyNotInJourneyProfile:
+                  value:
+                    success: false
+                    message: A competencia informada nao pertence ao perfil desta jornada.
+                    errors: []
+                    code: COMPETENCY_NOT_IN_JOURNEY_PROFILE
         "500":
           description: Erro interno do servidor
           content:

@@ -134,4 +134,17 @@ class UserJourneyAttachCoursesTest extends TestCase
             ->assertUnauthorized()
             ->assertJsonPath('code', 'UNAUTHENTICATED');
     }
+
+    public function test_it_rejects_request_without_csrf_token(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $journey = $this->journey($user, $profile, '2026-08-01 09:00:00');
+        $course = $this->higherEducationCourse('Graduacao', 'Ciencia da Computacao');
+
+        $this->actingAs($user)
+            ->postJson("/api/journeys/{$journey->PK_JORNADA}/courses", ['course_ids' => [$course->PK_CURSO_SUPERIOR]])
+            ->assertStatus(419)
+            ->assertJsonPath('code', 'CSRF_TOKEN_MISMATCH');
+    }
 }

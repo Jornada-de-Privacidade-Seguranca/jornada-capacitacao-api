@@ -10,6 +10,7 @@ use App\Models\JourneyProfile;
 use App\Models\KnowledgeDomain;
 use App\Models\ProfessionalCertification;
 use App\Models\ProfessionalExperience;
+use App\Models\ProfileCompetency;
 use App\Models\Subcriterion;
 use App\Models\Usuario;
 
@@ -78,8 +79,21 @@ trait CreatesJourneyFixtures
         return ProfessionalCertification::create(['NO_CERTIFICACAO_PROFISSIONAL' => $name]);
     }
 
-    private function competency(string $namePt = 'Competencia Teste'): Competency
+    /**
+     * Cria uma competencia. Quando um perfil e informado, vincula a competencia a ele
+     * em RL_PERFIS_COMPETENCIAS, exigido por Rule::exists em RecordJourneyCompetenciesRequest.
+     */
+    private function competency(string $namePt = 'Competencia Teste', ?JourneyProfile $profile = null): Competency
     {
-        return Competency::create(['NO_COMPETENCIAS_PT' => $namePt]);
+        $competency = Competency::create(['NO_COMPETENCIAS_PT' => $namePt]);
+
+        if ($profile !== null) {
+            ProfileCompetency::create([
+                'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+                'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
+            ]);
+        }
+
+        return $competency;
     }
 }
