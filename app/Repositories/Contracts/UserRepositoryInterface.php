@@ -14,5 +14,7 @@ interface UserRepositoryInterface
 
     public function findById(int $id): ?Usuario;
 
+    public function lockForUpdate(int $id): void;
+
     public function update(Usuario $user, array $data): Usuario;
 }

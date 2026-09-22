@@ -166,6 +166,7 @@ insert into public.tb_criterios(no_criterio_pt, no_criterio_en, nu_peso_criterio
 insert into public.tb_criterios(no_criterio_pt, no_criterio_en, nu_peso_criterio) values ('Certificação Profissional', 'Professional Certification', 10.72);
 insert into public.tb_criterios(no_criterio_pt, no_criterio_en, nu_peso_criterio) values ('Nível de Proficiência - Inglês', 'Proficiency Level - English', 4.85);
 insert into public.tb_criterios(no_criterio_pt, no_criterio_en, nu_peso_criterio) values ('Competências', 'Competencies', 45.82);
+insert into public.tb_criterios(no_criterio_pt, no_criterio_en, nu_peso_criterio) values ('Nenhum', 'None', 0);
 
 --Insert TB_SUBCRITERIOS
 insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (2, 'Graduação', 'Graduation', 8.829);
@@ -177,6 +178,7 @@ insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriter
 insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Básico - Leitura', 'Basic - Reading', 10.616);
 insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing', 26.05);
 insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Avançado - Fluente', 'Advanced - Fluent', 63.335);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Nenhum', 'None', 0);
 
 --Insert TB_CURSO_SUPERIOR
 insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (1, 'Direito', 'Law');
