@@ -52,6 +52,13 @@ class HigherEducationCourseSeederTest extends TestCase
         $this->assertSame(7, HigherEducationCourse::query()->count());
     }
 
+    public function test_default_database_seeder_populates_the_academic_course_catalog(): void
+    {
+        $this->seed();
+
+        $this->assertSame(7, HigherEducationCourse::query()->count());
+    }
+
     private function subcriterion(string $namePt): Subcriterion
     {
         return Subcriterion::query()

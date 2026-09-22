@@ -39,14 +39,14 @@ Adicionalmente, o Gestor de Segurança da Informação compõe a estrutura de go
 insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_perfis_pt, no_perfis_pt, no_perfis_en) values (2,
 'The agent responsible for managing information assets shall be designated by the Information Security Manager, in accordance with Article 8 of Normative Instruction GSI/PR No. 3, dated May 28, 2021:
 “Article 8. It is the responsibility of the information security manager of each agency or entity to coordinate the process of mapping information assets, as well as to designate an agent responsible for managing information assets from among the agency’s or entity’s permanent staff.”'
-,'O Agente responsável pela gestão dos ativos de informação será designado pelo Gestor de Segurança da Informação, conforme o Art. 8º da IN GSI/PR N°3, de 28 de maio de 2021: 
+,'O Agente responsável pela gestão dos ativos de informação será designado pelo Gestor de Segurança da Informação, conforme o Art. 8º da IN GSI/PR N°3, de 28 de maio de 2021:
 “Art. 8º Cabe ao gestor de segurança da informação de cada órgão ou entidade coordenar o processo de mapeamento de ativos de informação, bem como designar um agente responsável pela gestão dos ativos de informação, dentre os servidores efetivos do órgão ou da entidade.”'
 ,'Agente Responsável pela Gestão dos Ativos de Informação', 'Agent Responsible for Managing Information Assets');
 
 insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_perfis_pt, no_perfis_pt, no_perfis_en) values (2,
 'Pursuant to Article 8 of IN GSI/PR No. 3, dated May 28, 2021:
 “It is the responsibility of the information security manager of each agency or entity to coordinate the information asset mapping process, as well as to designate an agent responsible for managing information assets from among the agency’s or entity’s permanent staff.”'
-,'Conforme o Art. 8° da IN GSI/PR N°3, de 28 de maio de 2021: 
+,'Conforme o Art. 8° da IN GSI/PR N°3, de 28 de maio de 2021:
 “Cabe ao gestor de segurança da informação de cada órgão ou entidade coordenar o processo de mapeamento de ativos de informação, bem como designar um agente responsável pela gestão dos ativos de informação, dentre os servidores efetivos do órgão ou da entidade.”'
 ,'Agente Responsável pela Gestão de Mudança nos Aspectos de Segurança da Informação', 'Agent Responsible for Managing Change Regarding Information Security Aspects');
 
@@ -78,21 +78,21 @@ insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_
 insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_perfis_pt, no_perfis_pt, no_perfis_en) values (2,
 'In accordance with Normative Instruction No. 1 of May 27, 2020, a Cyber ​​Incident Prevention, Handling, and Response Team (ETIR) must be established and implemented by agencies and entities of the direct and indirect federal public administration, as indicated in Article 15:
 IV - Establish and implement a Cyber ​​Incident Prevention, Handling, and Response Team (ETIR), which shall constitute the network of teams—comprising agencies and entities of the federal public administration—coordinated by the Government Cyber ​​Incident Handling and Response Center of the Institutional Security Office of the Presidency of the Republic.'
-,'Conforme a IN Nº 1 de 27 de Maio de 2020, a Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR) deverá ser instituída e implementada pelos órgãos e entidades da administração pública federal, direta e indireta, conforme indicado no Art.15: 
+,'Conforme a IN Nº 1 de 27 de Maio de 2020, a Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR) deverá ser instituída e implementada pelos órgãos e entidades da administração pública federal, direta e indireta, conforme indicado no Art.15:
 IV - Instituir e implementar Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos - ETIR, que constituirá a rede de equipes, integrada pelos órgãos e pelas entidades da administração pública federal, coordenada pelo Centro de Tratamento e Resposta a Incidentes Cibernéticos de Governo do Gabinete de Segurança Institucional da Presidência da República.'
 ,'Equipe de Prevenção, Tratamento e Resposta a Incidentes Cibernéticos (ETIR)', 'Cyber ​​Incident Prevention, Handling, and Response Team (ETIR)');
 
 insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_perfis_pt, no_perfis_pt, no_perfis_en) values (2,
 'Normative Instruction No. 2 of February 5, 2013, defines the Security and Accreditation Manager as:
 “The person responsible for the security of information classified at any level of secrecy within Registration Bodies and Control Posts.”'
-,'A Instrução Normativa N° - 2, de 5 de fevereiro de 2013 define o Gestor de Segurança e Credenciamento como: 
+,'A Instrução Normativa N° - 2, de 5 de fevereiro de 2013 define o Gestor de Segurança e Credenciamento como:
 “Responsável pela segurança da informação classificada em qualquer grau de sigilo nos Órgãos de Registro e Postos de Controle”.'
 ,'Gestor de Segurança e Credenciamento', 'Security and Accreditation Manager');
 
 insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_perfis_pt, no_perfis_pt, no_perfis_en) values (3,
 'In accordance with Ordinance SGD/MGI No. 852 of March 28, 2023, the Information and Communication Technology Manager is part of the PPSI governance structure within each agency and entity of the direct, autonomous, and foundational federal public administration.
 Additionally, the Privacy and Information Security Program (PPSI) Framework Guide states that the IT Manager constitutes the first line of defense, representing the primary structure responsible for PPSI governance.'
-,'De acordo com a Portaria SGD/MGI nº 852, de 28 de março de 2023, o Gestor de Tecnologia da Informação e Comunicação compõe a Estrutura de Governança do PPSI em cada órgão e entidade da administração pública federal direta, autárquica e fundacional.  
+,'De acordo com a Portaria SGD/MGI nº 852, de 28 de março de 2023, o Gestor de Tecnologia da Informação e Comunicação compõe a Estrutura de Governança do PPSI em cada órgão e entidade da administração pública federal direta, autárquica e fundacional.
 Adicionalmente, o Guia do Framework do Programa de Privacidade e Segurança da Informação informa que o Gestor de TI compõe a primeira linha de defesa, representando a estrutura principal responsável pela governança do PPSI.'
 ,'Gestor de Tecnologia da Informação e Comunicação', 'Information and Communication Technology Manager');
 
@@ -106,7 +106,7 @@ Their responsibilities include hardware and software management, data protection
 insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_perfis_pt, no_perfis_pt, no_perfis_en) values (3,
 'Senior management in public sector bodies is understood to comprise individuals in leadership and strategic decision-making positions who represent the public administration and are responsible for guiding privacy and data protection policy. This includes:
 1.Ministers of State and Secretaries, Presidents, Vice-Presidents, Rectors, Vice-Rectors, Pro-Rectors, Armed Forces Commanders, and the Information Security Committee.'
-,'Entende-se que a Alta Administração em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui: 
+,'Entende-se que a Alta Administração em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
 1.Ministros de Estado e Secretários, Presidentes, Vice-Presidente, Reitores, Vice-Reitores, Pró-Reitores e Comandantes das Forças Armadas, Comitê de Segurança da Informação.'
 ,'Alta Administração 1', 'Senior Management 1');
 
@@ -115,16 +115,16 @@ insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_
 1.Directors, Deputy Directors, Superintendents, Undersecretaries, and General Coordinators.
 2.Chiefs of Staff, Deputy Chiefs of Staff, and Advisors.
 3.Internal Control Advisor and Ombudsman.'
-,'Entende-se que a Alta Administração 2 em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:  
-1.Diretores, Vice-Diretores, Superintendentes, Subsecretários, Coordenadores-Gerais. 
-2.Chefes de Gabinete, Subchefes e Assessores. 
+,'Entende-se que a Alta Administração 2 em órgãos públicos é composta por indivíduos em posições de liderança e decisão estratégica que representam a administração pública e têm a responsabilidade de orientar a política de privacidade e proteção de dados. Isso inclui:
+1.Diretores, Vice-Diretores, Superintendentes, Subsecretários, Coordenadores-Gerais.
+2.Chefes de Gabinete, Subchefes e Assessores.
 3.Assessor de Controle Interno, Ouvidor. '
 ,'Alta Administração 2', 'Senior Management 2');
 
 insert into public.tb_perfis_jornada (fk_dominio_conhecimento, ds_perfis_en, ds_perfis_pt, no_perfis_pt, no_perfis_en) values (3,
 'According to the Information Security and Privacy Framework Guide, the Head of the Internal Control Unit plays a fundamental role in driving and implementing the Framework, supporting, supervising, and monitoring the activities carried out by the first line of defense established by CGU Normative Instruction No. 3 of June 9, 2017.
 Ordinance SGD/MGI No. 852 of March 28, 2023, states that the Head of the Internal Control Unit will support, supervise, and monitor the activities carried out by the first line of defense established by CGU Normative Instruction No. 3 of June 9, 2017.'
-,'De acordo com o Guia do Framework de Privacidade e Segurança da Informação, o Responsável pela Unidade de Controle Interno consiste em um dos papéis fundamentais para condução e implementação do Framework, atuando no apoio, supervisão e monitoramento das atividades desenvolvidas pela primeira linha de defesa prevista pela Instrução Normativa CGU nº 3, de 9 de junho de 2017. 
+,'De acordo com o Guia do Framework de Privacidade e Segurança da Informação, o Responsável pela Unidade de Controle Interno consiste em um dos papéis fundamentais para condução e implementação do Framework, atuando no apoio, supervisão e monitoramento das atividades desenvolvidas pela primeira linha de defesa prevista pela Instrução Normativa CGU nº 3, de 9 de junho de 2017.
 A Portaria SGD/MGI nº 852, de 28 de março de 2023 informa que o Responsável pela Unidade Controle Interno atuará no apoio, supervisão e monitoramento das atividades desenvolvidas pela primeira linha de defesa prevista pela Instrução Normativa CGU nº 3, de 9 de junho de 2017. '
 ,'Responsável pela Unidade de Controle Interno', 'Head of the Internal Control Unit');
 
@@ -168,15 +168,24 @@ insert into public.tb_criterios(no_criterio_pt, no_criterio_en, nu_peso_criterio
 insert into public.tb_criterios(no_criterio_pt, no_criterio_en, nu_peso_criterio) values ('Competências', 'Competencies', 45.82);
 
 --Insert TB_SUBCRITERIOS
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Graduação', 'Graduation', 8.829);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Pós-Graduação', 'Postgraduate', 15.751);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Mestrado', 'Masters', 27.18);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Doutorado', 'Doctorate', 48.241);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Tempo de Experiência Profissional', 'Years of Professional Experience', 50);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Tempo de Atuação no Perfil','Time Spent on Role', 50);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Básico - Leitura', 'Basic - Reading', 10.616);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing', 26.05);
-insert into public.tb_subcriterios(no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values ('Avançado - Fluente', 'Advanced - Fluent', 63.335);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (2, 'Graduação', 'Graduation', 8.829);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (2, 'Pós-Graduação', 'Postgraduate', 15.751);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (2, 'Mestrado', 'Masters', 27.18);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (2, 'Doutorado', 'Doctorate', 48.241);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (1, 'Tempo de Experiência Profissional', 'Years of Professional Experience', 50);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (1, 'Tempo de Atuação no Perfil','Time Spent on Role', 50);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Básico - Leitura', 'Basic - Reading', 10.616);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Intermediário - Leitura e Escrita', 'Intermediary - Reading and Writing', 26.05);
+insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Avançado - Fluente', 'Advanced - Fluent', 63.335);
+
+--Insert TB_CURSO_SUPERIOR
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (1, 'Direito', 'Law');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (1, 'Ciência da Computação', 'Computer Science');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (2, 'Segurança da Informação', 'Information Security');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (2, 'Privacidade e Proteção de Dados', 'Privacy and Data Protection');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (2, 'Governança de Privacidade', 'Privacy Governance');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (3, 'Direito Digital', 'Digital Law');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (4, 'Segurança da Informação', 'Information Security');
 
 --Insert TB_PRESO_CRIT_COMPETENCIA
 --Gestor de Segurança da Informação
