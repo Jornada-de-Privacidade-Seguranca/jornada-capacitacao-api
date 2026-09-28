@@ -180,6 +180,15 @@ insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriter
 insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Avançado - Fluente', 'Advanced - Fluent', 63.335);
 insert into public.tb_subcriterios(fk_criterios, no_subcriterio_pt, no_subcriterio_en, nu_peso_subcriterio) values (4, 'Nenhum', 'None', 0);
 
+--Insert TB_CURSO_SUPERIOR
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (1, 'Direito', 'Law');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (1, 'Ciência da Computação', 'Computer Science');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (2, 'Segurança da Informação', 'Information Security');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (2, 'Privacidade e Proteção de Dados', 'Privacy and Data Protection');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (2, 'Governança de Privacidade', 'Privacy Governance');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (3, 'Direito Digital', 'Digital Law');
+insert into public.tb_curso_superior(fk_subcriterios, no_curso_superior_pt, no_curso_superior_en) values (4, 'Segurança da Informação', 'Information Security');
+
 --Insert TB_PRESO_CRIT_COMPETENCIA
 --Gestor de Segurança da Informação
 INSERT INTO public.tb_peso_crit_competencia(fk_perfis_jornada, fk_area_conhecimento, nu_peso_crit_competencia) values (6,5,13.366);

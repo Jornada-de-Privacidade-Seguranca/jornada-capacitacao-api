@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JourneyAnswersController;
 use App\Http\Controllers\Api\JourneyCertificationsController;
 use App\Http\Controllers\Api\JourneyCompetenciesController;
+use App\Http\Controllers\Api\JourneyCourseOptionsController;
 use App\Http\Controllers\Api\JourneyCoursesController;
 use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\LoginController;
@@ -38,6 +39,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
             ->only(['index', 'show']);
         Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index']);
         Route::get('/journeys/current/certifications/options', CertificationOptionController::class);
+        Route::get('/journeys/current/courses/options', JourneyCourseOptionsController::class);
         Route::get('/journeys/current/general-data/options', [CurrentJourneyGeneralDataController::class, 'options']);
         Route::put('/journeys/current/general-data', [CurrentJourneyGeneralDataController::class, 'update']);
         Route::get('/journeys/{journey}', [UserJourneyController::class, 'show']);
