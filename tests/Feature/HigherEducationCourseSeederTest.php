@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Criterion;
 use App\Models\HigherEducationCourse;
 use App\Models\Subcriterion;
 use Database\Seeders\HigherEducationCourseSeeder;
@@ -50,6 +51,36 @@ class HigherEducationCourseSeederTest extends TestCase
         $this->seed(HigherEducationCourseSeeder::class);
 
         $this->assertSame(7, HigherEducationCourse::query()->count());
+    }
+
+    public function test_it_uses_the_academic_subcriterion_when_another_criterion_has_the_same_name(): void
+    {
+        $academicBachelor = $this->subcriterion('Graduação');
+        $academicBachelor->delete();
+
+        $professionalCriterion = Criterion::query()
+            ->where('NO_CRITERIO_PT', 'Experiência Profissional')
+            ->firstOrFail();
+        $nonAcademicBachelor = Subcriterion::create([
+            'FK_CRITERIOS' => $professionalCriterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => 'Graduação',
+            'NO_SUBCRITERIO_EN' => 'Bachelor Degree',
+        ]);
+        $academicBachelor = Subcriterion::create([
+            'FK_CRITERIOS' => 2,
+            'NO_SUBCRITERIO_PT' => 'Graduação',
+            'NO_SUBCRITERIO_EN' => 'Graduation',
+        ]);
+
+        $this->seed(HigherEducationCourseSeeder::class);
+
+        $this->assertDatabaseHas('TB_CURSO_SUPERIOR', [
+            'NO_CURSO_SUPERIOR_PT' => 'Direito',
+            'FK_SUBCRITERIOS' => $academicBachelor->PK_SUBCRITERIOS,
+        ]);
+        $this->assertDatabaseMissing('TB_CURSO_SUPERIOR', [
+            'FK_SUBCRITERIOS' => $nonAcademicBachelor->PK_SUBCRITERIOS,
+        ]);
     }
 
     public function test_default_database_seeder_populates_the_academic_course_catalog(): void

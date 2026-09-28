@@ -9,6 +9,8 @@ use RuntimeException;
 
 class HigherEducationCourseSeeder extends Seeder
 {
+    private const ACADEMIC_CRITERION_ID = 2;
+
     public function run(): void
     {
         foreach ($this->courses() as $course) {
@@ -43,6 +45,7 @@ class HigherEducationCourseSeeder extends Seeder
     private function subcriterion(string $namePt): Subcriterion
     {
         $subcriterion = Subcriterion::query()
+            ->where('FK_CRITERIOS', self::ACADEMIC_CRITERION_ID)
             ->where('NO_SUBCRITERIO_PT', $namePt)
             ->first();
 
