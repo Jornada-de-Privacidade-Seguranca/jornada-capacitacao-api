@@ -442,7 +442,7 @@ class JornadaSchemaTest extends TestCase
         $this->assertTrue($journey->englishSubcriterion->is($subcriterion));
         $this->assertTrue($journey->higherEducationCourses->first()->is($higherEducation));
         $this->assertTrue($higherEducation->subcriterion->is($subcriterion));
-        $this->assertSame(85, $journey->NU_PONTUACAO_TOTAL);
+        $this->assertSame(85.0, $journey->NU_PONTUACAO_TOTAL);
     }
 
     private function createLegacyJornadaSchema(): void

@@ -2326,6 +2326,7 @@ components:
             - number
             - "null"
           format: float
+          description: Pontuacao final persistida ao concluir a jornada; permanece nula durante a jornada e nao e recalculada nas consultas.
           example: 126.329
         summary:
           $ref: "#/components/schemas/UserJourneySummary"
@@ -2533,6 +2534,7 @@ components:
             - number
             - "null"
           format: float
+          description: Pontuacao final persistida ao concluir a jornada; permanece nula durante a jornada e nao e recalculada nas consultas.
           example: 126.329
         answers:
           $ref: "#/components/schemas/UserJourneyAnswers"

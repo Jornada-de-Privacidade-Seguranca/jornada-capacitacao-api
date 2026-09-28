@@ -24,6 +24,7 @@ class Journey extends JornadaModel
     ];
 
     protected $casts = [
+        'NU_PONTUACAO_TOTAL' => 'float',
         'DH_CRIADO_EM' => 'datetime',
         'DH_FIM' => 'datetime',
     ];

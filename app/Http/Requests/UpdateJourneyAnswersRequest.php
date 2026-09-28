@@ -28,7 +28,19 @@ class UpdateJourneyAnswersRequest extends FormRequest
         return [
             'journey' => ['bail', 'required', 'regex:/^[0-9]+$/', 'integer', 'min:1'],
             'professional_experience_id' => ['sometimes', 'integer', 'exists:TB_EXPERIENCIA_ATUACAO,PK_EXPERIENCIA_ATUACAO'],
-            'profile_experience_id' => ['sometimes', 'integer', 'exists:TB_EXPERIENCIA_ATUACAO,PK_EXPERIENCIA_ATUACAO'],
+            'profile_experience_id' => [
+                'sometimes',
+                'integer',
+                Rule::exists('TB_EXPERIENCIA_ATUACAO', 'PK_EXPERIENCIA_ATUACAO')->where(
+                    fn ($query) => $query
+                        ->where(fn ($query) => $query
+                            ->whereNull('DS_EXPERIENCIA_ATUACAO_PT')
+                            ->orWhere('DS_EXPERIENCIA_ATUACAO_PT', '!=', 'Nenhum'))
+                        ->where(fn ($query) => $query
+                            ->whereNull('DS_EXPERIENCIA_ATUACAO_EN')
+                            ->orWhere('DS_EXPERIENCIA_ATUACAO_EN', '!=', 'None')),
+                ),
+            ],
             'english_proficiency_id' => [
                 'sometimes',
                 'integer',

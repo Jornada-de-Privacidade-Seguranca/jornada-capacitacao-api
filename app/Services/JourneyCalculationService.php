@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\Journey;
 use App\Models\ProfessionalExperience;
+use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class JourneyCalculationService
@@ -53,6 +55,7 @@ class JourneyCalculationService
 
         return $this->calculateProfessionalExperienceScore($journey->professionalExperience)
             + $this->calculateProfileExperienceScore($journey->profileExperience)
+            + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
             + $this->calculateCourseScore($journey->higherEducationCourses)
             + $this->calculateCertificationScore($journey->professionalCertifications)
             + $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights);
@@ -66,6 +69,11 @@ class JourneyCalculationService
     public function calculateProfileExperienceScore(ProfessionalExperience|string|null $experience): float
     {
         return $this->calculateExperienceScoreRejectingNone($experience);
+    }
+
+    public function calculateEnglishProficiencyScore(?Subcriterion $subcriterion): float
+    {
+        return (float) ($subcriterion?->NU_PESO_SUBCRITERIO ?? 0);
     }
 
     private function calculateExperienceScoreAllowingNone(ProfessionalExperience|string|null $experience): float
@@ -130,6 +138,7 @@ class JourneyCalculationService
         $weightsByArea = $this->areaWeightsByAreaId($areaWeights);
 
         return collect($acquiredKnowledges)
+            ->filter(fn ($acquiredKnowledge): bool => (int) $acquiredKnowledge->TP_ADQUIRIDO === 1)
             ->sum(function ($acquiredKnowledge) use ($weightsByArea): float {
                 $competency = $acquiredKnowledge->competency ?? null;
 
@@ -208,34 +217,6 @@ class JourneyCalculationService
 
     private function normalizeLabel(?string $label): string
     {
-        $label = trim((string) $label);
-        $label = strtr($label, [
-            'á' => 'a',
-            'à' => 'a',
-            'â' => 'a',
-            'ã' => 'a',
-            'Á' => 'a',
-            'À' => 'a',
-            'Â' => 'a',
-            'Ã' => 'a',
-            'é' => 'e',
-            'ê' => 'e',
-            'É' => 'e',
-            'Ê' => 'e',
-            'í' => 'i',
-            'Í' => 'i',
-            'ó' => 'o',
-            'ô' => 'o',
-            'õ' => 'o',
-            'Ó' => 'o',
-            'Ô' => 'o',
-            'Õ' => 'o',
-            'ú' => 'u',
-            'Ú' => 'u',
-            'ç' => 'c',
-            'Ç' => 'c',
-        ]);
-
-        return mb_strtolower($label);
+        return Str::lower(Str::ascii(trim((string) $label)));
     }
 }

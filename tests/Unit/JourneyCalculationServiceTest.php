@@ -65,6 +65,16 @@ class JourneyCalculationServiceTest extends TestCase
         );
     }
 
+    public function test_it_uses_the_persisted_english_subcriterion_weight(): void
+    {
+        $service = $this->service();
+
+        $this->assertSame(26.05, $service->calculateEnglishProficiencyScore(new Subcriterion([
+            'NU_PESO_SUBCRITERIO' => 26.05,
+        ])));
+        $this->assertSame(0.0, $service->calculateEnglishProficiencyScore(null));
+    }
+
     public function test_it_calculates_certification_score_with_maximum_limit(): void
     {
         $service = $this->service();
@@ -76,7 +86,7 @@ class JourneyCalculationServiceTest extends TestCase
         $this->assertSame(100.0, $service->calculateCertificationScore(8));
     }
 
-    public function test_it_calculates_competency_score_with_hardcoded_level_weights_and_area_weights(): void
+    public function test_it_calculates_only_acquired_competencies_with_area_weights(): void
     {
         $service = $this->service();
         $advanced = new Difficulty([
@@ -109,9 +119,11 @@ class JourneyCalculationServiceTest extends TestCase
         ];
 
         $this->assertSame(65.0, $service->calculateCompetencyScore([
-            (new AcquiredKnowledge)->setRelation('competency', $advancedCompetency),
-            (new AcquiredKnowledge)->setRelation('competency', $specialistCompetency),
-            (new AcquiredKnowledge)->setRelation('competency', $missingWeightCompetency),
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $advancedCompetency),
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $specialistCompetency),
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $missingWeightCompetency),
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 0]))->setRelation('competency', $advancedCompetency),
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => null]))->setRelation('competency', $specialistCompetency),
         ], $areaWeights));
     }
 
@@ -141,16 +153,19 @@ class JourneyCalculationServiceTest extends TestCase
         $journey->setRelation('profileExperience', new ProfessionalExperience([
             'DS_EXPERIENCIA_ATUACAO_PT' => 'Entre 7 e 10 anos',
         ]));
+        $journey->setRelation('englishSubcriterion', new Subcriterion([
+            'NU_PESO_SUBCRITERIO' => 26.05,
+        ]));
         $journey->setRelation('higherEducationCourses', new Collection([$course]));
         $journey->setRelation('professionalCertifications', new Collection([
             new ProfessionalCertification,
             new ProfessionalCertification,
         ]));
         $journey->setRelation('acquiredKnowledges', new Collection([
-            (new AcquiredKnowledge)->setRelation('competency', $competency),
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(93.829, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(119.879, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function service(?Collection $areaWeights = null): JourneyCalculationService

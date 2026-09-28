@@ -46,6 +46,7 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.finished_at', null)
             ->assertJsonPath('data.status', 'ongoing')
             ->assertJsonPath('data.is_completed', false)
+            ->assertJsonPath('data.score', null)
             ->assertJsonPath('data.answers.professional_experience.description_pt', '1 a 3 anos')
             ->assertJsonPath('data.answers.profile_experience.description_pt', 'Mais de 5 anos')
             ->assertJsonPath('data.answers.english_proficiency.name_pt', 'Intermediario')
@@ -101,6 +102,8 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.id', $journey->PK_JORNADA)
             ->assertJsonPath('data.status', 'completed')
             ->assertJsonPath('data.score', 126.329);
+
+        $this->assertSame(126.329, $journey->fresh()->NU_PONTUACAO_TOTAL);
     }
 
     public function test_it_rejects_completed_journey_with_missing_required_data(): void

@@ -52,6 +52,7 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('data.1.finished_at', null)
             ->assertJsonPath('data.1.status', 'ongoing')
             ->assertJsonPath('data.1.is_completed', false)
+            ->assertJsonPath('data.1.score', null)
             ->assertJsonPath('data.1.summary.acquired_knowledges_count', 1)
             ->assertJsonPath('data.1.summary.professional_certifications_count', 1)
             ->assertJsonPath('data.1.detail.journey_id', $recentJourney->PK_JORNADA)
@@ -97,6 +98,8 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('data.0.id', $journey->PK_JORNADA)
             ->assertJsonPath('data.0.status', 'completed')
             ->assertJsonPath('data.0.score', 126.329);
+
+        $this->assertSame(126.329, $journey->fresh()->NU_PONTUACAO_TOTAL);
     }
 
     public function test_common_user_cannot_list_journeys_from_another_user(): void
