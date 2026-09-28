@@ -776,6 +776,7 @@ paths:
         - sessionAuth: []
       parameters:
         - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
@@ -819,8 +820,23 @@ paths:
                       detail:
                         journey_id: 10
                         user_id: 2
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao para iniciar uma jornada para o usuario informado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para iniciar uma jornada para este usuario.
+                    errors: []
+                    code: USER_JOURNEYS_FORBIDDEN
         "404":
-          description: Jornada informada nao encontrada
+          description: Usuario ou perfil de jornada informado nao encontrado
           content:
             application/json:
               schema:
@@ -851,6 +867,8 @@ paths:
                     message: Voce ja possui uma jornada em andamento. Finalize ou continue a jornada atual antes de iniciar uma nova.
                     errors: []
                     code: JOURNEY_IN_PROGRESS
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
           description: Erro de validacao
           content:
@@ -874,6 +892,14 @@ paths:
                       journey_profile_id:
                         - O perfil de jornada deve ser um numero inteiro.
                     code: VALIDATION_ERROR
+                invalidUserIdentifier:
+                  value:
+                    success: false
+                    message: Identificador do usuario invalido.
+                    errors:
+                      user:
+                        - O identificador do usuario deve ser um numero inteiro maior ou igual a 1.
+                    code: INVALID_USER_IDENTIFIER
         "500":
           description: Erro interno do servidor
           content:
@@ -899,6 +925,7 @@ paths:
         - sessionAuth: []
       parameters:
         - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
@@ -917,6 +944,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
         "404":
           description: Jornada informada nao encontrada
           content:
@@ -956,6 +985,8 @@ paths:
                     message: Jornada ja finalizada nao pode ser alterada.
                     errors: []
                     code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
           description: Erro de validacao
           content:
@@ -996,6 +1027,7 @@ paths:
         - sessionAuth: []
       parameters:
         - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
@@ -1013,6 +1045,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
         "404":
           description: Jornada informada nao encontrada
           content:
@@ -1052,6 +1086,8 @@ paths:
                     message: Jornada ja finalizada nao pode ser alterada.
                     errors: []
                     code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
           description: Erro de validacao
           content:
@@ -1092,6 +1128,7 @@ paths:
         - sessionAuth: []
       parameters:
         - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
@@ -1109,6 +1146,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
         "404":
           description: Jornada informada nao encontrada
           content:
@@ -1148,6 +1187,8 @@ paths:
                     message: Jornada ja finalizada nao pode ser alterada.
                     errors: []
                     code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
           description: Erro de validacao
           content:
@@ -1188,6 +1229,7 @@ paths:
         - sessionAuth: []
       parameters:
         - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
@@ -1209,6 +1251,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
         "404":
           description: Jornada informada nao encontrada
           content:
@@ -1248,6 +1292,8 @@ paths:
                     message: Jornada ja finalizada nao pode ser alterada.
                     errors: []
                     code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
           description: Erro de validacao ou competencia fora do perfil da jornada
           content:
@@ -1661,12 +1707,39 @@ components:
       in: cookie
       name: jornada_session
       description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
+  responses:
+    Unauthenticated:
+      description: Usuario nao autenticado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+          examples:
+            unauthenticated:
+              value:
+                success: false
+                message: Usuario nao autenticado.
+                errors: []
+                code: UNAUTHENTICATED
+    CsrfTokenMismatch:
+      description: Token CSRF ausente ou invalido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+          examples:
+            csrfTokenMismatch:
+              value:
+                success: false
+                message: Token CSRF invalido.
+                errors: []
+                code: CSRF_TOKEN_MISMATCH
   parameters:
     CsrfToken:
       name: X-CSRF-TOKEN
       in: header
       required: true
-      description: Valor retornado em data.csrf_token por GET /auth/csrf-token. No Swagger local, execute primeiro /auth/csrf-token, copie data.csrf_token e cole aqui antes de chamar endpoints POST de sessao.
+      description: Valor retornado em data.csrf_token por GET /auth/csrf-token. No Swagger local, execute primeiro /auth/csrf-token, copie data.csrf_token e cole aqui antes de chamar endpoints mutaveis autenticados por sessao.
       schema:
         type: string
       example: test-csrf-token

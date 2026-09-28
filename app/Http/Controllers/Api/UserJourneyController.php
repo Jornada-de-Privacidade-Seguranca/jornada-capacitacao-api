@@ -57,12 +57,12 @@ class UserJourneyController
         );
     }
 
-    public function store(StoreUserJourneyRequest $request, int $user): JsonResponse
+    public function store(StoreUserJourneyRequest $request): JsonResponse
     {
         try {
             $journey = $this->journeyService->startForUser(
                 authenticatedUser: $request->user(),
-                userId: $user,
+                userId: $request->validatedUserId(),
                 data: $request->validated(),
             );
         } catch (ModelNotFoundException) {
