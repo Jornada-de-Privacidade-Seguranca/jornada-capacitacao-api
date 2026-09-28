@@ -1617,6 +1617,105 @@ paths:
                     message: Nao foi possivel buscar as certificacoes disponiveis no momento.
                     errors: []
                     code: CERTIFICATION_OPTIONS_SEARCH_FAILED
+  /journeys/current/courses/options:
+    get:
+      tags:
+        - Journeys
+      summary: Lista cursos academicos disponiveis para a jornada em andamento
+      description: Retorna os cursos superiores cadastrados em TB_CURSO_SUPERIOR disponiveis para selecao na etapa de formacao academica da jornada, usando o relacionamento com TB_SUBCRITERIOS para identificar o tipo do curso quando essa informacao estiver disponivel. Exige que o usuario autenticado possua uma jornada em andamento.
+      operationId: listJourneyCourseOptions
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: type_id
+          in: query
+          required: false
+          description: Filtra os cursos pelo identificador do tipo/subcriterio cadastrado em TB_SUBCRITERIOS. Aceita apenas subcriterios de formacao academica (Graduacao, Pos-Graduacao, Mestrado, Doutorado); um subcriterio existente mas de outra categoria, como experiencia profissional ou ingles, retorna 422 INVALID_COURSE_TYPE.
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        "200":
+          description: Cursos disponiveis retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCourseOptionListResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Cursos disponiveis encontrados com sucesso.
+                    data:
+                      - id: 1
+                        name_pt: Direito
+                        name_en: Law
+                        type:
+                          id: 1
+                          name_pt: Graduação
+                          name_en: Bachelor Degree
+                      - id: 2
+                        name_pt: Ciencia da Computacao
+                        name_en: Computer Science
+                        type:
+                          id: 1
+                          name_pt: Graduação
+                          name_en: Bachelor Degree
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Nao existe jornada em andamento para este usuario.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "422":
+          description: Filtro de tipo de curso invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidType:
+                  value:
+                    success: false
+                    message: Tipo de curso informado e invalido.
+                    errors:
+                      type_id:
+                        - Tipo de curso informado e invalido.
+                    code: INVALID_COURSE_TYPE
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar os cursos disponiveis no momento.
+                    errors: []
+                    code: COURSE_OPTIONS_SEARCH_FAILED
   /journey-profiles:
     parameters:
       - name: page
@@ -3147,3 +3246,65 @@ components:
             type: array
             items:
               type: string
+    JourneyCourseOptionListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Cursos disponiveis encontrados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/JourneyCourseOption"
+    JourneyCourseOption:
+      type: object
+      required:
+        - id
+        - name_pt
+        - name_en
+        - type
+      properties:
+        id:
+          type: integer
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Direito
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Law
+        type:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyCourseOptionType"
+            - type: "null"
+    JourneyCourseOptionType:
+      type: object
+      required:
+        - id
+        - name_pt
+        - name_en
+      properties:
+        id:
+          type: integer
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Graduação
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Bachelor Degree
