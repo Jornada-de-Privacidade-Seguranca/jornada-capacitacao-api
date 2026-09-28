@@ -1665,6 +1665,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
         "404":
           description: Nao existe jornada em andamento para este usuario
           content:
@@ -1719,17 +1726,41 @@ paths:
                   certification_ids: []
       responses:
         "200":
-          description: Certificacoes selecionadas encontradas com sucesso
+          description: Certificacoes selecionadas salvas com sucesso
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/JourneyCertificationSelectionResponse"
+              examples:
+                updated:
+                  value:
+                    success: true
+                    message: Certificacoes selecionadas salvas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      certifications:
+                        - id: 1
+                          name: CIPM
+                          issuer: IAPP
+                          knowledge_domain:
+                            id: 1
+                            name_pt: Privacidade
+                            name_en: Privacy
         "401":
           description: Usuario nao autenticado
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
         "404":
           description: Nao existe jornada em andamento para este usuario
           content:
@@ -3323,8 +3354,11 @@ components:
       properties:
         certification_ids:
           type: array
+          maxItems: 100
+          uniqueItems: true
           items:
             type: integer
+            minimum: 1
           example:
             - 1
             - 2

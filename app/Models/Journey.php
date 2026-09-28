@@ -81,8 +81,6 @@ class Journey extends JornadaModel
             'FK_CERTIFICACAO_PROFISSIONAL',
             'PK_JORNADA',
             'PK_CERTIFICACAO_PROFISSIONAL',
-        )
-            ->withPivot('PK_CERTIFICACAO_JORNADA')
-            ->orderBy('TB_CERTIFICACAO_PROFISSIONAL.PK_CERTIFICACAO_PROFISSIONAL');
+        )->withPivot('PK_CERTIFICACAO_JORNADA');
     }
 }

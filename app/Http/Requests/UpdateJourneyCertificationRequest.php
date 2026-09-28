@@ -18,8 +18,8 @@ class UpdateJourneyCertificationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'certification_ids' => ['present', 'array'],
-            'certification_ids.*' => ['integer'],
+            'certification_ids' => ['present', 'array', 'max:100'],
+            'certification_ids.*' => ['integer', 'min:1', 'distinct'],
         ];
     }
 
@@ -28,7 +28,10 @@ class UpdateJourneyCertificationRequest extends FormRequest
         return [
             'certification_ids.present' => 'Informe a lista de certificacoes profissionais.',
             'certification_ids.array' => 'A lista de certificacoes profissionais deve ser um array.',
+            'certification_ids.max' => 'A lista de certificacoes profissionais nao pode ter mais de 100 itens.',
             'certification_ids.*.integer' => 'A certificacao profissional deve ser um numero inteiro.',
+            'certification_ids.*.min' => 'A certificacao profissional deve ser um numero inteiro positivo.',
+            'certification_ids.*.distinct' => 'A lista de certificacoes profissionais nao pode conter itens duplicados.',
         ];
     }
 
@@ -37,7 +40,7 @@ class UpdateJourneyCertificationRequest extends FormRequest
      */
     public function certificationIds(): array
     {
-        return array_values(array_unique(array_map('intval', $this->validated('certification_ids'))));
+        return array_map('intval', $this->validated('certification_ids'));
     }
 
     protected function failedValidation(Validator $validator): void

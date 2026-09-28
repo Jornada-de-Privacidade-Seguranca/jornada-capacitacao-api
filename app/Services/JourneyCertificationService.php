@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Exceptions\NoOngoingJourneyException;
 use App\Models\Journey;
 use App\Models\Usuario;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
 use App\Repositories\Contracts\ProfessionalCertificationRepositoryInterface;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -19,13 +19,18 @@ class JourneyCertificationService
 
     public function findForAuthenticatedUser(Usuario $authenticatedUser): Journey
     {
-        $journey = $this->journeyRepository->findOngoingWithCertificationsByUser((int) $authenticatedUser->PK_USUARIO);
+        $journey = $this->journeyRepository->findOngoingByUser((int) $authenticatedUser->PK_USUARIO);
 
         if ($journey === null) {
-            throw new ModelNotFoundException;
+            throw new NoOngoingJourneyException;
         }
 
-        return $journey;
+        return $journey->load([
+            'professionalCertifications' => fn ($query) => $query->orderBy(
+                'TB_CERTIFICACAO_PROFISSIONAL.PK_CERTIFICACAO_PROFISSIONAL'
+            ),
+            'professionalCertifications.knowledgeDomain',
+        ]);
     }
 
     /**
@@ -34,12 +39,10 @@ class JourneyCertificationService
     public function replaceForAuthenticatedUser(Usuario $authenticatedUser, array $certificationIds): Journey
     {
         $journey = $this->findForAuthenticatedUser($authenticatedUser);
-        $uniqueCertificationIds = array_values(array_unique($certificationIds));
-
-        $this->ensureCertificationsExist($uniqueCertificationIds);
+        $this->ensureCertificationsExist($certificationIds);
 
         return DB::transaction(
-            fn (): Journey => $this->journeyRepository->syncProfessionalCertifications($journey, $uniqueCertificationIds)
+            fn (): Journey => $this->journeyRepository->syncProfessionalCertifications($journey, $certificationIds)
         );
     }
 

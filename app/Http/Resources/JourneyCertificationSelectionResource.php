@@ -16,15 +16,9 @@ class JourneyCertificationSelectionResource extends JsonResource
         return [
             'journey_id' => $this->PK_JORNADA,
             'status' => 'ongoing',
-            'is_complete' => $this->isComplete(),
+            // A etapa de certificacoes profissionais e opcional.
+            'is_complete' => true,
             'certifications' => CertificationOptionResource::collection($this->professionalCertifications)->resolve(),
         ];
-    }
-
-    private function isComplete(): bool
-    {
-        $isRequiredStep = false;
-
-        return ! $isRequiredStep || $this->professionalCertifications->isNotEmpty();
     }
 }

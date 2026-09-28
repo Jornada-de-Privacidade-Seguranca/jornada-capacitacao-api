@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\NoOngoingJourneyException;
 use App\Http\Requests\UpdateJourneyCertificationRequest;
 use App\Http\Resources\JourneyCertificationSelectionResource;
 use App\Services\JourneyCertificationService;
 use App\Support\ApiResponse;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,9 +21,11 @@ class JourneyCertificationController
     {
         try {
             $journey = $this->journeyCertificationService->findForAuthenticatedUser($request->user());
-        } catch (ModelNotFoundException) {
+        } catch (NoOngoingJourneyException) {
             return $this->ongoingJourneyNotFoundResponse();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return ApiResponse::error(
                 message: 'Nao foi possivel buscar as certificacoes selecionadas no momento.',
                 status: Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -44,7 +46,7 @@ class JourneyCertificationController
                 authenticatedUser: $request->user(),
                 certificationIds: $request->certificationIds(),
             );
-        } catch (ModelNotFoundException) {
+        } catch (NoOngoingJourneyException) {
             return $this->ongoingJourneyNotFoundResponse();
         } catch (ValidationException $exception) {
             return ApiResponse::error(
@@ -53,7 +55,9 @@ class JourneyCertificationController
                 code: 'VALIDATION_ERROR',
                 errors: $exception->errors(),
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return ApiResponse::error(
                 message: 'Nao foi possivel atualizar as certificacoes selecionadas no momento.',
                 status: Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -63,7 +67,7 @@ class JourneyCertificationController
 
         return ApiResponse::success(
             data: new JourneyCertificationSelectionResource($journey),
-            message: 'Certificacoes selecionadas encontradas com sucesso.',
+            message: 'Certificacoes selecionadas salvas com sucesso.',
         );
     }
 
