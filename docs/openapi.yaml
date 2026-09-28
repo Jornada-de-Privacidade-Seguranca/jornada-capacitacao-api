@@ -1692,6 +1692,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CurrentJourneyCompetencyStateResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Competencias da jornada encontradas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: false
+                      competencies: []
         "401":
           description: Usuario nao autenticado
           content:
@@ -1714,7 +1724,7 @@ paths:
       tags:
         - Journeys
       summary: Substitui respostas de competencias da jornada em andamento
-      description: Valida e substitui a lista de conhecimentos adquiridos da jornada atual.
+      description: Valida e substitui integralmente a lista de conhecimentos adquiridos da jornada atual. Enviar `competencies` como uma lista vazia limpa todas as respostas desta etapa.
       operationId: updateCurrentJourneyCompetencies
       security:
         - sessionAuth: []
@@ -1736,11 +1746,35 @@ paths:
                       acquired: false
       responses:
         "200":
-          description: Competencias da jornada encontradas com sucesso
+          description: Competencias da jornada salvas com sucesso
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CurrentJourneyCompetencyStateResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Competencias da jornada salvas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      competencies:
+                        - id: 1
+                          acquired: true
+                          type_acquired: 1
+                          competency:
+                            id: 1
+                            origin_pt: Referencial
+                            origin_en: Reference
+                            name_pt: LGPD
+                            name_en: LGPD
+                            description_pt: Fundamentos da LGPD
+                            description_en: LGPD fundamentals
+                            knowledge_domain: null
+                            knowledge_area: null
+                            difficulty: null
         "401":
           description: Usuario nao autenticado
           content:
@@ -1765,6 +1799,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidCompetency:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      competencies:
+                        - Cada competencia informada deve existir e pertencer ao perfil da jornada atual.
+                    code: VALIDATION_ERROR
         "500":
           description: Erro interno do servidor
           content:
@@ -3365,7 +3408,6 @@ components:
           type: string
           enum:
             - ongoing
-            - completed
           example: ongoing
         is_complete:
           type: boolean
@@ -3403,6 +3445,7 @@ components:
       properties:
         competencies:
           type: array
+          maxItems: 500
           items:
             type: object
             required:
@@ -3411,6 +3454,7 @@ components:
             properties:
               competency_id:
                 type: integer
+                minimum: 1
                 example: 1
               acquired:
                 type: boolean

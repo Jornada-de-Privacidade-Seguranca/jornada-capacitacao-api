@@ -7,6 +7,7 @@ use App\Models\Journey;
 use App\Models\ProfileCompetency;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
@@ -34,12 +35,23 @@ class JourneyRepository implements JourneyRepositoryInterface
 
     public function findOngoingByUser(int $userId): ?Journey
     {
+        return $this->ongoingByUserQuery($userId)->first();
+    }
+
+    public function findOngoingByUserForUpdate(int $userId): ?Journey
+    {
+        return $this->ongoingByUserQuery($userId)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    private function ongoingByUserQuery(int $userId): Builder
+    {
         return Journey::query()
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
             ->orderByDesc('DH_CRIADO_EM')
-            ->orderByDesc('PK_JORNADA')
-            ->first();
+            ->orderByDesc('PK_JORNADA');
     }
 
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator

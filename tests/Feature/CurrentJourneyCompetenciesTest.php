@@ -171,7 +171,7 @@ class CurrentJourneyCompetenciesTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('message', 'Competencias da jornada encontradas com sucesso.')
+            ->assertJsonPath('message', 'Competencias da jornada salvas com sucesso.')
             ->assertJsonPath('data.is_complete', true)
             ->assertJsonCount(2, 'data.competencies')
             ->assertJsonPath('data.competencies.0.acquired', true)
@@ -279,6 +279,167 @@ class CurrentJourneyCompetenciesTest extends TestCase
             ->assertJsonValidationErrors(['competencies']);
     }
 
+    public function test_it_rejects_invalid_payload_shapes(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $this->createJourney($user, $profile, finishedAt: null);
+
+        foreach ([[], ['competencies' => 'invalid']] as $payload) {
+            $this->actingAs($user)
+                ->putJsonWithCsrf('/api/journeys/current/competencies', $payload)
+                ->assertUnprocessable()
+                ->assertJsonPath('success', false)
+                ->assertJsonPath('message', 'Validation error.')
+                ->assertJsonPath('code', 'VALIDATION_ERROR')
+                ->assertJsonValidationErrors(['competencies']);
+        }
+    }
+
+    public function test_it_rejects_invalid_competency_items(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $this->createJourney($user, $profile, finishedAt: null);
+
+        $invalidItems = [
+            [[], ['competencies.0.competency_id', 'competencies.0.acquired']],
+            [['competency_id' => 0, 'acquired' => true], ['competencies.0.competency_id']],
+            [['competency_id' => 'invalid', 'acquired' => true], ['competencies.0.competency_id']],
+            [['competency_id' => 1, 'acquired' => 'invalid'], ['competencies.0.acquired']],
+        ];
+
+        foreach ($invalidItems as [$item, $expectedErrors]) {
+            $this->actingAs($user)
+                ->putJsonWithCsrf('/api/journeys/current/competencies', ['competencies' => [$item]])
+                ->assertUnprocessable()
+                ->assertJsonPath('code', 'VALIDATION_ERROR')
+                ->assertJsonValidationErrors($expectedErrors);
+        }
+    }
+
+    public function test_it_rejects_more_than_five_hundred_competencies(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $this->createJourney($user, $profile, finishedAt: null);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/competencies', [
+                'competencies' => array_fill(0, 501, [
+                    'competency_id' => 1,
+                    'acquired' => true,
+                ]),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonValidationErrors(['competencies']);
+    }
+
+    public function test_it_keeps_previous_answers_when_the_replacement_is_invalid(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $journey = $this->createJourney($user, $profile, finishedAt: null);
+        $savedCompetency = $this->createCompetency();
+        $validCompetency = $this->createCompetency();
+
+        $this->attachCompetencyToProfile($profile, $savedCompetency);
+        $this->attachCompetencyToProfile($profile, $validCompetency);
+        $savedAnswer = $this->createAnswer($journey, $savedCompetency, acquired: true);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/competencies', [
+                'competencies' => [
+                    ['competency_id' => $validCompetency->PK_COMPETENCIAS, 'acquired' => false],
+                    ['competency_id' => 999999, 'acquired' => true],
+                ],
+            ])
+            ->assertUnprocessable();
+
+        $this->assertDatabaseHas('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'PK_CONHECIMENTOS_ADQUIRIDOS' => $savedAnswer->PK_CONHECIMENTOS_ADQUIRIDOS,
+            'TP_ADQUIRIDO' => 1,
+        ]);
+        $this->assertDatabaseMissing('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'FK_JORNADA' => $journey->PK_JORNADA,
+            'FK_COMPETENCIAS' => $validCompetency->PK_COMPETENCIAS,
+        ]);
+    }
+
+    public function test_it_updates_only_the_authenticated_users_ongoing_journey(): void
+    {
+        $user = $this->activeUser();
+        $otherUser = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $ongoingJourney = $this->createJourney($user, $profile, finishedAt: null);
+        $finishedJourney = $this->createJourney($user, $profile, finishedAt: '2026-06-01 09:00:00');
+        $otherJourney = $this->createJourney($otherUser, $profile, finishedAt: null);
+        $competency = $this->createCompetency();
+
+        $this->attachCompetencyToProfile($profile, $competency);
+        $finishedAnswer = $this->createAnswer($finishedJourney, $competency, acquired: false);
+        $otherAnswer = $this->createAnswer($otherJourney, $competency, acquired: false);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/competencies', [
+                'competencies' => [
+                    ['competency_id' => $competency->PK_COMPETENCIAS, 'acquired' => true],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.journey_id', $ongoingJourney->PK_JORNADA);
+
+        $this->assertDatabaseHas('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'PK_CONHECIMENTOS_ADQUIRIDOS' => $finishedAnswer->PK_CONHECIMENTOS_ADQUIRIDOS,
+            'TP_ADQUIRIDO' => 0,
+        ]);
+        $this->assertDatabaseHas('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'PK_CONHECIMENTOS_ADQUIRIDOS' => $otherAnswer->PK_CONHECIMENTOS_ADQUIRIDOS,
+            'TP_ADQUIRIDO' => 0,
+        ]);
+    }
+
+    public function test_it_ignores_saved_answers_that_no_longer_belong_to_the_profile(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $journey = $this->createJourney($user, $profile, finishedAt: null);
+        $profileCompetency = $this->createCompetency();
+        $outsideCompetency = $this->createCompetency();
+
+        $this->attachCompetencyToProfile($profile, $profileCompetency);
+        $this->createAnswer($journey, $outsideCompetency, acquired: true);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies')
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', false)
+            ->assertJsonCount(0, 'data.competencies');
+    }
+
+    public function test_it_keeps_the_step_incomplete_after_a_partial_update(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $this->createJourney($user, $profile, finishedAt: null);
+        $firstCompetency = $this->createCompetency();
+        $secondCompetency = $this->createCompetency();
+
+        $this->attachCompetencyToProfile($profile, $firstCompetency);
+        $this->attachCompetencyToProfile($profile, $secondCompetency);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/competencies', [
+                'competencies' => [
+                    ['competency_id' => $firstCompetency->PK_COMPETENCIAS, 'acquired' => true],
+                ],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', false)
+            ->assertJsonCount(1, 'data.competencies');
+    }
+
     public function test_it_returns_not_found_when_there_is_no_ongoing_journey(): void
     {
         $user = $this->activeUser();
@@ -294,6 +455,36 @@ class CurrentJourneyCompetenciesTest extends TestCase
             ->assertJsonPath('errors', []);
     }
 
+    public function test_options_and_update_return_not_found_when_there_is_no_ongoing_journey(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $finishedJourney = $this->createJourney($user, $profile, finishedAt: '2026-07-01 09:00:00');
+        $competency = $this->createCompetency();
+        $this->attachCompetencyToProfile($profile, $competency);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options')
+            ->assertNotFound()
+            ->assertJsonPath('code', 'ONGOING_JOURNEY_NOT_FOUND');
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/competencies', [
+                'competencies' => [
+                    ['competency_id' => $competency->PK_COMPETENCIAS, 'acquired' => true],
+                ],
+            ])
+            ->assertNotFound()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'ONGOING_JOURNEY_NOT_FOUND')
+            ->assertJsonPath('errors', []);
+
+        $this->assertDatabaseMissing('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'FK_JORNADA' => $finishedJourney->PK_JORNADA,
+            'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
+        ]);
+    }
+
     public function test_it_rejects_unauthenticated_requests(): void
     {
         $this->getJson('/api/journeys/current/competencies/options')
@@ -305,6 +496,12 @@ class CurrentJourneyCompetenciesTest extends TestCase
             ->assertUnauthorized()
             ->assertJsonPath('success', false)
             ->assertJsonPath('code', 'UNAUTHENTICATED');
+
+        $this->putJsonWithCsrf('/api/journeys/current/competencies', ['competencies' => []])
+            ->assertUnauthorized()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'UNAUTHENTICATED')
+            ->assertJsonPath('errors', []);
     }
 
     public function test_it_does_not_return_internal_calculation_fields(): void

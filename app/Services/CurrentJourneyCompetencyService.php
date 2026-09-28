@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Exceptions\NoOngoingJourneyException;
 use App\Models\Journey;
 use App\Models\Usuario;
 use App\Repositories\Contracts\CurrentJourneyCompetencyRepositoryInterface;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CurrentJourneyCompetencyService
@@ -33,28 +34,41 @@ class CurrentJourneyCompetencyService
 
     public function replaceAnswersForAuthenticatedUser(Usuario $authenticatedUser, array $competencies): array
     {
-        $journey = $this->ongoingJourneyFor($authenticatedUser);
-        $normalizedCompetencies = $this->uniqueCompetencies($competencies);
+        return DB::transaction(function () use ($authenticatedUser, $competencies): array {
+            $journey = $this->lockedOngoingJourneyFor($authenticatedUser);
 
-        $this->assertCompetenciesBelongToProfile(
-            (int) $journey->FK_PERFIS_JORNADA,
-            array_column($normalizedCompetencies, 'competency_id'),
-        );
+            $this->assertCompetenciesBelongToProfile(
+                (int) $journey->FK_PERFIS_JORNADA,
+                array_column($competencies, 'competency_id'),
+            );
 
-        $this->currentJourneyCompetencyRepository->replaceForJourney(
-            (int) $journey->PK_JORNADA,
-            $normalizedCompetencies,
-        );
+            $this->currentJourneyCompetencyRepository->replaceForJourney(
+                (int) $journey->PK_JORNADA,
+                $competencies,
+            );
 
-        return $this->buildAnswersPayload($journey);
+            return $this->buildAnswersPayload($journey);
+        });
     }
 
     private function ongoingJourneyFor(Usuario $authenticatedUser): Journey
     {
-        $journey = $this->journeyRepository->findOngoingByUser((int) $authenticatedUser->PK_USUARIO);
+        return $this->requireOngoingJourney(
+            $this->journeyRepository->findOngoingByUser((int) $authenticatedUser->PK_USUARIO),
+        );
+    }
 
+    private function lockedOngoingJourneyFor(Usuario $authenticatedUser): Journey
+    {
+        return $this->requireOngoingJourney(
+            $this->journeyRepository->findOngoingByUserForUpdate((int) $authenticatedUser->PK_USUARIO),
+        );
+    }
+
+    private function requireOngoingJourney(?Journey $journey): Journey
+    {
         if ($journey === null) {
-            throw new ModelNotFoundException;
+            throw new NoOngoingJourneyException;
         }
 
         return $journey;
@@ -68,24 +82,10 @@ class CurrentJourneyCompetencyService
 
         return [
             'journey_id' => $journey->PK_JORNADA,
-            'status' => $journey->DH_FIM === null ? 'ongoing' : 'completed',
+            'status' => 'ongoing',
             'is_complete' => $totalOptions > 0 && $answers->count() === $totalOptions,
             'competencies' => $answers,
         ];
-    }
-
-    private function uniqueCompetencies(array $competencies): array
-    {
-        $unique = [];
-
-        foreach ($competencies as $competency) {
-            $unique[(int) $competency['competency_id']] = [
-                'competency_id' => (int) $competency['competency_id'],
-                'acquired' => (bool) $competency['acquired'],
-            ];
-        }
-
-        return array_values($unique);
     }
 
     private function assertCompetenciesBelongToProfile(int $journeyProfileId, array $competencyIds): void

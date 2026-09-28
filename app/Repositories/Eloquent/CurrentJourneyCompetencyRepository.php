@@ -6,7 +6,6 @@ use App\Models\AcquiredKnowledge;
 use App\Models\Competency;
 use App\Repositories\Contracts\CurrentJourneyCompetencyRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 
 class CurrentJourneyCompetencyRepository implements CurrentJourneyCompetencyRepositoryInterface
 {
@@ -60,18 +59,21 @@ class CurrentJourneyCompetencyRepository implements CurrentJourneyCompetencyRepo
 
     public function replaceForJourney(int $journeyId, array $competencies): void
     {
-        DB::transaction(function () use ($journeyId, $competencies): void {
-            AcquiredKnowledge::query()
-                ->where('FK_JORNADA', $journeyId)
-                ->delete();
+        AcquiredKnowledge::query()
+            ->where('FK_JORNADA', $journeyId)
+            ->delete();
 
-            foreach ($competencies as $competency) {
-                AcquiredKnowledge::query()->create([
-                    'FK_JORNADA' => $journeyId,
-                    'FK_COMPETENCIAS' => $competency['competency_id'],
-                    'TP_ADQUIRIDO' => $competency['acquired'] ? 1 : 0,
-                ]);
-            }
-        });
+        if ($competencies === []) {
+            return;
+        }
+
+        AcquiredKnowledge::query()->insert(array_map(
+            fn (array $competency): array => [
+                'FK_JORNADA' => $journeyId,
+                'FK_COMPETENCIAS' => $competency['competency_id'],
+                'TP_ADQUIRIDO' => $competency['acquired'] ? 1 : 0,
+            ],
+            $competencies,
+        ));
     }
 }

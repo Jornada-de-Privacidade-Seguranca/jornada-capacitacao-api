@@ -19,18 +19,37 @@ class ReplaceCurrentJourneyCompetenciesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'competencies' => ['present', 'array'],
-            'competencies.*.competency_id' => ['required', 'integer'],
+            'competencies' => ['present', 'array', 'max:500'],
+            'competencies.*.competency_id' => ['required', 'integer', 'min:1'],
             'competencies.*.acquired' => ['required', 'boolean'],
         ];
+    }
+
+    public function competencies(): array
+    {
+        $unique = [];
+
+        foreach ($this->validated('competencies') as $competency) {
+            $unique[(int) $competency['competency_id']] = [
+                'competency_id' => (int) $competency['competency_id'],
+                'acquired' => (bool) $competency['acquired'],
+            ];
+        }
+
+        return array_values($unique);
     }
 
     public function withValidator(ValidationValidator $validator): void
     {
         $validator->after(function (ValidationValidator $validator): void {
             $answersByCompetency = [];
+            $competencies = $this->input('competencies', []);
 
-            foreach ($this->input('competencies', []) as $competency) {
+            if (! is_array($competencies)) {
+                return;
+            }
+
+            foreach ($competencies as $competency) {
                 if (! is_array($competency) || ! array_key_exists('competency_id', $competency) || ! array_key_exists('acquired', $competency)) {
                     continue;
                 }

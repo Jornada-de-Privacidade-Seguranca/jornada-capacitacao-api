@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\NoOngoingJourneyException;
 use App\Http\Requests\ReplaceCurrentJourneyCompetenciesRequest;
 use App\Http\Resources\CurrentJourneyCompetencyOptionResource;
 use App\Http\Resources\CurrentJourneyCompetencyStateResource;
 use App\Services\CurrentJourneyCompetencyService;
 use App\Support\ApiResponse;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,9 +22,11 @@ class CurrentJourneyCompetencyController
     {
         try {
             $competencies = $this->currentJourneyCompetencyService->listOptionsForAuthenticatedUser($request->user());
-        } catch (ModelNotFoundException) {
+        } catch (NoOngoingJourneyException) {
             return $this->ongoingJourneyNotFound();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return ApiResponse::error(
                 message: 'Nao foi possivel buscar as competencias disponiveis no momento.',
                 status: Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -42,9 +44,11 @@ class CurrentJourneyCompetencyController
     {
         try {
             $state = $this->currentJourneyCompetencyService->answersForAuthenticatedUser($request->user());
-        } catch (ModelNotFoundException) {
+        } catch (NoOngoingJourneyException) {
             return $this->ongoingJourneyNotFound();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return ApiResponse::error(
                 message: 'Nao foi possivel buscar as competencias da jornada no momento.',
                 status: Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -63,9 +67,9 @@ class CurrentJourneyCompetencyController
         try {
             $state = $this->currentJourneyCompetencyService->replaceAnswersForAuthenticatedUser(
                 $request->user(),
-                $request->validated('competencies'),
+                $request->competencies(),
             );
-        } catch (ModelNotFoundException) {
+        } catch (NoOngoingJourneyException) {
             return $this->ongoingJourneyNotFound();
         } catch (ValidationException $exception) {
             return ApiResponse::error(
@@ -74,7 +78,9 @@ class CurrentJourneyCompetencyController
                 code: 'VALIDATION_ERROR',
                 errors: $exception->errors(),
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return ApiResponse::error(
                 message: 'Nao foi possivel salvar as competencias da jornada no momento.',
                 status: Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -84,7 +90,7 @@ class CurrentJourneyCompetencyController
 
         return ApiResponse::success(
             data: (new CurrentJourneyCompetencyStateResource($state))->resolve(),
-            message: 'Competencias da jornada encontradas com sucesso.',
+            message: 'Competencias da jornada salvas com sucesso.',
         );
     }
 
