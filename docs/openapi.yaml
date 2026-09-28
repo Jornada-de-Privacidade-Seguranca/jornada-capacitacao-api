@@ -767,6 +767,569 @@ paths:
                     message: Nao foi possivel buscar as jornadas no momento.
                     errors: []
                     code: JOURNEYS_SEARCH_FAILED
+    post:
+      tags:
+        - Journeys
+      summary: Inicia uma nova jornada para um usuario
+      description: Registra o inicio de uma nova jornada para o usuario informado, apenas com o perfil de jornada escolhido. Usuarios comuns so podem iniciar jornadas para si mesmos; administradores podem iniciar jornadas para qualquer usuario. O usuario nao pode possuir outra jornada em andamento (com DH_FIM nulo). Dados gerais (experiencia profissional, atuacao de perfil, proficiencia em ingles), cursos, certificacoes e competencias sao preenchidos depois, em etapas proprias (ver PATCH /journeys/{journey}/answers, POST /journeys/{journey}/courses, POST /journeys/{journey}/certifications e POST /journeys/{journey}/competencies). Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      operationId: createUserJourney
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserJourneyCreatePayload"
+            examples:
+              minimal:
+                value:
+                  journey_profile_id: 1
+      responses:
+        "201":
+          description: Jornada iniciada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyCreateResponse"
+              examples:
+                created:
+                  value:
+                    success: true
+                    message: Jornada iniciada com sucesso.
+                    data:
+                      id: 10
+                      user_id: 2
+                      user_name: Maria Silva
+                      journey_profile:
+                        id: 1
+                        name: Encarregado pelo Tratamento de Dados Pessoais
+                        description: Privacidade e Seguranca
+                        knowledge_domain:
+                          id: 1
+                          name: Privacidade
+                      started_at: "2026-07-23 16:30:00"
+                      finished_at: null
+                      status: ongoing
+                      is_completed: false
+                      summary:
+                        acquired_knowledges_count: 0
+                        professional_certifications_count: 0
+                      detail:
+                        journey_id: 10
+                        user_id: 2
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao para iniciar uma jornada para o usuario informado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para iniciar uma jornada para este usuario.
+                    errors: []
+                    code: USER_JOURNEYS_FORBIDDEN
+        "404":
+          description: Usuario ou perfil de jornada informado nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                userNotFound:
+                  value:
+                    success: false
+                    message: Usuario nao encontrado.
+                    errors: []
+                    code: USER_NOT_FOUND
+                journeyProfileNotFound:
+                  value:
+                    success: false
+                    message: Perfil de jornada nao encontrado.
+                    errors: []
+                    code: JOURNEY_PROFILE_NOT_FOUND
+        "409":
+          description: Usuario ja possui uma jornada em andamento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyInProgress:
+                  value:
+                    success: false
+                    message: Voce ja possui uma jornada em andamento. Finalize ou continue a jornada atual antes de iniciar uma nova.
+                    errors: []
+                    code: JOURNEY_IN_PROGRESS
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                missingRequiredFields:
+                  value:
+                    success: false
+                    message: Dados obrigatorios nao informados.
+                    errors:
+                      journey_profile_id:
+                        - O perfil de jornada e obrigatorio.
+                    code: REQUIRED_FIELDS_MISSING
+                invalidData:
+                  value:
+                    success: false
+                    message: Dados invalidos.
+                    errors:
+                      journey_profile_id:
+                        - O perfil de jornada deve ser um numero inteiro.
+                    code: VALIDATION_ERROR
+                invalidUserIdentifier:
+                  value:
+                    success: false
+                    message: Identificador do usuario invalido.
+                    errors:
+                      user:
+                        - O identificador do usuario deve ser um numero inteiro maior ou igual a 1.
+                    code: INVALID_USER_IDENTIFIER
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel iniciar a jornada no momento.
+                    errors: []
+                    code: JOURNEY_CREATION_FAILED
+
+  /journeys/{journey}/answers:
+    patch:
+      tags:
+        - Journeys
+      summary: Atualiza os dados gerais de uma jornada em andamento
+      description: Atualiza as respostas de contexto de uma jornada (experiencia profissional, atuacao no perfil e proficiencia em ingles). Cada campo e opcional e so e alterado quando enviado. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      operationId: updateJourneyAnswers
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJourneyAnswersPayload"
+            examples:
+              partial:
+                value:
+                  professional_experience_id: 1
+                  english_proficiency_id: 2
+      responses:
+        "200":
+          description: Respostas da jornada atualizadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Jornada informada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "403":
+          description: Usuario sem permissao para atualizar a jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para atualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "409":
+          description: Jornada ja finalizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                alreadyFinished:
+                  value:
+                    success: false
+                    message: Jornada ja finalizada nao pode ser alterada.
+                    errors: []
+                    code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidData:
+                  value:
+                    success: false
+                    message: Dados invalidos.
+                    errors:
+                      professional_experience_id:
+                        - A experiencia profissional informada nao existe.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel atualizar as respostas da jornada no momento.
+                    errors: []
+                    code: JOURNEY_ANSWERS_UPDATE_FAILED
+
+  /journeys/{journey}/courses:
+    post:
+      tags:
+        - Journeys
+      summary: Vincula cursos superiores/pos-graduacao a uma jornada em andamento
+      description: Anexa um ou mais cursos superiores (graduacao ou pos-graduacao) a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      operationId: attachJourneyCourses
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachJourneyCoursesPayload"
+            examples:
+              default:
+                value:
+                  course_ids: [1, 2]
+      responses:
+        "200":
+          description: Cursos vinculados a jornada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Jornada informada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "403":
+          description: Usuario sem permissao para atualizar a jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para atualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "409":
+          description: Jornada ja finalizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                alreadyFinished:
+                  value:
+                    success: false
+                    message: Jornada ja finalizada nao pode ser alterada.
+                    errors: []
+                    code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidData:
+                  value:
+                    success: false
+                    message: Dados invalidos.
+                    errors:
+                      course_ids:
+                        - Informe ao menos um curso.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel vincular os cursos a jornada no momento.
+                    errors: []
+                    code: JOURNEY_COURSES_ATTACH_FAILED
+
+  /journeys/{journey}/certifications:
+    post:
+      tags:
+        - Journeys
+      summary: Vincula certificacoes profissionais a uma jornada em andamento
+      description: Anexa uma ou mais certificacoes profissionais a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      operationId: attachJourneyCertifications
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttachJourneyCertificationsPayload"
+            examples:
+              default:
+                value:
+                  certification_ids: [1, 2]
+      responses:
+        "200":
+          description: Certificacoes vinculadas a jornada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Jornada informada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "403":
+          description: Usuario sem permissao para atualizar a jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para atualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "409":
+          description: Jornada ja finalizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                alreadyFinished:
+                  value:
+                    success: false
+                    message: Jornada ja finalizada nao pode ser alterada.
+                    errors: []
+                    code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidData:
+                  value:
+                    success: false
+                    message: Dados invalidos.
+                    errors:
+                      certification_ids:
+                        - Informe ao menos uma certificacao.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel vincular as certificacoes a jornada no momento.
+                    errors: []
+                    code: JOURNEY_CERTIFICATIONS_ATTACH_FAILED
+
+  /journeys/{journey}/competencies:
+    post:
+      tags:
+        - Journeys
+      summary: Registra competencias adquiridas em uma jornada em andamento
+      description: Registra, para cada competencia informada, se ela foi adquirida (is_acquired) na jornada. Reenviar a mesma competencia atualiza o valor anterior (upsert). Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      operationId: recordJourneyCompetencies
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordJourneyCompetenciesPayload"
+            examples:
+              default:
+                value:
+                  competencies:
+                    - competency_id: 1
+                      is_acquired: true
+                    - competency_id: 2
+                      is_acquired: false
+      responses:
+        "200":
+          description: Competencias da jornada atualizadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserJourneyDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Jornada informada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "403":
+          description: Usuario sem permissao para atualizar a jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para atualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "409":
+          description: Jornada ja finalizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                alreadyFinished:
+                  value:
+                    success: false
+                    message: Jornada ja finalizada nao pode ser alterada.
+                    errors: []
+                    code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Erro de validacao ou competencia fora do perfil da jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                invalidData:
+                  value:
+                    success: false
+                    message: Dados invalidos.
+                    errors:
+                      competencies:
+                        - Informe ao menos uma competencia.
+                    code: VALIDATION_ERROR
+                competencyNotInJourneyProfile:
+                  value:
+                    success: false
+                    message: A competencia informada nao pertence ao perfil desta jornada.
+                    errors: []
+                    code: COMPETENCY_NOT_IN_JOURNEY_PROFILE
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel atualizar as competencias da jornada no momento.
+                    errors: []
+                    code: JOURNEY_COMPETENCIES_UPDATE_FAILED
+
   /journeys/{journey}:
     get:
       tags:
@@ -1056,6 +1619,105 @@ paths:
                     message: Nao foi possivel buscar as certificacoes disponiveis no momento.
                     errors: []
                     code: CERTIFICATION_OPTIONS_SEARCH_FAILED
+  /journeys/current/courses/options:
+    get:
+      tags:
+        - Journeys
+      summary: Lista cursos academicos disponiveis para a jornada em andamento
+      description: Retorna os cursos superiores cadastrados em TB_CURSO_SUPERIOR disponiveis para selecao na etapa de formacao academica da jornada, usando o relacionamento com TB_SUBCRITERIOS para identificar o tipo do curso quando essa informacao estiver disponivel. Exige que o usuario autenticado possua uma jornada em andamento.
+      operationId: listJourneyCourseOptions
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: type_id
+          in: query
+          required: false
+          description: Filtra os cursos pelo identificador do tipo/subcriterio cadastrado em TB_SUBCRITERIOS. Aceita apenas subcriterios de formacao academica (Graduacao, Pos-Graduacao, Mestrado, Doutorado); um subcriterio existente mas de outra categoria, como experiencia profissional ou ingles, retorna 422 INVALID_COURSE_TYPE.
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+      responses:
+        "200":
+          description: Cursos disponiveis retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCourseOptionListResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Cursos disponiveis encontrados com sucesso.
+                    data:
+                      - id: 1
+                        name_pt: Direito
+                        name_en: Law
+                        type:
+                          id: 1
+                          name_pt: Graduação
+                          name_en: Bachelor Degree
+                      - id: 2
+                        name_pt: Ciencia da Computacao
+                        name_en: Computer Science
+                        type:
+                          id: 1
+                          name_pt: Graduação
+                          name_en: Bachelor Degree
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Nao existe jornada em andamento para este usuario.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "422":
+          description: Filtro de tipo de curso invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidType:
+                  value:
+                    success: false
+                    message: Tipo de curso informado e invalido.
+                    errors:
+                      type_id:
+                        - Tipo de curso informado e invalido.
+                    code: INVALID_COURSE_TYPE
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar os cursos disponiveis no momento.
+                    errors: []
+                    code: COURSE_OPTIONS_SEARCH_FAILED
   /journey-profiles:
     parameters:
       - name: page
@@ -1146,12 +1808,39 @@ components:
       in: cookie
       name: jornada_session
       description: Cookie de sessao HttpOnly emitido pelo backend apos login. Em integracoes browser cross-origin, o frontend deve chamar a API com credenciais habilitadas e a origem precisa estar permitida na configuracao CORS.
+  responses:
+    Unauthenticated:
+      description: Usuario nao autenticado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+          examples:
+            unauthenticated:
+              value:
+                success: false
+                message: Usuario nao autenticado.
+                errors: []
+                code: UNAUTHENTICATED
+    CsrfTokenMismatch:
+      description: Token CSRF ausente ou invalido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StandardError"
+          examples:
+            csrfTokenMismatch:
+              value:
+                success: false
+                message: Token CSRF invalido.
+                errors: []
+                code: CSRF_TOKEN_MISMATCH
   parameters:
     CsrfToken:
       name: X-CSRF-TOKEN
       in: header
       required: true
-      description: Valor retornado em data.csrf_token por GET /auth/csrf-token. No Swagger local, execute primeiro /auth/csrf-token, copie data.csrf_token e cole aqui antes de chamar endpoints POST de sessao.
+      description: Valor retornado em data.csrf_token por GET /auth/csrf-token. No Swagger local, execute primeiro /auth/csrf-token, copie data.csrf_token e cole aqui antes de chamar endpoints mutaveis autenticados por sessao.
       schema:
         type: string
       example: test-csrf-token
@@ -1705,6 +2394,83 @@ components:
         user_id:
           type: integer
           example: 2
+    UserJourneyCreatePayload:
+      type: object
+      required:
+        - journey_profile_id
+      properties:
+        journey_profile_id:
+          type: integer
+          example: 1
+    UpdateJourneyAnswersPayload:
+      type: object
+      properties:
+        professional_experience_id:
+          type: integer
+          example: 1
+        profile_experience_id:
+          type: integer
+          example: 2
+        english_proficiency_id:
+          type: integer
+          example: 1
+    AttachJourneyCoursesPayload:
+      type: object
+      required:
+        - course_ids
+      properties:
+        course_ids:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+          example: [1, 2]
+    AttachJourneyCertificationsPayload:
+      type: object
+      required:
+        - certification_ids
+      properties:
+        certification_ids:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+          example: [1, 2]
+    RecordJourneyCompetenciesPayload:
+      type: object
+      required:
+        - competencies
+      properties:
+        competencies:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required:
+              - competency_id
+              - is_acquired
+            properties:
+              competency_id:
+                type: integer
+                example: 1
+              is_acquired:
+                type: boolean
+                example: true
+    UserJourneyCreateResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornada iniciada com sucesso.
+        data:
+          $ref: "#/components/schemas/UserJourneyListItem"
     UserJourneyDetailResponse:
       type: object
       required:
@@ -2496,3 +3262,65 @@ components:
             type: array
             items:
               type: string
+    JourneyCourseOptionListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Cursos disponiveis encontrados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/JourneyCourseOption"
+    JourneyCourseOption:
+      type: object
+      required:
+        - id
+        - name_pt
+        - name_en
+        - type
+      properties:
+        id:
+          type: integer
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Direito
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Law
+        type:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyCourseOptionType"
+            - type: "null"
+    JourneyCourseOptionType:
+      type: object
+      required:
+        - id
+        - name_pt
+        - name_en
+      properties:
+        id:
+          type: integer
+          example: 1
+        name_pt:
+          type:
+            - string
+            - "null"
+          example: Graduação
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Bachelor Degree

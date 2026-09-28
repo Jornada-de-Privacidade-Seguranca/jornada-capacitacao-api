@@ -1,0 +1,67 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Exceptions\CompetencyNotInJourneyProfileException;
+use App\Exceptions\JourneyAlreadyFinishedException;
+use App\Http\Requests\RecordJourneyCompetenciesRequest;
+use App\Http\Resources\JourneyDetailResource;
+use App\Services\JourneyService;
+use App\Support\ApiResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Throwable;
+
+class JourneyCompetenciesController
+{
+    public function __construct(private readonly JourneyService $journeyService) {}
+
+    public function __invoke(RecordJourneyCompetenciesRequest $request): JsonResponse
+    {
+        try {
+            $journey = $this->journeyService->recordCompetencies(
+                authenticatedUser: $request->user(),
+                journeyId: $request->validatedJourneyId(),
+                competencies: $request->competencies(),
+            );
+        } catch (ModelNotFoundException) {
+            return ApiResponse::error(
+                message: 'Jornada nao encontrada.',
+                status: Response::HTTP_NOT_FOUND,
+                code: 'JOURNEY_NOT_FOUND',
+            );
+        } catch (AccessDeniedHttpException) {
+            return ApiResponse::error(
+                message: 'Voce nao possui permissao para atualizar esta jornada.',
+                status: Response::HTTP_FORBIDDEN,
+                code: 'JOURNEY_FORBIDDEN',
+            );
+        } catch (JourneyAlreadyFinishedException) {
+            return ApiResponse::error(
+                message: 'Jornada ja finalizada nao pode ser alterada.',
+                status: Response::HTTP_CONFLICT,
+                code: 'JOURNEY_ALREADY_FINISHED',
+            );
+        } catch (CompetencyNotInJourneyProfileException) {
+            return ApiResponse::error(
+                message: 'A competencia informada nao pertence ao perfil desta jornada.',
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+                code: 'COMPETENCY_NOT_IN_JOURNEY_PROFILE',
+            );
+        } catch (Throwable) {
+            return ApiResponse::error(
+                message: 'Nao foi possivel atualizar as competencias da jornada no momento.',
+                status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                code: 'JOURNEY_COMPETENCIES_UPDATE_FAILED',
+            );
+        }
+
+        return ApiResponse::success(
+            data: new JourneyDetailResource($journey),
+            message: 'Competencias da jornada atualizadas com sucesso.',
+            status: Response::HTTP_OK,
+        );
+    }
+}
