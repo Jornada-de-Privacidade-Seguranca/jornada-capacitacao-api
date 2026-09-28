@@ -23,7 +23,7 @@ class CriterionRepository implements CriterionRepositoryInterface
     public function findEnglishCriterionId(): ?int
     {
         return Criterion::query()
-            ->where('NO_CRITERIO_EN', 'Proficiency Level - English')
+            ->where('NO_CRITERIO_EN', Criterion::ENGLISH_PROFICIENCY_NAME)
             ->value('PK_CRITERIOS');
     }
 }

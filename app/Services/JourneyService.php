@@ -6,6 +6,7 @@ use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\IncompleteJourneyException;
 use App\Exceptions\JourneyAlreadyFinishedException;
 use App\Exceptions\JourneyProfileNotFoundException;
+use App\Exceptions\NoOngoingJourneyException;
 use App\Exceptions\OngoingJourneyExistsException;
 use App\Models\Journey;
 use App\Models\Usuario;
@@ -19,6 +20,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class JourneyService
@@ -156,50 +158,19 @@ class JourneyService
         $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
 
         if ($journey === null) {
-            throw new ModelNotFoundException;
+            throw new NoOngoingJourneyException;
         }
 
         $englishCriterionId = $this->criterionRepository->findEnglishCriterionId();
 
         if ($englishCriterionId === null) {
-            throw new ModelNotFoundException;
+            throw new RuntimeException('English proficiency criterion is not configured.');
         }
 
-        $experienceOptions = $this->professionalExperienceRepository
-            ->allOrdered()
-            ->map(fn ($experience): array => [
-                'id' => $experience->PK_EXPERIENCIA_ATUACAO,
-                'description_pt' => $experience->DS_EXPERIENCIA_ATUACAO_PT,
-                'description_en' => $experience->DS_EXPERIENCIA_ATUACAO_EN,
-            ])
-            ->values()
-            ->all();
-
         return [
-            'journey_id' => $journey->PK_JORNADA,
-            'status' => 'ongoing',
-            'fields' => [
-                'english_level' => [
-                    'required' => true,
-                    'options' => $this->subcriterionRepository
-                        ->allByCriterionId($englishCriterionId)
-                        ->map(fn ($subcriterion): array => [
-                            'id' => $subcriterion->PK_SUBCRITERIOS,
-                            'name_pt' => $subcriterion->NO_SUBCRITERIO_PT,
-                            'name_en' => $subcriterion->NO_SUBCRITERIO_EN,
-                        ])
-                        ->values()
-                        ->all(),
-                ],
-                'professional_experience' => [
-                    'required' => true,
-                    'options' => $experienceOptions,
-                ],
-                'profile_experience' => [
-                    'required' => true,
-                    'options' => $experienceOptions,
-                ],
-            ],
+            'journey' => $journey,
+            'english_levels' => $this->subcriterionRepository->allByCriterionId($englishCriterionId),
+            'experience_options' => $this->professionalExperienceRepository->allOrdered(),
         ];
     }
 
@@ -208,13 +179,17 @@ class JourneyService
         $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
 
         if ($journey === null) {
-            throw new ModelNotFoundException;
+            throw new NoOngoingJourneyException;
         }
 
         $englishSubcriterion = $this->subcriterionRepository->findOrFail((int) $data['english_level_id']);
         $englishCriterionId = $this->criterionRepository->findEnglishCriterionId();
 
-        if ($englishCriterionId === null || (int) $englishSubcriterion->FK_CRITERIOS !== $englishCriterionId) {
+        if ($englishCriterionId === null) {
+            throw new RuntimeException('English proficiency criterion is not configured.');
+        }
+
+        if ((int) $englishSubcriterion->FK_CRITERIOS !== $englishCriterionId) {
             throw ValidationException::withMessages([
                 'english_level_id' => ['O nivel de ingles informado nao pertence ao criterio de ingles.'],
             ]);

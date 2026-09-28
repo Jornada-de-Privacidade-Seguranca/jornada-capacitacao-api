@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Criterion;
 use App\Models\Journey;
 use App\Models\JourneyProfile;
 use App\Models\KnowledgeDomain;
@@ -82,6 +83,53 @@ class CurrentJourneyGeneralDataOptionsTest extends TestCase
             ->assertJsonPath('message', 'Usuario nao autenticado.')
             ->assertJsonPath('code', 'UNAUTHENTICATED')
             ->assertJsonPath('errors', []);
+    }
+
+    public function test_it_treats_missing_english_configuration_as_internal_error(): void
+    {
+        $user = $this->activeUser();
+        $this->currentJourneyFor($user);
+
+        Criterion::query()
+            ->where('NO_CRITERIO_EN', Criterion::ENGLISH_PROFICIENCY_NAME)
+            ->update(['NO_CRITERIO_EN' => 'Unavailable English criterion']);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/general-data/options')
+            ->assertInternalServerError()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'CURRENT_JOURNEY_GENERAL_DATA_OPTIONS_FAILED')
+            ->assertJsonPath('errors', []);
+    }
+
+    public function test_it_returns_not_found_when_user_only_has_a_completed_journey(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $journey->update(['DH_FIM' => '2026-09-15 10:00:00']);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/general-data/options')
+            ->assertNotFound()
+            ->assertJsonPath('code', 'CURRENT_JOURNEY_NOT_FOUND');
+    }
+
+    public function test_it_orders_all_option_lists_by_primary_key(): void
+    {
+        $user = $this->activeUser();
+        $this->currentJourneyFor($user);
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/journeys/current/general-data/options')
+            ->assertOk();
+
+        foreach (['english_level', 'professional_experience', 'profile_experience'] as $field) {
+            $ids = collect($response->json("data.fields.{$field}.options"))->pluck('id')->all();
+            $orderedIds = $ids;
+            sort($orderedIds);
+
+            $this->assertSame($orderedIds, $ids);
+        }
     }
 
     private function activeUser(): Usuario

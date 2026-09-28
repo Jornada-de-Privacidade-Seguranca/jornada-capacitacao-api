@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Criterion extends JornadaModel
 {
+    public const ENGLISH_PROFICIENCY_NAME = 'Proficiency Level - English';
+
     protected $table = 'TB_CRITERIOS';
 
     protected $primaryKey = 'PK_CRITERIOS';

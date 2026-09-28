@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\NoOngoingJourneyException;
 use App\Http\Requests\UpdateCurrentJourneyGeneralDataRequest;
+use App\Http\Resources\CurrentJourneyGeneralDataOptionsResource;
 use App\Http\Resources\CurrentJourneyGeneralDataResource;
 use App\Services\JourneyService;
 use App\Support\ApiResponse;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,13 +22,15 @@ class CurrentJourneyGeneralDataController
     {
         try {
             $options = $this->journeyService->getCurrentGeneralDataOptions($request->user());
-        } catch (ModelNotFoundException) {
+        } catch (NoOngoingJourneyException) {
             return ApiResponse::error(
                 message: 'Jornada em andamento nao encontrada.',
                 status: Response::HTTP_NOT_FOUND,
                 code: 'CURRENT_JOURNEY_NOT_FOUND',
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return ApiResponse::error(
                 message: 'Nao foi possivel buscar as opcoes dos dados gerais da jornada no momento.',
                 status: Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -36,7 +39,7 @@ class CurrentJourneyGeneralDataController
         }
 
         return ApiResponse::success(
-            data: $options,
+            data: (new CurrentJourneyGeneralDataOptionsResource($options))->resolve($request),
             message: 'Opcoes dos dados gerais da jornada retornadas com sucesso.',
         );
     }
@@ -48,7 +51,7 @@ class CurrentJourneyGeneralDataController
                 authenticatedUser: $request->user(),
                 data: $request->validated(),
             );
-        } catch (ModelNotFoundException) {
+        } catch (NoOngoingJourneyException) {
             return ApiResponse::error(
                 message: 'Jornada em andamento nao encontrada.',
                 status: Response::HTTP_NOT_FOUND,
@@ -61,7 +64,9 @@ class CurrentJourneyGeneralDataController
                 code: 'VALIDATION_ERROR',
                 errors: $exception->errors(),
             );
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             return ApiResponse::error(
                 message: 'Nao foi possivel salvar os dados gerais da jornada no momento.',
                 status: Response::HTTP_INTERNAL_SERVER_ERROR,

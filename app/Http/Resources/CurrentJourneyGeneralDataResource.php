@@ -15,52 +15,19 @@ class CurrentJourneyGeneralDataResource extends JsonResource
     {
         return [
             'journey_id' => $this->PK_JORNADA,
-            'status' => $this->DH_FIM === null ? 'ongoing' : 'completed',
+            'status' => 'ongoing',
             'is_complete' => $this->FK_SUBCRITERIOS_INGLES !== null
                 && $this->FK_EXPERIENCIA_PROFISSIONAL !== null
                 && $this->FK_ATUACAO_PERFIL !== null,
-            'english_level' => $this->englishLevel(),
-            'professional_experience' => $this->professionalExperience(),
-            'profile_experience' => $this->profileExperience(),
-        ];
-    }
-
-    private function englishLevel(): ?array
-    {
-        if ($this->englishSubcriterion === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->englishSubcriterion->PK_SUBCRITERIOS,
-            'name_pt' => $this->englishSubcriterion->NO_SUBCRITERIO_PT,
-            'name_en' => $this->englishSubcriterion->NO_SUBCRITERIO_EN,
-        ];
-    }
-
-    private function professionalExperience(): ?array
-    {
-        if ($this->professionalExperience === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->professionalExperience->PK_EXPERIENCIA_ATUACAO,
-            'description_pt' => $this->professionalExperience->DS_EXPERIENCIA_ATUACAO_PT,
-            'description_en' => $this->professionalExperience->DS_EXPERIENCIA_ATUACAO_EN,
-        ];
-    }
-
-    private function profileExperience(): ?array
-    {
-        if ($this->profileExperience === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->profileExperience->PK_EXPERIENCIA_ATUACAO,
-            'description_pt' => $this->profileExperience->DS_EXPERIENCIA_ATUACAO_PT,
-            'description_en' => $this->profileExperience->DS_EXPERIENCIA_ATUACAO_EN,
+            'english_level' => $this->englishSubcriterion === null
+                ? null
+                : (new EnglishLevelOptionResource($this->englishSubcriterion))->resolve($request),
+            'professional_experience' => $this->professionalExperience === null
+                ? null
+                : (new ExperienceOptionResource($this->professionalExperience))->resolve($request),
+            'profile_experience' => $this->profileExperience === null
+                ? null
+                : (new ExperienceOptionResource($this->profileExperience))->resolve($request),
         ];
     }
 }
