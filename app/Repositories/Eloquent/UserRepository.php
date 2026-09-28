@@ -34,6 +34,11 @@ class UserRepository implements UserRepositoryInterface
             ->find($id);
     }
 
+    public function lockForUpdate(int $id): void
+    {
+        Usuario::query()->whereKey($id)->lockForUpdate()->first();
+    }
+
     public function update(Usuario $user, array $data): Usuario
     {
         $user->fill($data);
