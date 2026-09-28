@@ -2,7 +2,9 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Models\AcquiredKnowledge;
 use App\Models\Journey;
+use App\Models\ProfileCompetency;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -85,5 +87,63 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    public function hasOngoingJourney(int $userId): bool
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_FIM')
+            ->exists();
+    }
+
+    public function create(array $data): Journey
+    {
+        $journey = Journey::query()->create($data);
+
+        return $journey->load(['usuario', 'journeyProfile.knowledgeDomain']);
+    }
+
+    public function update(Journey $journey, array $data): void
+    {
+        $journey->update($data);
+    }
+
+    public function attachCourses(Journey $journey, array $courseIds): void
+    {
+        $journey->higherEducationCourses()->syncWithoutDetaching($courseIds);
+    }
+
+    public function attachCertifications(Journey $journey, array $certificationIds): void
+    {
+        $journey->professionalCertifications()->syncWithoutDetaching($certificationIds);
+    }
+
+    public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void
+    {
+        foreach ($competencies as $competency) {
+            AcquiredKnowledge::query()->updateOrCreate(
+                [
+                    'FK_JORNADA' => $journey->PK_JORNADA,
+                    'FK_COMPETENCIAS' => $competency['competency_id'],
+                ],
+                [
+                    'TP_ADQUIRIDO' => $competency['is_acquired'] ? 1 : 0,
+                ],
+            );
+        }
+    }
+
+    public function competencyIdsBelongToProfile(int $journeyProfileId, array $competencyIds): bool
+    {
+        $distinctCompetencyIds = array_unique($competencyIds);
+
+        $matchingCount = ProfileCompetency::query()
+            ->where('FK_PERFIS_JORNADA', $journeyProfileId)
+            ->whereIn('FK_COMPETENCIAS', $distinctCompetencyIds)
+            ->distinct()
+            ->count('FK_COMPETENCIAS');
+
+        return $matchingCount === count($distinctCompetencyIds);
     }
 }
