@@ -9,7 +9,19 @@ interface JourneyRepositoryInterface
 {
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator;
 
+    public function hasOngoingJourney(int $userId): bool;
+
+    public function create(array $data): Journey;
+
     public function findDetailedById(int $journeyId): ?Journey;
+
+    public function update(Journey $journey, array $data): void;
+
+    public function attachCourses(Journey $journey, array $courseIds): void;
+
+    public function attachCertifications(Journey $journey, array $certificationIds): void;
+
+    public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void;
 
     public function findOngoingByUser(int $userId): ?Journey;
 
@@ -19,4 +31,6 @@ interface JourneyRepositoryInterface
      * @param  array<int, int>  $certificationIds
      */
     public function syncProfessionalCertifications(Journey $journey, array $certificationIds): Journey;
+
+    public function competencyIdsBelongToProfile(int $journeyProfileId, array $competencyIds): bool;
 }
