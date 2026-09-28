@@ -10,24 +10,26 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
+    private const DETAILED_RELATIONS = [
+        'usuario.profileType',
+        'journeyProfile.knowledgeDomain',
+        'journeyProfile.competencies.knowledgeDomain',
+        'journeyProfile.competencies.knowledgeArea',
+        'journeyProfile.competencies.difficulty',
+        'professionalExperience',
+        'profileExperience',
+        'englishSubcriterion',
+        'higherEducationCourses.subcriterion',
+        'acquiredKnowledges.competency.knowledgeDomain',
+        'acquiredKnowledges.competency.knowledgeArea',
+        'acquiredKnowledges.competency.difficulty',
+        'professionalCertifications.knowledgeDomain',
+    ];
+
     public function findDetailedById(int $journeyId): ?Journey
     {
         return Journey::query()
-            ->with([
-                'usuario.profileType',
-                'journeyProfile.knowledgeDomain',
-                'journeyProfile.competencies.knowledgeDomain',
-                'journeyProfile.competencies.knowledgeArea',
-                'journeyProfile.competencies.difficulty',
-                'professionalExperience',
-                'profileExperience',
-                'englishSubcriterion',
-                'higherEducationCourses.subcriterion',
-                'acquiredKnowledges.competency.knowledgeDomain',
-                'acquiredKnowledges.competency.knowledgeArea',
-                'acquiredKnowledges.competency.difficulty',
-                'professionalCertifications.knowledgeDomain',
-            ])
+            ->with(self::DETAILED_RELATIONS)
             ->where('PK_JORNADA', $journeyId)
             ->first();
     }
@@ -39,6 +41,17 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->whereNull('DH_FIM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
+            ->first();
+    }
+
+    public function findLatestByUserForUpdate(int $userId): ?Journey
+    {
+        return Journey::query()
+            ->with(self::DETAILED_RELATIONS)
+            ->where('FK_USUARIO', $userId)
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA')
+            ->lockForUpdate()
             ->first();
     }
 

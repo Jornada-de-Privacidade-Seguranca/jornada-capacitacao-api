@@ -104,8 +104,7 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('errors.fields.0', 'journey_profile')
             ->assertJsonPath('errors.fields.1', 'answers.professional_experience')
             ->assertJsonPath('errors.fields.2', 'answers.profile_experience')
-            ->assertJsonPath('errors.fields.3', 'answers.english_proficiency')
-            ->assertJsonPath('errors.fields.4', 'answers.higher_education_courses');
+            ->assertJsonPath('errors.fields.3', 'answers.english_proficiency');
     }
 
     public function test_it_rejects_completed_journey_when_journey_profile_knowledge_domain_is_missing(): void

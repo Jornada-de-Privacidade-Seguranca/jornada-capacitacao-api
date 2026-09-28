@@ -15,6 +15,7 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class JourneyService
@@ -25,6 +26,7 @@ class JourneyService
         private readonly JourneyRepositoryInterface $journeyRepository,
         private readonly UserRepositoryInterface $userRepository,
         private readonly JourneyProfileRepositoryInterface $journeyProfileRepository,
+        private readonly JourneyCalculationService $journeyCalculationService,
     ) {}
 
     public function listForUser(Usuario $authenticatedUser, int $userId, array $filters): LengthAwarePaginator
@@ -144,6 +146,42 @@ class JourneyService
         return $journey;
     }
 
+    public function finalizeCurrent(Usuario $authenticatedUser): Journey
+    {
+        return DB::transaction(function () use ($authenticatedUser): Journey {
+            $journey = $this->journeyRepository->findLatestByUserForUpdate(
+                (int) $authenticatedUser->PK_USUARIO,
+            );
+
+            if ($journey === null) {
+                throw new ModelNotFoundException;
+            }
+
+            if ($journey->DH_FIM !== null) {
+                throw new JourneyAlreadyFinishedException;
+            }
+
+            $missingFields = $this->missingRequiredFields($journey);
+
+            if ($missingFields !== []) {
+                throw new IncompleteJourneyException($missingFields);
+            }
+
+            try {
+                $totalScore = $this->journeyCalculationService->calculateForJourney($journey);
+            } catch (InvalidArgumentException) {
+                throw new IncompleteJourneyException(['answers.profile_experience']);
+            }
+
+            $this->journeyRepository->update($journey, [
+                'NU_PONTUACAO_TOTAL' => (int) round($totalScore),
+                'DH_FIM' => now(),
+            ]);
+
+            return $journey->refresh();
+        });
+    }
+
     private function canViewUserJourneys(Usuario $authenticatedUser, Usuario $requestedUser): bool
     {
         if ((int) $authenticatedUser->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE) {
@@ -187,6 +225,18 @@ class JourneyService
             return;
         }
 
+        $missingFields = $this->missingRequiredFields($journey);
+
+        if ($missingFields !== []) {
+            throw new IncompleteJourneyException($missingFields);
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function missingRequiredFields(Journey $journey): array
+    {
         $missingFields = [];
 
         foreach ($this->requiredCompletedJourneyRelations() as $relation => $field) {
@@ -195,21 +245,37 @@ class JourneyService
             }
         }
 
-        if ($journey->higherEducationCourses->isEmpty()) {
-            $missingFields[] = 'answers.higher_education_courses';
-        }
-
         if ($journey->journeyProfile !== null && $journey->journeyProfile->knowledgeDomain === null) {
             $missingFields[] = 'journey_profile.knowledge_domain';
         }
 
-        if ($journey->acquiredKnowledges->contains(fn ($acquiredKnowledge): bool => $acquiredKnowledge->competency === null)) {
+        $hasBrokenCompetency = $journey->acquiredKnowledges
+            ->contains(fn ($knowledge): bool => $knowledge->competency === null);
+
+        if ($hasBrokenCompetency) {
             $missingFields[] = 'acquired_knowledges.competency';
         }
 
-        if ($missingFields !== []) {
-            throw new IncompleteJourneyException($missingFields);
+        if ($journey->journeyProfile !== null && ! $hasBrokenCompetency) {
+            $expectedIds = $journey->journeyProfile->competencies
+                ->pluck('PK_COMPETENCIAS')
+                ->map(fn ($id): int => (int) $id)
+                ->sort()
+                ->values();
+            $answeredIds = $journey->acquiredKnowledges
+                ->pluck('FK_COMPETENCIAS')
+                ->filter(fn ($id): bool => $id !== null)
+                ->map(fn ($id): int => (int) $id)
+                ->unique()
+                ->sort()
+                ->values();
+
+            if ($expectedIds->isEmpty() || $expectedIds->all() !== $answeredIds->all()) {
+                $missingFields[] = 'answers.competencies';
+            }
         }
+
+        return array_values(array_unique($missingFields));
     }
 
     /**

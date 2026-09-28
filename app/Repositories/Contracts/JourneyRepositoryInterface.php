@@ -25,5 +25,7 @@ interface JourneyRepositoryInterface
 
     public function findOngoingByUser(int $userId): ?Journey;
 
+    public function findLatestByUserForUpdate(int $userId): ?Journey;
+
     public function competencyIdsBelongToProfile(int $journeyProfileId, array $competencyIds): bool;
 }

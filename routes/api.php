@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\JourneyCertificationsController;
 use App\Http\Controllers\Api\JourneyCompetenciesController;
 use App\Http\Controllers\Api\JourneyCourseOptionsController;
 use App\Http\Controllers\Api\JourneyCoursesController;
+use App\Http\Controllers\Api\JourneyFinalizationController;
 use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
@@ -45,6 +46,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
         Route::post('/journeys/{journey}/courses', JourneyCoursesController::class);
         Route::post('/journeys/{journey}/certifications', JourneyCertificationsController::class);
         Route::post('/journeys/{journey}/competencies', JourneyCompetenciesController::class);
+        Route::post('/journeys/current/finalize', JourneyFinalizationController::class);
         Route::post('/auth/logout', LogoutController::class);
     });
 });
