@@ -35,6 +35,7 @@ class JourneyRepository implements JourneyRepositoryInterface
     public function findOngoingByUser(int $userId): ?Journey
     {
         return Journey::query()
+            ->with('higherEducationCourses.subcriterion')
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
             ->orderByDesc('DH_CRIADO_EM')
@@ -112,6 +113,11 @@ class JourneyRepository implements JourneyRepositoryInterface
     public function attachCourses(Journey $journey, array $courseIds): void
     {
         $journey->higherEducationCourses()->syncWithoutDetaching($courseIds);
+    }
+
+    public function syncCourses(Journey $journey, array $courseIds): void
+    {
+        $journey->higherEducationCourses()->sync($courseIds);
     }
 
     public function attachCertifications(Journey $journey, array $certificationIds): void
