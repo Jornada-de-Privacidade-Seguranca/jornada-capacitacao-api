@@ -10,6 +10,21 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
+    public function findCurrentByUserId(int $userId): ?Journey
+    {
+        return Journey::query()
+            ->with([
+                'professionalExperience',
+                'profileExperience',
+                'englishSubcriterion',
+            ])
+            ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_FIM')
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA')
+            ->first();
+    }
+
     public function findDetailedById(int $journeyId): ?Journey
     {
         return Journey::query()
@@ -41,6 +56,18 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->first();
+    }
+
+    public function syncProfessionalCertifications(Journey $journey, array $certificationIds): Journey
+    {
+        $journey->professionalCertifications()->sync($certificationIds);
+
+        return $journey->load([
+            'professionalCertifications' => fn ($query) => $query->orderBy(
+                'TB_CERTIFICACAO_PROFISSIONAL.PK_CERTIFICACAO_PROFISSIONAL'
+            ),
+            'professionalCertifications.knowledgeDomain',
+        ]);
     }
 
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator
@@ -88,6 +115,22 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    public function updateGeneralData(Journey $journey, array $data): Journey
+    {
+        $journey->fill([
+            'FK_SUBCRITERIOS_INGLES' => $data['english_level_id'],
+            'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'],
+            'FK_ATUACAO_PERFIL' => $data['profile_experience_id'],
+        ]);
+        $journey->save();
+
+        return $journey->load([
+            'professionalExperience',
+            'profileExperience',
+            'englishSubcriterion',
+        ]);
     }
 
     public function hasOngoingJourney(int $userId): bool

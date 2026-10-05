@@ -1545,6 +1545,209 @@ paths:
                     message: Nao foi possivel buscar os dados da jornada no momento.
                     errors: []
                     code: JOURNEY_SEARCH_FAILED
+  /journeys/current/general-data/options:
+    get:
+      tags:
+        - Journeys
+      summary: Lista opcoes dos dados gerais da jornada atual
+      description: Retorna opcoes exibiveis de ingles, experiencia profissional e atuacao no perfil para preencher a etapa de dados gerais da jornada em andamento do usuario autenticado. Pesos, divisores, valores finais e pontuacoes nao sao expostos.
+      operationId: getCurrentJourneyGeneralDataOptions
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Opcoes retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentJourneyGeneralDataOptionsResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Opcoes dos dados gerais da jornada retornadas com sucesso.
+                    data:
+                      journey_id: 15
+                      status: ongoing
+                      fields:
+                        english_level:
+                          required: true
+                          options:
+                            - id: 7
+                              name_pt: Básico - Leitura
+                              name_en: Basic - Reading
+                            - id: 10
+                              name_pt: Nenhum
+                              name_en: None
+                        professional_experience:
+                          required: true
+                          options:
+                            - id: 2
+                              description_pt: Entre 1 e 3 anos
+                              description_en: Between 1 and 3 years
+                        profile_experience:
+                          required: true
+                          options:
+                            - id: 3
+                              description_pt: Entre 4 e 6 anos
+                              description_en: Between 4 and 6 years
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Usuario autenticado nao possui jornada em andamento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                currentJourneyNotFound:
+                  value:
+                    success: false
+                    message: Jornada em andamento nao encontrada.
+                    errors: []
+                    code: CURRENT_JOURNEY_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as opcoes dos dados gerais da jornada no momento.
+                    errors: []
+                    code: CURRENT_JOURNEY_GENERAL_DATA_OPTIONS_FAILED
+  /journeys/current/general-data:
+    put:
+      tags:
+        - Journeys
+      summary: Salva os dados gerais da jornada atual
+      description: Atualiza nivel de ingles, experiencia profissional e tempo de atuacao no perfil na jornada em andamento do usuario autenticado. Este endpoint nao calcula nem retorna pontuacao. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token e envie o header X-CSRF-TOKEN.
+      operationId: updateCurrentJourneyGeneralData
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCurrentJourneyGeneralDataPayload"
+            examples:
+              valid:
+                value:
+                  english_level_id: 10
+                  professional_experience_id: 2
+                  profile_experience_id: 3
+      responses:
+        "200":
+          description: Dados gerais salvos com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentJourneyGeneralDataResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Dados gerais da jornada salvos com sucesso.
+                    data:
+                      journey_id: 15
+                      status: ongoing
+                      is_complete: true
+                      english_level:
+                        id: 10
+                        name_pt: Nenhum
+                        name_en: None
+                      professional_experience:
+                        id: 2
+                        description_pt: Entre 1 e 3 anos
+                        description_en: Between 1 and 3 years
+                      profile_experience:
+                        id: 3
+                        description_pt: Entre 4 e 6 anos
+                        description_en: Between 4 and 6 years
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Usuario autenticado nao possui jornada em andamento
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                currentJourneyNotFound:
+                  value:
+                    success: false
+                    message: Jornada em andamento nao encontrada.
+                    errors: []
+                    code: CURRENT_JOURNEY_NOT_FOUND
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidEnglishCriterion:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      english_level_id:
+                        - O nivel de ingles informado nao pertence ao criterio de ingles.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel salvar os dados gerais da jornada no momento.
+                    errors: []
+                    code: CURRENT_JOURNEY_GENERAL_DATA_UPDATE_FAILED
   /journeys/current/certifications/options:
     get:
       tags:
@@ -1617,6 +1820,190 @@ paths:
                     message: Nao foi possivel buscar as certificacoes disponiveis no momento.
                     errors: []
                     code: CERTIFICATION_OPTIONS_SEARCH_FAILED
+  /journeys/current/certifications:
+    get:
+      tags:
+        - Journeys
+      summary: Consulta certificacoes profissionais selecionadas na jornada em andamento
+      description: Retorna a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado.
+      operationId: getCurrentJourneyCertifications
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Certificacoes selecionadas encontradas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCertificationSelectionResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Certificacoes selecionadas encontradas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      certifications:
+                        - id: 1
+                          name: CIPM
+                          issuer: IAPP
+                          knowledge_domain:
+                            id: 1
+                            name_pt: Privacidade
+                            name_en: Privacy
+                empty:
+                  value:
+                    success: true
+                    message: Certificacoes selecionadas encontradas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      certifications: []
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Nao existe jornada em andamento para este usuario.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as certificacoes selecionadas no momento.
+                    errors: []
+                    code: JOURNEY_CERTIFICATIONS_SEARCH_FAILED
+    put:
+      tags:
+        - Journeys
+      summary: Substitui certificacoes profissionais selecionadas na jornada em andamento
+      description: Substitui a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado. A lista vazia e aceita porque esta etapa e opcional.
+      operationId: updateCurrentJourneyCertifications
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJourneyCertificationsPayload"
+            examples:
+              update:
+                value:
+                  certification_ids:
+                    - 1
+                    - 2
+                    - 3
+              empty:
+                value:
+                  certification_ids: []
+      responses:
+        "200":
+          description: Certificacoes selecionadas salvas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCertificationSelectionResponse"
+              examples:
+                updated:
+                  value:
+                    success: true
+                    message: Certificacoes selecionadas salvas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      certifications:
+                        - id: 1
+                          name: CIPM
+                          issuer: IAPP
+                          knowledge_domain:
+                            id: 1
+                            name_pt: Privacidade
+                            name_en: Privacy
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          description: Token CSRF invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                missingCertification:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      certification_ids:
+                        - A certificacao profissional informada nao existe.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel atualizar as certificacoes selecionadas no momento.
+                    errors: []
+                    code: JOURNEY_CERTIFICATIONS_UPDATE_FAILED
   /journeys/current/courses:
     get:
       tags:
@@ -2343,6 +2730,177 @@ components:
             - string
             - "null"
           example: Aluno
+    CurrentJourneyGeneralDataOptionsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Opcoes dos dados gerais da jornada retornadas com sucesso.
+        data:
+          $ref: "#/components/schemas/CurrentJourneyGeneralDataOptions"
+    CurrentJourneyGeneralDataOptions:
+      type: object
+      required:
+        - journey_id
+        - status
+        - fields
+      properties:
+        journey_id:
+          type: integer
+          example: 15
+        status:
+          type: string
+          enum:
+            - ongoing
+          example: ongoing
+        fields:
+          type: object
+          required:
+            - english_level
+            - professional_experience
+            - profile_experience
+          properties:
+            english_level:
+              $ref: "#/components/schemas/CurrentJourneyEnglishLevelOptionsField"
+            professional_experience:
+              $ref: "#/components/schemas/CurrentJourneyExperienceOptionsField"
+            profile_experience:
+              $ref: "#/components/schemas/CurrentJourneyExperienceOptionsField"
+    CurrentJourneyEnglishLevelOptionsField:
+      type: object
+      required:
+        - required
+        - options
+      properties:
+        required:
+          type: boolean
+          example: true
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/CurrentJourneyEnglishLevel"
+    CurrentJourneyExperienceOptionsField:
+      type: object
+      required:
+        - required
+        - options
+      properties:
+        required:
+          type: boolean
+          example: true
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/CurrentJourneyExperienceOption"
+    UpdateCurrentJourneyGeneralDataPayload:
+      type: object
+      required:
+        - english_level_id
+        - professional_experience_id
+        - profile_experience_id
+      properties:
+        english_level_id:
+          type: integer
+          description: ID de TB_SUBCRITERIOS pertencente ao criterio Nível de Proficiência - Inglês. A opcao Nenhum e aceita.
+          minimum: 1
+          example: 10
+        professional_experience_id:
+          type: integer
+          description: ID de TB_EXPERIENCIA_ATUACAO para experiencia profissional.
+          minimum: 1
+          example: 2
+        profile_experience_id:
+          type: integer
+          description: ID de TB_EXPERIENCIA_ATUACAO para tempo de atuacao no perfil.
+          minimum: 1
+          example: 3
+    CurrentJourneyGeneralDataResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Dados gerais da jornada salvos com sucesso.
+        data:
+          $ref: "#/components/schemas/CurrentJourneyGeneralData"
+    CurrentJourneyGeneralData:
+      type: object
+      required:
+        - journey_id
+        - status
+        - is_complete
+        - english_level
+        - professional_experience
+        - profile_experience
+      properties:
+        journey_id:
+          type: integer
+          example: 15
+        status:
+          type: string
+          enum:
+            - ongoing
+          example: ongoing
+        is_complete:
+          type: boolean
+          example: true
+        english_level:
+          oneOf:
+            - $ref: "#/components/schemas/CurrentJourneyEnglishLevel"
+            - type: "null"
+        professional_experience:
+          oneOf:
+            - $ref: "#/components/schemas/CurrentJourneyExperienceOption"
+            - type: "null"
+        profile_experience:
+          oneOf:
+            - $ref: "#/components/schemas/CurrentJourneyExperienceOption"
+            - type: "null"
+    CurrentJourneyEnglishLevel:
+      type: object
+      required:
+        - id
+        - name_pt
+        - name_en
+      properties:
+        id:
+          type: integer
+          example: 10
+        name_pt:
+          type: string
+          example: Nenhum
+        name_en:
+          type: string
+          example: None
+    CurrentJourneyExperienceOption:
+      type: object
+      required:
+        - id
+        - description_pt
+        - description_en
+      properties:
+        id:
+          type: integer
+          example: 2
+        description_pt:
+          type: string
+          example: Entre 1 e 3 anos
+        description_en:
+          type: string
+          example: Between 1 and 3 years
     UserJourneyListResponse:
       type: object
       required:
@@ -3232,6 +3790,60 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CertificationOption"
+    JourneyCertificationSelectionResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Certificacoes selecionadas encontradas com sucesso.
+        data:
+          $ref: "#/components/schemas/JourneyCertificationSelection"
+    JourneyCertificationSelection:
+      type: object
+      required:
+        - journey_id
+        - status
+        - is_complete
+        - certifications
+      properties:
+        journey_id:
+          type: integer
+          example: 10
+        status:
+          type: string
+          enum:
+            - ongoing
+          example: ongoing
+        is_complete:
+          type: boolean
+          example: true
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/CertificationOption"
+    UpdateJourneyCertificationsPayload:
+      type: object
+      required:
+        - certification_ids
+      properties:
+        certification_ids:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+          example:
+            - 1
+            - 2
+            - 3
     CertificationOption:
       type: object
       required:
