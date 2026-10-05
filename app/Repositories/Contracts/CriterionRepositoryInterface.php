@@ -10,4 +10,6 @@ interface CriterionRepositoryInterface
     public function all(): Collection;
 
     public function findOrFail(int $id): Criterion;
+
+    public function findEnglishCriterionId(): ?int;
 }

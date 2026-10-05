@@ -3,8 +3,10 @@
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CertificationOptionController;
 use App\Http\Controllers\Api\CsrfTokenController;
+use App\Http\Controllers\Api\CurrentJourneyGeneralDataController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JourneyAnswersController;
+use App\Http\Controllers\Api\JourneyCertificationController;
 use App\Http\Controllers\Api\JourneyCertificationsController;
 use App\Http\Controllers\Api\JourneyCompetenciesController;
 use App\Http\Controllers\Api\JourneyCourseOptionsController;
@@ -39,7 +41,11 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
             ->only(['index', 'show']);
         Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index']);
         Route::get('/journeys/current/certifications/options', CertificationOptionController::class);
+        Route::get('/journeys/current/certifications', [JourneyCertificationController::class, 'show']);
+        Route::put('/journeys/current/certifications', [JourneyCertificationController::class, 'update']);
         Route::get('/journeys/current/courses/options', JourneyCourseOptionsController::class);
+        Route::get('/journeys/current/general-data/options', [CurrentJourneyGeneralDataController::class, 'options']);
+        Route::put('/journeys/current/general-data', [CurrentJourneyGeneralDataController::class, 'update']);
         Route::get('/journeys/{journey}', [UserJourneyController::class, 'show']);
         Route::post('/users/{user}/journeys', [UserJourneyController::class, 'store']);
         Route::patch('/journeys/{journey}/answers', JourneyAnswersController::class);
