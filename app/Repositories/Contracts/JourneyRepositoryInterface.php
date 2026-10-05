@@ -31,6 +31,8 @@ interface JourneyRepositoryInterface
 
     public function findOngoingByUser(int $userId): ?Journey;
 
+    public function findOngoingByUserForUpdate(int $userId): ?Journey;
+
     /**
      * @param  array<int, int>  $certificationIds
      */
