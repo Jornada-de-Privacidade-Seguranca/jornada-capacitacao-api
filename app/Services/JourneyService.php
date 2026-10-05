@@ -6,15 +6,21 @@ use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\IncompleteJourneyException;
 use App\Exceptions\JourneyAlreadyFinishedException;
 use App\Exceptions\JourneyProfileNotFoundException;
+use App\Exceptions\NoOngoingJourneyException;
 use App\Exceptions\OngoingJourneyExistsException;
 use App\Models\Journey;
 use App\Models\Usuario;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
+use App\Repositories\Contracts\ProfessionalExperienceRepositoryInterface;
+use App\Repositories\Contracts\SubcriterionRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class JourneyService
@@ -23,6 +29,9 @@ class JourneyService
 
     public function __construct(
         private readonly JourneyRepositoryInterface $journeyRepository,
+        private readonly CriterionRepositoryInterface $criterionRepository,
+        private readonly ProfessionalExperienceRepositoryInterface $professionalExperienceRepository,
+        private readonly SubcriterionRepositoryInterface $subcriterionRepository,
         private readonly UserRepositoryInterface $userRepository,
         private readonly JourneyProfileRepositoryInterface $journeyProfileRepository,
     ) {}
@@ -142,6 +151,51 @@ class JourneyService
         $this->ensureCompletedJourneyHasRequiredData($journey);
 
         return $journey;
+    }
+
+    public function getCurrentGeneralDataOptions(Usuario $authenticatedUser): array
+    {
+        $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
+
+        if ($journey === null) {
+            throw new NoOngoingJourneyException;
+        }
+
+        $englishCriterionId = $this->criterionRepository->findEnglishCriterionId();
+
+        if ($englishCriterionId === null) {
+            throw new RuntimeException('English proficiency criterion is not configured.');
+        }
+
+        return [
+            'journey' => $journey,
+            'english_levels' => $this->subcriterionRepository->allByCriterionId($englishCriterionId),
+            'experience_options' => $this->professionalExperienceRepository->allOrdered(),
+        ];
+    }
+
+    public function updateCurrentGeneralData(Usuario $authenticatedUser, array $data): Journey
+    {
+        $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
+
+        if ($journey === null) {
+            throw new NoOngoingJourneyException;
+        }
+
+        $englishSubcriterion = $this->subcriterionRepository->findOrFail((int) $data['english_level_id']);
+        $englishCriterionId = $this->criterionRepository->findEnglishCriterionId();
+
+        if ($englishCriterionId === null) {
+            throw new RuntimeException('English proficiency criterion is not configured.');
+        }
+
+        if ((int) $englishSubcriterion->FK_CRITERIOS !== $englishCriterionId) {
+            throw ValidationException::withMessages([
+                'english_level_id' => ['O nivel de ingles informado nao pertence ao criterio de ingles.'],
+            ]);
+        }
+
+        return $this->journeyRepository->updateGeneralData($journey, $data);
     }
 
     private function canViewUserJourneys(Usuario $authenticatedUser, Usuario $requestedUser): bool
