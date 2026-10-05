@@ -157,9 +157,10 @@ class JourneyCalculationService
     {
         return collect($areaWeights)
             ->filter(fn ($areaWeight): bool => $areaWeight->FK_AREA_CONHECIMENTO !== null)
-            ->mapWithKeys(fn ($areaWeight): array => [
-                (int) $areaWeight->FK_AREA_CONHECIMENTO => (float) ($areaWeight->NU_PESO_CRIT_COMPETENCIA ?? 0),
-            ]);
+            ->groupBy(fn ($areaWeight): int => (int) $areaWeight->FK_AREA_CONHECIMENTO)
+            ->map(fn (Collection $weights): float => $weights->sum(
+                fn ($weight): float => (float) ($weight->NU_PESO_CRIT_COMPETENCIA ?? 0),
+            ));
     }
 
     private function competencyLevelWeight(mixed $difficulty): float

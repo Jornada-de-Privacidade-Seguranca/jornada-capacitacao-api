@@ -22,6 +22,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 use Tests\TestCase;
 
 class JornadaSchemaTest extends TestCase
@@ -64,6 +65,18 @@ class JornadaSchemaTest extends TestCase
         $this->assertTrue(Schema::hasColumn('TB_AREA_CONHECIMENTO', 'DS_AREA_CONHECIMENTO_PT'));
         $this->assertTrue(Schema::hasColumn('TB_AREA_CONHECIMENTO', 'DS_AREA_CONHECIMENTO_EN'));
         $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'NU_PONTUACAO_TOTAL'));
+    }
+
+    public function test_it_refuses_to_rollback_fractional_journey_scores_to_integer(): void
+    {
+        Journey::create(['NU_PONTUACAO_TOTAL' => 126.329]);
+
+        $migration = require database_path('migrations/2026_09_28_000000_change_journey_total_score_to_decimal.php');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('pontuacoes fracionarias');
+
+        $migration->down();
     }
 
     public function test_it_migrates_fixed_jornada_reference_data(): void

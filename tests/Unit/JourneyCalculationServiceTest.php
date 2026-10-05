@@ -127,6 +127,27 @@ class JourneyCalculationServiceTest extends TestCase
         ], $areaWeights));
     }
 
+    public function test_it_sums_multiple_weights_for_the_same_knowledge_area(): void
+    {
+        $service = $this->service();
+        $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Avançado']);
+        $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
+        $competency->setRelation('difficulty', $difficulty);
+
+        $this->assertSame(32.0, $service->calculateCompetencyScore([
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
+        ], [
+            new CompetencyCriterionWeight([
+                'FK_AREA_CONHECIMENTO' => 10,
+                'NU_PESO_CRIT_COMPETENCIA' => 25,
+            ]),
+            new CompetencyCriterionWeight([
+                'FK_AREA_CONHECIMENTO' => 10,
+                'NU_PESO_CRIT_COMPETENCIA' => 15,
+            ]),
+        ]));
+    }
+
     public function test_it_calculates_journey_total_using_profile_area_weights_from_repository(): void
     {
         $areaWeight = new CompetencyCriterionWeight([
