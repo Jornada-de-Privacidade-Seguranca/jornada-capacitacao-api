@@ -34,6 +34,15 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->first();
     }
 
+    public function findDetailedByIdForUpdate(int $journeyId): ?Journey
+    {
+        return Journey::query()
+            ->with(self::DETAILED_RELATIONS)
+            ->where('PK_JORNADA', $journeyId)
+            ->lockForUpdate()
+            ->first();
+    }
+
     public function findOngoingByUser(int $userId): ?Journey
     {
         return Journey::query()

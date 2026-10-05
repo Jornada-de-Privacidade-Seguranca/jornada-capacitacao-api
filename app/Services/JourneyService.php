@@ -85,48 +85,56 @@ class JourneyService
 
     public function updateAnswers(Usuario $authenticatedUser, int $journeyId, array $data): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $data): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
 
-        $this->journeyRepository->update($journey, [
-            'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'] ?? $journey->FK_EXPERIENCIA_PROFISSIONAL,
-            'FK_ATUACAO_PERFIL' => $data['profile_experience_id'] ?? $journey->FK_ATUACAO_PERFIL,
-            'FK_SUBCRITERIOS_INGLES' => $data['english_proficiency_id'] ?? $journey->FK_SUBCRITERIOS_INGLES,
-        ]);
+            $this->journeyRepository->update($journey, [
+                'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'] ?? $journey->FK_EXPERIENCIA_PROFISSIONAL,
+                'FK_ATUACAO_PERFIL' => $data['profile_experience_id'] ?? $journey->FK_ATUACAO_PERFIL,
+                'FK_SUBCRITERIOS_INGLES' => $data['english_proficiency_id'] ?? $journey->FK_SUBCRITERIOS_INGLES,
+            ]);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function attachCourses(Usuario $authenticatedUser, int $journeyId, array $courseIds): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $courseIds): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
 
-        $this->journeyRepository->attachCourses($journey, $courseIds);
+            $this->journeyRepository->attachCourses($journey, $courseIds);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function attachCertifications(Usuario $authenticatedUser, int $journeyId, array $certificationIds): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $certificationIds): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
 
-        $this->journeyRepository->attachCertifications($journey, $certificationIds);
+            $this->journeyRepository->attachCertifications($journey, $certificationIds);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function recordCompetencies(Usuario $authenticatedUser, int $journeyId, array $competencies): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $competencies): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
 
-        $competencyIds = array_column($competencies, 'competency_id');
+            $competencyIds = array_column($competencies, 'competency_id');
 
-        if (! $this->journeyRepository->competencyIdsBelongToProfile((int) $journey->FK_PERFIS_JORNADA, $competencyIds)) {
-            throw new CompetencyNotInJourneyProfileException;
-        }
+            if (! $this->journeyRepository->competencyIdsBelongToProfile((int) $journey->FK_PERFIS_JORNADA, $competencyIds)) {
+                throw new CompetencyNotInJourneyProfileException;
+            }
 
-        $this->journeyRepository->upsertAcquiredKnowledges($journey, $competencies);
+            $this->journeyRepository->upsertAcquiredKnowledges($journey, $competencies);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function findForAuthenticatedUser(Usuario $authenticatedUser, int $journeyId): Journey
@@ -200,9 +208,15 @@ class JourneyService
         return (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
     }
 
-    private function resolveJourneyForManagement(Usuario $authenticatedUser, int $journeyId): Journey
+    private function resolveJourneyForManagement(
+        Usuario $authenticatedUser,
+        int $journeyId,
+        bool $lockForUpdate = false,
+    ): Journey
     {
-        $journey = $this->journeyRepository->findDetailedById($journeyId);
+        $journey = $lockForUpdate
+            ? $this->journeyRepository->findDetailedByIdForUpdate($journeyId)
+            : $this->journeyRepository->findDetailedById($journeyId);
 
         if ($journey === null) {
             throw new ModelNotFoundException;

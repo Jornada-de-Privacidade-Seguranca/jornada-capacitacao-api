@@ -15,6 +15,8 @@ interface JourneyRepositoryInterface
 
     public function findDetailedById(int $journeyId): ?Journey;
 
+    public function findDetailedByIdForUpdate(int $journeyId): ?Journey;
+
     public function update(Journey $journey, array $data): void;
 
     public function attachCourses(Journey $journey, array $courseIds): void;
