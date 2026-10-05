@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Exceptions\JourneyAlreadyFinishedException;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
+use App\Repositories\Contracts\ProfessionalExperienceRepositoryInterface;
+use App\Repositories\Contracts\SubcriterionRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Services\JourneyCalculationService;
 use App\Services\JourneyService;
@@ -47,6 +50,9 @@ class JourneyMutationConcurrencyTest extends TestCase
 
         $service = new JourneyService(
             $journeyRepository,
+            Mockery::mock(CriterionRepositoryInterface::class),
+            Mockery::mock(ProfessionalExperienceRepositoryInterface::class),
+            Mockery::mock(SubcriterionRepositoryInterface::class),
             Mockery::mock(UserRepositoryInterface::class),
             Mockery::mock(JourneyProfileRepositoryInterface::class),
             Mockery::mock(JourneyCalculationService::class),
