@@ -1915,6 +1915,204 @@ paths:
                     message: Nao foi possivel buscar as certificacoes disponiveis no momento.
                     errors: []
                     code: CERTIFICATION_OPTIONS_SEARCH_FAILED
+  /journeys/current/competencies/options:
+    get:
+      tags:
+        - Journeys
+      summary: Lista competencias disponiveis para a jornada em andamento
+      description: Retorna somente as competencias ligadas ao perfil da jornada atual do usuario autenticado.
+      operationId: listCurrentJourneyCompetencyOptions
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Competencias disponiveis encontradas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentJourneyCompetencyOptionListResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Competencias disponiveis encontradas com sucesso.
+                    message: Competencias disponiveis encontradas com sucesso.
+                    data:
+                      - id: 1
+                        origin_pt: Referencial
+                        origin_en: Reference
+                        name_pt: LGPD
+                        name_en: LGPD
+                        description_pt: Fundamentos da LGPD
+                        description_en: LGPD fundamentals
+                        knowledge_domain:
+                          id: 1
+                          name_pt: Privacidade
+                          name_en: Privacy
+                        knowledge_area:
+                          id: 2
+                          name_pt: Governanca
+                          name_en: Governance
+                        difficulty:
+                          id: 1
+                          name_pt: Basico
+                          name_en: Basic
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /journeys/current/competencies:
+    get:
+      tags:
+        - Journeys
+      summary: Consulta respostas de competencias da jornada em andamento
+      description: Retorna as respostas ja salvas de aquisicao de competencias da jornada atual.
+      operationId: getCurrentJourneyCompetencies
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Competencias da jornada encontradas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentJourneyCompetencyStateResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Competencias da jornada encontradas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: false
+                      competencies: []
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+    put:
+      tags:
+        - Journeys
+      summary: Substitui respostas de competencias da jornada em andamento
+      description: Valida e substitui integralmente a lista de conhecimentos adquiridos da jornada atual. Enviar `competencies` como uma lista vazia limpa todas as respostas desta etapa.
+      operationId: updateCurrentJourneyCompetencies
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CurrentJourneyCompetencyUpdatePayload"
+            examples:
+              valid:
+                value:
+                  competencies:
+                    - competency_id: 1
+                      acquired: true
+                    - competency_id: 2
+                      acquired: false
+      responses:
+        "200":
+          description: Competencias da jornada salvas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentJourneyCompetencyStateResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Competencias da jornada salvas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      competencies:
+                        - id: 1
+                          acquired: true
+                          type_acquired: 1
+                          competency:
+                            id: 1
+                            origin_pt: Referencial
+                            origin_en: Reference
+                            name_pt: LGPD
+                            name_en: LGPD
+                            description_pt: Fundamentos da LGPD
+                            description_en: LGPD fundamentals
+                            knowledge_domain: null
+                            knowledge_area: null
+                            difficulty: null
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          description: Token CSRF invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidCompetency:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      competencies:
+                        - Cada competencia informada deve existir e pertencer ao perfil da jornada atual.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
   /journeys/current/certifications:
     get:
       tags:
@@ -2099,6 +2297,102 @@ paths:
                     message: Nao foi possivel atualizar as certificacoes selecionadas no momento.
                     errors: []
                     code: JOURNEY_CERTIFICATIONS_UPDATE_FAILED
+  /journeys/current/courses:
+    get:
+      tags:
+        - Journeys
+      summary: Consulta os cursos selecionados na jornada em andamento
+      description: Retorna a lista de cursos superiores selecionados na jornada em andamento do usuario autenticado. Retorna uma lista vazia quando ainda nao houver selecao. A resposta nao inclui afinidade, peso ou pontuacao.
+      operationId: getCurrentJourneyCourses
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Cursos selecionados retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCourseOptionListResponse"
+              examples:
+                empty:
+                  value:
+                    success: true
+                    message: Cursos selecionados encontrados com sucesso.
+                    data: []
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Nao existe jornada em andamento para este usuario.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+    put:
+      tags:
+        - Journeys
+      summary: Substitui os cursos selecionados na jornada em andamento
+      description: Substitui integralmente a selecao em RL_CURSOS_SUPERIORES_JORNADA. IDs duplicados sao normalizados antes da sincronizacao e uma lista vazia remove todas as selecoes.
+      operationId: replaceCurrentJourneyCourses
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceCurrentJourneyCoursesPayload"
+            examples:
+              default:
+                value:
+                  course_ids: [1, 2, 3]
+              clear:
+                value:
+                  course_ids: []
+      responses:
+        "200":
+          description: Cursos selecionados substituidos com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCourseOptionListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Um ou mais cursos nao existem ou o payload e invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+
   /journeys/current/courses/options:
     get:
       tags:
@@ -3102,6 +3396,17 @@ components:
           items:
             type: integer
           example: [1, 2]
+    ReplaceCurrentJourneyCoursesPayload:
+      type: object
+      required:
+        - course_ids
+      properties:
+        course_ids:
+          type: array
+          description: Lista completa de cursos selecionados. Pode ser vazia; IDs repetidos sao normalizados pela API.
+          items:
+            type: integer
+          example: [1, 2, 3]
     AttachJourneyCertificationsPayload:
       type: object
       required:
@@ -3904,6 +4209,104 @@ components:
                 - string
                 - "null"
               example: Privacy
+    CurrentJourneyCompetencyOptionListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Competencias disponiveis encontradas com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyCompetency"
+    CurrentJourneyCompetencyStateResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Competencias da jornada encontradas com sucesso.
+        data:
+          $ref: "#/components/schemas/CurrentJourneyCompetencyState"
+    CurrentJourneyCompetencyState:
+      type: object
+      required:
+        - journey_id
+        - status
+        - is_complete
+        - competencies
+      properties:
+        journey_id:
+          type: integer
+          example: 10
+        status:
+          type: string
+          enum:
+            - ongoing
+          example: ongoing
+        is_complete:
+          type: boolean
+          example: false
+        competencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/CurrentJourneyCompetencyAnswer"
+    CurrentJourneyCompetencyAnswer:
+      type: object
+      required:
+        - id
+        - acquired
+        - type_acquired
+        - competency
+      properties:
+        id:
+          type: integer
+          example: 1
+        acquired:
+          type: boolean
+          example: true
+        type_acquired:
+          type: integer
+          enum:
+            - 0
+            - 1
+          example: 1
+        competency:
+          $ref: "#/components/schemas/UserJourneyCompetency"
+    CurrentJourneyCompetencyUpdatePayload:
+      type: object
+      required:
+        - competencies
+      properties:
+        competencies:
+          type: array
+          maxItems: 500
+          items:
+            type: object
+            required:
+              - competency_id
+              - acquired
+            properties:
+              competency_id:
+                type: integer
+                minimum: 1
+                example: 1
+              acquired:
+                type: boolean
+                example: true
     JourneyProfileListResponse:
       type: object
       required:

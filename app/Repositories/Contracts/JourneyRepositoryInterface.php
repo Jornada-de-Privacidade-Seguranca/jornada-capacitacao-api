@@ -25,6 +25,8 @@ interface JourneyRepositoryInterface
 
     public function attachCourses(Journey $journey, array $courseIds): void;
 
+    public function syncCourses(Journey $journey, array $courseIds): void;
+
     public function attachCertifications(Journey $journey, array $certificationIds): void;
 
     public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void;
@@ -32,6 +34,8 @@ interface JourneyRepositoryInterface
     public function findOngoingByUser(int $userId): ?Journey;
 
     public function findLatestByUserForUpdate(int $userId): ?Journey;
+
+    public function findOngoingByUserForUpdate(int $userId): ?Journey;
 
     /**
      * @param  array<int, int>  $certificationIds
