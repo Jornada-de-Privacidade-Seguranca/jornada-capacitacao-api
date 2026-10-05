@@ -25,5 +25,10 @@ interface JourneyRepositoryInterface
 
     public function findOngoingByUser(int $userId): ?Journey;
 
+    /**
+     * @param  array<int, int>  $certificationIds
+     */
+    public function syncProfessionalCertifications(Journey $journey, array $certificationIds): Journey;
+
     public function competencyIdsBelongToProfile(int $journeyProfileId, array $competencyIds): bool;
 }

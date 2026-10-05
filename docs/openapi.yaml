@@ -1617,6 +1617,190 @@ paths:
                     message: Nao foi possivel buscar as certificacoes disponiveis no momento.
                     errors: []
                     code: CERTIFICATION_OPTIONS_SEARCH_FAILED
+  /journeys/current/certifications:
+    get:
+      tags:
+        - Journeys
+      summary: Consulta certificacoes profissionais selecionadas na jornada em andamento
+      description: Retorna a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado.
+      operationId: getCurrentJourneyCertifications
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Certificacoes selecionadas encontradas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCertificationSelectionResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Certificacoes selecionadas encontradas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      certifications:
+                        - id: 1
+                          name: CIPM
+                          issuer: IAPP
+                          knowledge_domain:
+                            id: 1
+                            name_pt: Privacidade
+                            name_en: Privacy
+                empty:
+                  value:
+                    success: true
+                    message: Certificacoes selecionadas encontradas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      certifications: []
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Nao existe jornada em andamento para este usuario.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as certificacoes selecionadas no momento.
+                    errors: []
+                    code: JOURNEY_CERTIFICATIONS_SEARCH_FAILED
+    put:
+      tags:
+        - Journeys
+      summary: Substitui certificacoes profissionais selecionadas na jornada em andamento
+      description: Substitui a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado. A lista vazia e aceita porque esta etapa e opcional.
+      operationId: updateCurrentJourneyCertifications
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJourneyCertificationsPayload"
+            examples:
+              update:
+                value:
+                  certification_ids:
+                    - 1
+                    - 2
+                    - 3
+              empty:
+                value:
+                  certification_ids: []
+      responses:
+        "200":
+          description: Certificacoes selecionadas salvas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCertificationSelectionResponse"
+              examples:
+                updated:
+                  value:
+                    success: true
+                    message: Certificacoes selecionadas salvas com sucesso.
+                    data:
+                      journey_id: 10
+                      status: ongoing
+                      is_complete: true
+                      certifications:
+                        - id: 1
+                          name: CIPM
+                          issuer: IAPP
+                          knowledge_domain:
+                            id: 1
+                            name_pt: Privacidade
+                            name_en: Privacy
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          description: Token CSRF invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Erro de validacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                missingCertification:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      certification_ids:
+                        - A certificacao profissional informada nao existe.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel atualizar as certificacoes selecionadas no momento.
+                    errors: []
+                    code: JOURNEY_CERTIFICATIONS_UPDATE_FAILED
   /journeys/current/courses/options:
     get:
       tags:
@@ -3125,6 +3309,60 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CertificationOption"
+    JourneyCertificationSelectionResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Certificacoes selecionadas encontradas com sucesso.
+        data:
+          $ref: "#/components/schemas/JourneyCertificationSelection"
+    JourneyCertificationSelection:
+      type: object
+      required:
+        - journey_id
+        - status
+        - is_complete
+        - certifications
+      properties:
+        journey_id:
+          type: integer
+          example: 10
+        status:
+          type: string
+          enum:
+            - ongoing
+          example: ongoing
+        is_complete:
+          type: boolean
+          example: true
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/CertificationOption"
+    UpdateJourneyCertificationsPayload:
+      type: object
+      required:
+        - certification_ids
+      properties:
+        certification_ids:
+          type: array
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+          example:
+            - 1
+            - 2
+            - 3
     CertificationOption:
       type: object
       required:

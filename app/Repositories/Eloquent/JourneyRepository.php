@@ -42,6 +42,18 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->first();
     }
 
+    public function syncProfessionalCertifications(Journey $journey, array $certificationIds): Journey
+    {
+        $journey->professionalCertifications()->sync($certificationIds);
+
+        return $journey->load([
+            'professionalCertifications' => fn ($query) => $query->orderBy(
+                'TB_CERTIFICACAO_PROFISSIONAL.PK_CERTIFICACAO_PROFISSIONAL'
+            ),
+            'professionalCertifications.knowledgeDomain',
+        ]);
+    }
+
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator
     {
         $query = Journey::query()
