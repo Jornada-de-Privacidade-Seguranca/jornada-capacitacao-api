@@ -157,6 +157,11 @@ class JourneyRepository implements JourneyRepositoryInterface
         $journey->higherEducationCourses()->syncWithoutDetaching($courseIds);
     }
 
+    public function syncCourses(Journey $journey, array $courseIds): void
+    {
+        $journey->higherEducationCourses()->sync($courseIds);
+    }
+
     public function attachCertifications(Journey $journey, array $certificationIds): void
     {
         $journey->professionalCertifications()->syncWithoutDetaching($certificationIds);

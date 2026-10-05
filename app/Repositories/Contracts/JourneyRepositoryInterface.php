@@ -23,6 +23,8 @@ interface JourneyRepositoryInterface
 
     public function attachCourses(Journey $journey, array $courseIds): void;
 
+    public function syncCourses(Journey $journey, array $courseIds): void;
+
     public function attachCertifications(Journey $journey, array $certificationIds): void;
 
     public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void;

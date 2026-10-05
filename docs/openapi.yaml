@@ -2004,6 +2004,102 @@ paths:
                     message: Nao foi possivel atualizar as certificacoes selecionadas no momento.
                     errors: []
                     code: JOURNEY_CERTIFICATIONS_UPDATE_FAILED
+  /journeys/current/courses:
+    get:
+      tags:
+        - Journeys
+      summary: Consulta os cursos selecionados na jornada em andamento
+      description: Retorna a lista de cursos superiores selecionados na jornada em andamento do usuario autenticado. Retorna uma lista vazia quando ainda nao houver selecao. A resposta nao inclui afinidade, peso ou pontuacao.
+      operationId: getCurrentJourneyCourses
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Cursos selecionados retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCourseOptionListResponse"
+              examples:
+                empty:
+                  value:
+                    success: true
+                    message: Cursos selecionados encontrados com sucesso.
+                    data: []
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                ongoingJourneyNotFound:
+                  value:
+                    success: false
+                    message: Nao existe jornada em andamento para este usuario.
+                    errors: []
+                    code: ONGOING_JOURNEY_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+    put:
+      tags:
+        - Journeys
+      summary: Substitui os cursos selecionados na jornada em andamento
+      description: Substitui integralmente a selecao em RL_CURSOS_SUPERIORES_JORNADA. IDs duplicados sao normalizados antes da sincronizacao e uma lista vazia remove todas as selecoes.
+      operationId: replaceCurrentJourneyCourses
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplaceCurrentJourneyCoursesPayload"
+            examples:
+              default:
+                value:
+                  course_ids: [1, 2, 3]
+              clear:
+                value:
+                  course_ids: []
+      responses:
+        "200":
+          description: Cursos selecionados substituidos com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCourseOptionListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Um ou mais cursos nao existem ou o payload e invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+
   /journeys/current/courses/options:
     get:
       tags:
@@ -2974,6 +3070,17 @@ components:
           items:
             type: integer
           example: [1, 2]
+    ReplaceCurrentJourneyCoursesPayload:
+      type: object
+      required:
+        - course_ids
+      properties:
+        course_ids:
+          type: array
+          description: Lista completa de cursos selecionados. Pode ser vazia; IDs repetidos sao normalizados pela API.
+          items:
+            type: integer
+          example: [1, 2, 3]
     AttachJourneyCertificationsPayload:
       type: object
       required:
