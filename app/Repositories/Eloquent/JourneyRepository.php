@@ -50,7 +50,6 @@ class JourneyRepository implements JourneyRepositoryInterface
     public function findOngoingByUser(int $userId): ?Journey
     {
         return Journey::query()
-            ->with('higherEducationCourses.subcriterion')
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
             ->orderByDesc('DH_CRIADO_EM')

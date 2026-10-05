@@ -151,6 +151,17 @@ class CurrentJourneyCoursesTest extends TestCase
         $this->assertSame('O curso informado nao existe.', $response->json('errors')['course_ids.0'][0]);
     }
 
+    public function test_put_rejects_a_nested_course_id_as_invalid_input(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $this->journey($user, $this->journeyProfile('Privacidade'), '2026-09-29 09:00:00');
+
+        $this->actingAs($user)->withCsrfToken()
+            ->putJson('/api/journeys/current/courses', ['course_ids' => [[1]]])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR');
+    }
+
     public function test_endpoints_return_not_found_without_an_ongoing_journey(): void
     {
         $user = $this->activeUser('Maria Silva', 2);

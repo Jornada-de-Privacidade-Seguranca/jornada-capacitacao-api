@@ -15,15 +15,6 @@ class ReplaceCurrentJourneyCoursesRequest extends FormRequest
         return true;
     }
 
-    protected function prepareForValidation(): void
-    {
-        if (is_array($this->input('course_ids'))) {
-            $this->merge([
-                'course_ids' => array_values(array_unique($this->input('course_ids'))),
-            ]);
-        }
-    }
-
     public function rules(): array
     {
         return [
@@ -44,7 +35,7 @@ class ReplaceCurrentJourneyCoursesRequest extends FormRequest
 
     public function courseIds(): array
     {
-        return $this->validated()['course_ids'];
+        return array_values(array_unique($this->validated()['course_ids']));
     }
 
     protected function failedValidation(Validator $validator): void

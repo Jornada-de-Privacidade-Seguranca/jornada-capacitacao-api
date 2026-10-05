@@ -20,7 +20,7 @@ class CurrentJourneyCoursesService
             throw new ModelNotFoundException;
         }
 
-        return $journey;
+        return $journey->load('higherEducationCourses.subcriterion');
     }
 
     public function replaceForAuthenticatedUser(Usuario $authenticatedUser, array $courseIds): Journey
