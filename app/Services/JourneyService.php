@@ -19,8 +19,8 @@ use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -95,7 +95,7 @@ class JourneyService
     public function updateAnswers(Usuario $authenticatedUser, int $journeyId, array $data): Journey
     {
         return DB::transaction(function () use ($authenticatedUser, $journeyId, $data): Journey {
-            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
             $this->journeyRepository->update($journey, [
                 'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'] ?? $journey->FK_EXPERIENCIA_PROFISSIONAL,
@@ -110,7 +110,7 @@ class JourneyService
     public function attachCourses(Usuario $authenticatedUser, int $journeyId, array $courseIds): Journey
     {
         return DB::transaction(function () use ($authenticatedUser, $journeyId, $courseIds): Journey {
-            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
             $this->journeyRepository->attachCourses($journey, $courseIds);
 
@@ -121,7 +121,7 @@ class JourneyService
     public function attachCertifications(Usuario $authenticatedUser, int $journeyId, array $certificationIds): Journey
     {
         return DB::transaction(function () use ($authenticatedUser, $journeyId, $certificationIds): Journey {
-            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
             $this->journeyRepository->attachCertifications($journey, $certificationIds);
 
@@ -132,7 +132,7 @@ class JourneyService
     public function recordCompetencies(Usuario $authenticatedUser, int $journeyId, array $competencies): Journey
     {
         return DB::transaction(function () use ($authenticatedUser, $journeyId, $competencies): Journey {
-            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId, true);
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
             $competencyIds = array_column($competencies, 'competency_id');
 
@@ -265,12 +265,8 @@ class JourneyService
     private function resolveJourneyForManagement(
         Usuario $authenticatedUser,
         int $journeyId,
-        bool $lockForUpdate = false,
-    ): Journey
-    {
-        $journey = $lockForUpdate
-            ? $this->journeyRepository->findDetailedByIdForUpdate($journeyId)
-            : $this->journeyRepository->findDetailedById($journeyId);
+    ): Journey {
+        $journey = $this->journeyRepository->findDetailedByIdForUpdate($journeyId);
 
         if ($journey === null) {
             throw new ModelNotFoundException;
