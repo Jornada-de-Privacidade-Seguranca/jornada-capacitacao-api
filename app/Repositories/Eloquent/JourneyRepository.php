@@ -7,39 +7,100 @@ use App\Models\Journey;
 use App\Models\ProfileCompetency;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
-    public function findDetailedById(int $journeyId): ?Journey
+    private const DETAILED_RELATIONS = [
+        'usuario.profileType',
+        'journeyProfile.knowledgeDomain',
+        'journeyProfile.competencies.knowledgeDomain',
+        'journeyProfile.competencies.knowledgeArea',
+        'journeyProfile.competencies.difficulty',
+        'professionalExperience',
+        'profileExperience',
+        'englishSubcriterion',
+        'higherEducationCourses.subcriterion',
+        'acquiredKnowledges.competency.knowledgeDomain',
+        'acquiredKnowledges.competency.knowledgeArea',
+        'acquiredKnowledges.competency.difficulty',
+        'professionalCertifications.knowledgeDomain',
+    ];
+
+    public function findCurrentByUserId(int $userId): ?Journey
     {
         return Journey::query()
             ->with([
-                'usuario.profileType',
-                'journeyProfile.knowledgeDomain',
-                'journeyProfile.competencies.knowledgeDomain',
-                'journeyProfile.competencies.knowledgeArea',
-                'journeyProfile.competencies.difficulty',
                 'professionalExperience',
                 'profileExperience',
                 'englishSubcriterion',
-                'higherEducationCourses.subcriterion',
-                'acquiredKnowledges.competency.knowledgeDomain',
-                'acquiredKnowledges.competency.knowledgeArea',
-                'acquiredKnowledges.competency.difficulty',
-                'professionalCertifications.knowledgeDomain',
             ])
-            ->where('PK_JORNADA', $journeyId)
-            ->first();
-    }
-
-    public function findOngoingByUser(int $userId): ?Journey
-    {
-        return Journey::query()
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->first();
+    }
+
+    public function findDetailedById(int $journeyId): ?Journey
+    {
+        return Journey::query()
+            ->with(self::DETAILED_RELATIONS)
+            ->where('PK_JORNADA', $journeyId)
+            ->first();
+    }
+
+    public function findDetailedByIdForUpdate(int $journeyId): ?Journey
+    {
+        return Journey::query()
+            ->with(self::DETAILED_RELATIONS)
+            ->where('PK_JORNADA', $journeyId)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    public function findOngoingByUser(int $userId): ?Journey
+    {
+        return $this->ongoingByUserQuery($userId)->first();
+    }
+
+    public function findOngoingByUserForUpdate(int $userId): ?Journey
+    {
+        return $this->ongoingByUserQuery($userId)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    private function ongoingByUserQuery(int $userId): Builder
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_FIM')
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA');
+    }
+
+    public function findLatestByUserForUpdate(int $userId): ?Journey
+    {
+        return Journey::query()
+            ->with(self::DETAILED_RELATIONS)
+            ->where('FK_USUARIO', $userId)
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA')
+            ->lockForUpdate()
+            ->first();
+    }
+
+    public function syncProfessionalCertifications(Journey $journey, array $certificationIds): Journey
+    {
+        $journey->professionalCertifications()->sync($certificationIds);
+
+        return $journey->load([
+            'professionalCertifications' => fn ($query) => $query->orderBy(
+                'TB_CERTIFICACAO_PROFISSIONAL.PK_CERTIFICACAO_PROFISSIONAL'
+            ),
+            'professionalCertifications.knowledgeDomain',
+        ]);
     }
 
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator
@@ -89,6 +150,22 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->paginate($perPage, ['*'], 'page', $page);
     }
 
+    public function updateGeneralData(Journey $journey, array $data): Journey
+    {
+        $journey->fill([
+            'FK_SUBCRITERIOS_INGLES' => $data['english_level_id'],
+            'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'],
+            'FK_ATUACAO_PERFIL' => $data['profile_experience_id'],
+        ]);
+        $journey->save();
+
+        return $journey->load([
+            'professionalExperience',
+            'profileExperience',
+            'englishSubcriterion',
+        ]);
+    }
+
     public function hasOngoingJourney(int $userId): bool
     {
         return Journey::query()
@@ -112,6 +189,11 @@ class JourneyRepository implements JourneyRepositoryInterface
     public function attachCourses(Journey $journey, array $courseIds): void
     {
         $journey->higherEducationCourses()->syncWithoutDetaching($courseIds);
+    }
+
+    public function syncCourses(Journey $journey, array $courseIds): void
+    {
+        $journey->higherEducationCourses()->sync($courseIds);
     }
 
     public function attachCertifications(Journey $journey, array $certificationIds): void

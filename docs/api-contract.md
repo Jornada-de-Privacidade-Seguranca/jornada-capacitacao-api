@@ -338,13 +338,17 @@ Ao implementar ou alterar endpoints, o agente deve obrigatoriamente:
 11. Manter campos em `snake_case`.
 12. Manter datas no formato definido.
 13. Atualizar ou criar testes quando a alteração afetar o contrato de resposta.
-14. Não criar novo formato de resposta sem autorização explícita.
+14. Quando for tecnicamente possível e seguro, executar testes manuais chamando os endpoints criados ou alterados pela rota HTTP real da aplicação.
+15. Verificar individualmente todos os endpoints criados ou alterados na tarefa antes de considerá-la concluída.
+16. Não criar novo formato de resposta sem autorização explícita.
 
 ---
 
 ## 12. Critério de aceite
 
 Uma tarefa só pode ser considerada concluída quando todos os endpoints criados ou alterados seguirem este contrato.
+
+Quando a tarefa criar ou alterar endpoints, o agente deve, sempre que for tecnicamente possível e seguro, complementar os testes automatizados com testes manuais pela rota HTTP real da aplicação e registrar a verificação de cada endpoint criado ou alterado.
 
 Se o agente encontrar endpoints antigos fora do padrão, ele não deve alterar tudo automaticamente sem solicitação explícita.
 
@@ -367,6 +371,8 @@ Antes de finalizar qualquer implementação, o agente deve revisar o diff e conf
 - [ ] Campos retornados usam `snake_case`.
 - [ ] Datas seguem o formato definido.
 - [ ] Testes foram atualizados ou criados quando necessário.
+- [ ] Testes manuais foram executados para todos os endpoints criados ou alterados, quando possível e seguro.
+- [ ] Quando algum teste manual não pôde ser executado, o motivo foi registrado.
 
 Caso qualquer item não seja atendido, a tarefa não deve ser considerada finalizada.
 

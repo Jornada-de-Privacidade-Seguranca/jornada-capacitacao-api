@@ -20,4 +20,9 @@ abstract class TestCase extends BaseTestCase
     {
         return $this->withCsrfToken()->postJson($uri, $data, $headers, $options);
     }
+
+    protected function putJsonWithCsrf($uri, array $data = [], array $headers = [], int $options = 0): TestResponse
+    {
+        return $this->withCsrfToken()->putJson($uri, $data, $headers, $options);
+    }
 }

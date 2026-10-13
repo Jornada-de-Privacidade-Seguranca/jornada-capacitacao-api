@@ -11,6 +11,7 @@
 - Registrar bindings de repositories em `app/Providers/RepositoryServiceProvider.php`.
 - Manter `docs/openapi.yaml` atualizado quando endpoints publicos forem criados ou alterados.
 - Apos realizar qualquer tarefa que crie ou altere uma funcionalidade, criar ou atualizar testes automatizados para cobrir a feature afetada seguindo as regras de `Tests.MD`.
+- Ao concluir tarefa que crie ou altere endpoints, quando for tecnicamente possivel e seguro, alem dos testes automatizados, executar testes manuais chamando os endpoints afetados pela rota HTTP real da aplicacao e verificar individualmente todos os endpoints criados ou alterados na tarefa, conforme `Tests.MD`.
 - Nao commitar `.env`.
 - Nao alterar banco de producao.
 - Nao executar comandos destrutivos.
@@ -21,6 +22,20 @@
 - Nao remover arquivos do frontend sem autorizacao.
 - Nao modificar a arquitetura do frontend; integrar via API somente quando necessario.
 - Antes de alterar qualquer endpoint, leia docs/api-contract.md. Todo código de API deve seguir obrigatoriamente o contrato descrito nesse documento.
+
+## Agent skills
+
+### Issue tracker
+
+Issues e specs ficam no GitHub Issues; use o `gh` CLI. Veja `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human` e `wontfix`. Veja `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Layout single-context, com `GLOSSARY.md` na raiz e ADRs em `docs/adr/`. Veja `docs/agents/domain.md`.
 
 ## Segurança de autenticação por cookie e CSRF
 
@@ -33,4 +48,3 @@ Quando a aplicação utilizar autenticação baseada em sessão/cookie:
 * Caso uma nova rota mutável autenticada por cookie seja necessária e a proteção CSRF ainda não esteja configurada, apresentar o problema e a solução proposta antes de implementar a rota.
 * Não remover ou desabilitar proteção CSRF apenas para fazer uma rota funcionar.
 * Caso o modelo de autenticação seja alterado de cookie/session para Bearer Token, reavaliar esta regra conforme o novo modelo de autenticação.
-
