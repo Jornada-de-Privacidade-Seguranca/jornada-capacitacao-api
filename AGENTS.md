@@ -26,7 +26,11 @@
 
 ### Issue tracker
 
-Issues e specs ficam no GitHub Issues; use o `gh` CLI. Veja `docs/agents/issue-tracker.md`.
+Taiga é a referência externa; specs e tickets locais ficam em `.scratch/`. Não criar issues no GitHub. Veja `docs/agents/issue-tracker.md`.
+
+### Git workflow
+
+Trabalhar em branch de tarefa. Push é permitido em branches de tarefa, mas nunca em `main`, `master` ou `develop`. Veja `docs/agents/git-workflow.md`.
 
 ### Triage labels
 
