@@ -20,6 +20,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -34,6 +35,7 @@ class JourneyService
         private readonly SubcriterionRepositoryInterface $subcriterionRepository,
         private readonly UserRepositoryInterface $userRepository,
         private readonly JourneyProfileRepositoryInterface $journeyProfileRepository,
+        private readonly JourneyCalculationService $journeyCalculationService,
     ) {}
 
     public function listForUser(Usuario $authenticatedUser, int $userId, array $filters): LengthAwarePaginator
@@ -92,48 +94,56 @@ class JourneyService
 
     public function updateAnswers(Usuario $authenticatedUser, int $journeyId, array $data): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $data): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
-        $this->journeyRepository->update($journey, [
-            'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'] ?? $journey->FK_EXPERIENCIA_PROFISSIONAL,
-            'FK_ATUACAO_PERFIL' => $data['profile_experience_id'] ?? $journey->FK_ATUACAO_PERFIL,
-            'FK_SUBCRITERIOS_INGLES' => $data['english_proficiency_id'] ?? $journey->FK_SUBCRITERIOS_INGLES,
-        ]);
+            $this->journeyRepository->update($journey, [
+                'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'] ?? $journey->FK_EXPERIENCIA_PROFISSIONAL,
+                'FK_ATUACAO_PERFIL' => $data['profile_experience_id'] ?? $journey->FK_ATUACAO_PERFIL,
+                'FK_SUBCRITERIOS_INGLES' => $data['english_proficiency_id'] ?? $journey->FK_SUBCRITERIOS_INGLES,
+            ]);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function attachCourses(Usuario $authenticatedUser, int $journeyId, array $courseIds): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $courseIds): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
-        $this->journeyRepository->attachCourses($journey, $courseIds);
+            $this->journeyRepository->attachCourses($journey, $courseIds);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function attachCertifications(Usuario $authenticatedUser, int $journeyId, array $certificationIds): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $certificationIds): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
-        $this->journeyRepository->attachCertifications($journey, $certificationIds);
+            $this->journeyRepository->attachCertifications($journey, $certificationIds);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function recordCompetencies(Usuario $authenticatedUser, int $journeyId, array $competencies): Journey
     {
-        $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
+        return DB::transaction(function () use ($authenticatedUser, $journeyId, $competencies): Journey {
+            $journey = $this->resolveJourneyForManagement($authenticatedUser, $journeyId);
 
-        $competencyIds = array_column($competencies, 'competency_id');
+            $competencyIds = array_column($competencies, 'competency_id');
 
-        if (! $this->journeyRepository->competencyIdsBelongToProfile((int) $journey->FK_PERFIS_JORNADA, $competencyIds)) {
-            throw new CompetencyNotInJourneyProfileException;
-        }
+            if (! $this->journeyRepository->competencyIdsBelongToProfile((int) $journey->FK_PERFIS_JORNADA, $competencyIds)) {
+                throw new CompetencyNotInJourneyProfileException;
+            }
 
-        $this->journeyRepository->upsertAcquiredKnowledges($journey, $competencies);
+            $this->journeyRepository->upsertAcquiredKnowledges($journey, $competencies);
 
-        return $this->journeyRepository->findDetailedById($journeyId);
+            return $this->journeyRepository->findDetailedById($journeyId);
+        });
     }
 
     public function findForAuthenticatedUser(Usuario $authenticatedUser, int $journeyId): Journey
@@ -151,6 +161,42 @@ class JourneyService
         $this->ensureCompletedJourneyHasRequiredData($journey);
 
         return $journey;
+    }
+
+    public function finalizeCurrent(Usuario $authenticatedUser): Journey
+    {
+        return DB::transaction(function () use ($authenticatedUser): Journey {
+            $journey = $this->journeyRepository->findLatestByUserForUpdate(
+                (int) $authenticatedUser->PK_USUARIO,
+            );
+
+            if ($journey === null) {
+                throw new ModelNotFoundException;
+            }
+
+            if ($journey->DH_FIM !== null) {
+                throw new JourneyAlreadyFinishedException;
+            }
+
+            $missingFields = $this->missingRequiredFields($journey);
+
+            if ($missingFields !== []) {
+                throw new IncompleteJourneyException($missingFields);
+            }
+
+            try {
+                $totalScore = $this->journeyCalculationService->calculateForJourney($journey);
+            } catch (InvalidArgumentException) {
+                throw new IncompleteJourneyException(['answers.profile_experience']);
+            }
+
+            $this->journeyRepository->update($journey, [
+                'NU_PONTUACAO_TOTAL' => (int) round($totalScore),
+                'DH_FIM' => now(),
+            ]);
+
+            return $journey->refresh();
+        });
     }
 
     public function getCurrentGeneralDataOptions(Usuario $authenticatedUser): array
@@ -216,9 +262,11 @@ class JourneyService
         return (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
     }
 
-    private function resolveJourneyForManagement(Usuario $authenticatedUser, int $journeyId): Journey
-    {
-        $journey = $this->journeyRepository->findDetailedById($journeyId);
+    private function resolveJourneyForManagement(
+        Usuario $authenticatedUser,
+        int $journeyId,
+    ): Journey {
+        $journey = $this->journeyRepository->findDetailedByIdForUpdate($journeyId);
 
         if ($journey === null) {
             throw new ModelNotFoundException;
@@ -241,6 +289,18 @@ class JourneyService
             return;
         }
 
+        $missingFields = $this->missingRequiredFields($journey);
+
+        if ($missingFields !== []) {
+            throw new IncompleteJourneyException($missingFields);
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function missingRequiredFields(Journey $journey): array
+    {
         $missingFields = [];
 
         foreach ($this->requiredCompletedJourneyRelations() as $relation => $field) {
@@ -249,21 +309,37 @@ class JourneyService
             }
         }
 
-        if ($journey->higherEducationCourses->isEmpty()) {
-            $missingFields[] = 'answers.higher_education_courses';
-        }
-
         if ($journey->journeyProfile !== null && $journey->journeyProfile->knowledgeDomain === null) {
             $missingFields[] = 'journey_profile.knowledge_domain';
         }
 
-        if ($journey->acquiredKnowledges->contains(fn ($acquiredKnowledge): bool => $acquiredKnowledge->competency === null)) {
+        $hasBrokenCompetency = $journey->acquiredKnowledges
+            ->contains(fn ($knowledge): bool => $knowledge->competency === null);
+
+        if ($hasBrokenCompetency) {
             $missingFields[] = 'acquired_knowledges.competency';
         }
 
-        if ($missingFields !== []) {
-            throw new IncompleteJourneyException($missingFields);
+        if ($journey->journeyProfile !== null && ! $hasBrokenCompetency) {
+            $expectedIds = $journey->journeyProfile->competencies
+                ->pluck('PK_COMPETENCIAS')
+                ->map(fn ($id): int => (int) $id)
+                ->sort()
+                ->values();
+            $answeredIds = $journey->acquiredKnowledges
+                ->pluck('FK_COMPETENCIAS')
+                ->filter(fn ($id): bool => $id !== null)
+                ->map(fn ($id): int => (int) $id)
+                ->unique()
+                ->sort()
+                ->values();
+
+            if ($expectedIds->isEmpty() || $expectedIds->all() !== $answeredIds->all()) {
+                $missingFields[] = 'answers.competencies';
+            }
         }
+
+        return array_values(array_unique($missingFields));
     }
 
     /**

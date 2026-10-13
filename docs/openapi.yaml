@@ -1329,6 +1329,101 @@ paths:
                     errors: []
                     code: JOURNEY_COMPETENCIES_UPDATE_FAILED
 
+  /journeys/current/finalize:
+    post:
+      tags:
+        - Journeys
+      summary: Finaliza a jornada atual do usuario autenticado
+      description: >-
+        Valida os dados gerais e as respostas de todas as competencias do perfil,
+        calcula a pontuacao consolidada, persiste o resultado em
+        TB_JORNADA.NU_PONTUACAO_TOTAL e registra a finalizacao em DH_FIM. Cursos e
+        certificacoes sao opcionais e contribuem com zero quando ausentes. A
+        pontuacao e interna e nao e retornada por este endpoint. Uma nova chamada
+        quando a jornada mais recente ja esta finalizada retorna conflito.
+      operationId: finalizeCurrentJourney
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Jornada finalizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyFinalizationResponse"
+              examples:
+                finalized:
+                  value:
+                    success: true
+                    message: Jornada finalizada com sucesso.
+                    data:
+                      journey_id: 10
+                      status: completed
+                      finished_at: "2026-09-28 14:30:00"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Usuario nao possui jornada atual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada atual nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada mais recente ja foi finalizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                alreadyFinished:
+                  value:
+                    success: false
+                    message: Esta jornada ja foi finalizada.
+                    errors: []
+                    code: JOURNEY_ALREADY_FINISHED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Jornada possui etapas obrigatorias pendentes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                incompleteJourney:
+                  value:
+                    success: false
+                    message: Existem etapas obrigatorias pendentes.
+                    errors:
+                      fields:
+                        - answers.professional_experience
+                        - answers.profile_experience
+                        - answers.english_proficiency
+                        - answers.competencies
+                    code: INCOMPLETE_JOURNEY
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel finalizar a jornada no momento.
+                    errors: []
+                    code: JOURNEY_FINALIZATION_FAILED
+
   /journeys/{journey}:
     get:
       tags:
@@ -2928,6 +3023,39 @@ components:
             - string
             - "null"
           example: Aluno
+    JourneyFinalizationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornada finalizada com sucesso.
+        data:
+          type: object
+          required:
+            - journey_id
+            - status
+            - finished_at
+          properties:
+            journey_id:
+              type: integer
+              example: 10
+            status:
+              type: string
+              enum:
+                - completed
+              example: completed
+            finished_at:
+              type: string
+              description: Instante em que a pontuacao foi calculada e a jornada foi finalizada.
+              example: "2026-09-28 14:30:00"
+
     CurrentJourneyGeneralDataOptionsResponse:
       type: object
       required:

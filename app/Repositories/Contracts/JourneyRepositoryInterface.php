@@ -15,6 +15,8 @@ interface JourneyRepositoryInterface
 
     public function findDetailedById(int $journeyId): ?Journey;
 
+    public function findDetailedByIdForUpdate(int $journeyId): ?Journey;
+
     public function findCurrentByUserId(int $userId): ?Journey;
 
     public function updateGeneralData(Journey $journey, array $data): Journey;
@@ -30,6 +32,8 @@ interface JourneyRepositoryInterface
     public function upsertAcquiredKnowledges(Journey $journey, array $competencies): void;
 
     public function findOngoingByUser(int $userId): ?Journey;
+
+    public function findLatestByUserForUpdate(int $userId): ?Journey;
 
     public function findOngoingByUserForUpdate(int $userId): ?Journey;
 

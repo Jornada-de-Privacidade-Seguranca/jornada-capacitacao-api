@@ -9,5 +9,7 @@ interface CompetencyCriterionWeightRepositoryInterface
 {
     public function all(): Collection;
 
+    public function findByJourneyProfileId(int $journeyProfileId): Collection;
+
     public function findOrFail(int $id): CompetencyCriterionWeight;
 }
