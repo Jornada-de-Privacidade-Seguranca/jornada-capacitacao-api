@@ -23,6 +23,7 @@ class JourneyDetailResource extends JsonResource
             'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
             'status' => $isCompleted ? 'completed' : 'ongoing',
             'is_completed' => $isCompleted,
+            'score' => $this->NU_PONTUACAO_TOTAL,
             'answers' => [
                 'professional_experience' => $this->professionalExperience(),
                 'profile_experience' => $this->profileExperience(),

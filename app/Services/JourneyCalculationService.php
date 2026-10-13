@@ -25,7 +25,10 @@ class JourneyCalculationService
         'more than 10 years' => 50.0,
     ];
 
-    private const NONE_EXPERIENCE_LABELS = ['nenhum', 'none'];
+    private const NONE_EXPERIENCE_LABELS = [
+        'nenhum',
+        'none',
+    ];
 
     private const COMPETENCY_LEVEL_WEIGHTS = [
         'iniciante' => 1.0,
@@ -60,17 +63,43 @@ class JourneyCalculationService
 
     public function calculateProfessionalExperienceScore(ProfessionalExperience|string|null $experience): float
     {
-        return $this->calculateExperienceScore($experience, true);
+        return $this->calculateExperienceScoreAllowingNone($experience);
     }
 
     public function calculateProfileExperienceScore(ProfessionalExperience|string|null $experience): float
     {
-        return $this->calculateExperienceScore($experience, false);
+        return $this->calculateExperienceScoreRejectingNone($experience);
     }
 
     public function calculateEnglishProficiencyScore(?Subcriterion $subcriterion): float
     {
         return (float) ($subcriterion?->NU_PESO_SUBCRITERIO ?? 0);
+    }
+
+    private function calculateExperienceScoreAllowingNone(ProfessionalExperience|string|null $experience): float
+    {
+        if ($experience === null) {
+            return 0.0;
+        }
+
+        if ($this->hasNoneExperienceLabel($experience)) {
+            return 0.0;
+        }
+
+        return $this->experienceScore($experience);
+    }
+
+    private function calculateExperienceScoreRejectingNone(ProfessionalExperience|string|null $experience): float
+    {
+        if ($experience === null) {
+            return 0.0;
+        }
+
+        if ($this->hasNoneExperienceLabel($experience)) {
+            throw new InvalidArgumentException('Experiencia "Nenhum" nao permitida para este calculo.');
+        }
+
+        return $this->experienceScore($experience);
     }
 
     public function calculateCourseScore(iterable $courses): float
@@ -86,16 +115,20 @@ class JourneyCalculationService
                 $key = $subcriterion->PK_SUBCRITERIOS
                     ?? $this->normalizeLabel($subcriterion->NO_SUBCRITERIO_PT ?? $subcriterion->NO_SUBCRITERIO_EN ?? null);
 
-                return $key === ''
-                    ? []
-                    : [(string) $key => (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0)];
+                if ($key === '') {
+                    return [];
+                }
+
+                return [(string) $key => (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0)];
             })
             ->sum();
     }
 
     public function calculateCertificationScore(iterable|int $certifications): float
     {
-        $quantity = is_int($certifications) ? $certifications : collect($certifications)->count();
+        $quantity = is_int($certifications)
+            ? $certifications
+            : collect($certifications)->count();
 
         return min(max($quantity, 0) * 100.0 / 5.0, 100.0);
     }
@@ -105,61 +138,71 @@ class JourneyCalculationService
         $weightsByArea = $this->areaWeightsByAreaId($areaWeights);
 
         return collect($acquiredKnowledges)
-            ->filter(fn ($knowledge): bool => (int) $knowledge->TP_ADQUIRIDO === 1)
-            ->sum(function ($knowledge) use ($weightsByArea): float {
-                $competency = $knowledge->competency ?? null;
+            ->filter(fn ($acquiredKnowledge): bool => (int) $acquiredKnowledge->TP_ADQUIRIDO === 1)
+            ->sum(function ($acquiredKnowledge) use ($weightsByArea): float {
+                $competency = $acquiredKnowledge->competency ?? null;
 
                 if ($competency === null || $competency->FK_AREA_CONHECIMENTO === null) {
                     return 0.0;
                 }
 
                 $areaWeight = $weightsByArea->get((int) $competency->FK_AREA_CONHECIMENTO, 0.0);
+                $levelWeight = $this->competencyLevelWeight($competency->difficulty ?? null);
 
-                return $areaWeight * ($this->competencyLevelWeight($competency->difficulty ?? null) / 5.0);
+                return $areaWeight * ($levelWeight / 5.0);
             });
     }
 
-    private function calculateExperienceScore(ProfessionalExperience|string|null $experience, bool $allowNone): float
+    private function areaWeightsByAreaId(iterable $areaWeights): Collection
     {
-        if ($experience === null) {
+        return collect($areaWeights)
+            ->filter(fn ($areaWeight): bool => $areaWeight->FK_AREA_CONHECIMENTO !== null)
+            ->groupBy(fn ($areaWeight): int => (int) $areaWeight->FK_AREA_CONHECIMENTO)
+            ->map(fn (Collection $weights): float => $weights->sum(
+                fn ($weight): float => (float) ($weight->NU_PESO_CRIT_COMPETENCIA ?? 0),
+            ));
+    }
+
+    private function competencyLevelWeight(mixed $difficulty): float
+    {
+        if ($difficulty === null) {
             return 0.0;
         }
 
-        foreach ($this->experienceLabels($experience) as $label) {
-            $normalized = $this->normalizeLabel($label);
+        $labels = [
+            $difficulty->NO_DIFICULDADE_PT ?? null,
+            $difficulty->NO_DIFICULDADE_EN ?? null,
+        ];
 
-            if (in_array($normalized, self::NONE_EXPERIENCE_LABELS, true)) {
-                if ($allowNone) {
-                    return 0.0;
-                }
+        foreach ($labels as $label) {
+            $normalizedLabel = $this->normalizeLabel($label);
 
-                throw new InvalidArgumentException('Experiencia "Nenhum" nao permitida para atuacao no perfil.');
-            }
-
-            if (array_key_exists($normalized, self::EXPERIENCE_SCORES)) {
-                return self::EXPERIENCE_SCORES[$normalized];
+            if (array_key_exists($normalizedLabel, self::COMPETENCY_LEVEL_WEIGHTS)) {
+                return self::COMPETENCY_LEVEL_WEIGHTS[$normalizedLabel];
             }
         }
 
         return 0.0;
     }
 
-    private function areaWeightsByAreaId(iterable $areaWeights): Collection
+    private function hasNoneExperienceLabel(ProfessionalExperience|string $experience): bool
     {
-        return collect($areaWeights)
-            ->filter(fn ($weight): bool => $weight->FK_AREA_CONHECIMENTO !== null)
-            ->mapWithKeys(fn ($weight): array => [
-                (int) $weight->FK_AREA_CONHECIMENTO => (float) ($weight->NU_PESO_CRIT_COMPETENCIA ?? 0),
-            ]);
+        foreach ($this->experienceLabels($experience) as $label) {
+            if (in_array($this->normalizeLabel($label), self::NONE_EXPERIENCE_LABELS, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private function competencyLevelWeight(mixed $difficulty): float
+    private function experienceScore(ProfessionalExperience|string $experience): float
     {
-        foreach ([$difficulty?->NO_DIFICULDADE_PT, $difficulty?->NO_DIFICULDADE_EN] as $label) {
-            $normalized = $this->normalizeLabel($label);
+        foreach ($this->experienceLabels($experience) as $label) {
+            $normalizedLabel = $this->normalizeLabel($label);
 
-            if (array_key_exists($normalized, self::COMPETENCY_LEVEL_WEIGHTS)) {
-                return self::COMPETENCY_LEVEL_WEIGHTS[$normalized];
+            if (array_key_exists($normalizedLabel, self::EXPERIENCE_SCORES)) {
+                return self::EXPERIENCE_SCORES[$normalizedLabel];
             }
         }
 

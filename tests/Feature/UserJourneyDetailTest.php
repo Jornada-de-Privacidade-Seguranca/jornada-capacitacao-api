@@ -46,6 +46,7 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.finished_at', null)
             ->assertJsonPath('data.status', 'ongoing')
             ->assertJsonPath('data.is_completed', false)
+            ->assertJsonPath('data.score', null)
             ->assertJsonPath('data.answers.professional_experience.description_pt', '1 a 3 anos')
             ->assertJsonPath('data.answers.profile_experience.description_pt', 'Mais de 5 anos')
             ->assertJsonPath('data.answers.english_proficiency.name_pt', 'Intermediario')
@@ -83,6 +84,26 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonCount(2, 'data.answers.higher_education_courses')
             ->assertJsonPath('data.answers.higher_education_courses.0.name_pt', 'Direito')
             ->assertJsonPath('data.answers.higher_education_courses.1.name_pt', 'Especializacao');
+    }
+
+    public function test_it_returns_stored_score_for_completed_journey_detail(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $journey = $this->completeJourneyFor(
+            user: $user,
+            startedAt: '2026-07-23 16:30:00',
+            finishedAt: '2026-07-23 17:30:00',
+            score: 126.329,
+        );
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonPath('data.id', $journey->PK_JORNADA)
+            ->assertJsonPath('data.status', 'completed')
+            ->assertJsonPath('data.score', 126.329);
+
+        $this->assertSame(126.329, $journey->fresh()->NU_PONTUACAO_TOTAL);
     }
 
     public function test_it_rejects_completed_journey_with_missing_required_data(): void
@@ -223,8 +244,12 @@ class UserJourneyDetailTest extends TestCase
         ]);
     }
 
-    private function completeJourneyFor(Usuario $user, string $startedAt, ?string $finishedAt = null): Journey
-    {
+    private function completeJourneyFor(
+        Usuario $user,
+        string $startedAt,
+        ?string $finishedAt = null,
+        ?float $score = null,
+    ): Journey {
         $domain = KnowledgeDomain::create([
             'NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade',
             'NO_DOMINIO_CONHECIMENTO_EN' => 'Privacy',
@@ -301,6 +326,7 @@ class UserJourneyDetailTest extends TestCase
             'FK_EXPERIENCIA_PROFISSIONAL' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
             'FK_ATUACAO_PERFIL' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
             'FK_SUBCRITERIOS_INGLES' => $englishProficiency->PK_SUBCRITERIOS,
+            'NU_PONTUACAO_TOTAL' => $score,
             'DH_CRIADO_EM' => $startedAt,
             'DH_FIM' => $finishedAt,
         ]);

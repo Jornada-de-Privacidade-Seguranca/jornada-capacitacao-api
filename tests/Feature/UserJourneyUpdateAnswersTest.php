@@ -114,6 +114,29 @@ class UserJourneyUpdateAnswersTest extends TestCase
             ->assertJsonPath('errors.english_proficiency_id.0', 'A proficiencia em ingles informada nao existe.');
     }
 
+    public function test_it_rejects_none_as_profile_experience(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $journey = $this->journey($user, $profile, '2026-08-01 09:00:00');
+        $none = $this->professionalExperience('Nenhum');
+        $none->DS_EXPERIENCIA_ATUACAO_EN = 'None';
+        $none->save();
+
+        $this->actingAs($user)->withCsrfToken()
+            ->patchJson("/api/journeys/{$journey->PK_JORNADA}/answers", [
+                'profile_experience_id' => $none->PK_EXPERIENCIA_ATUACAO,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.profile_experience_id.0', 'A atuacao de perfil informada nao existe.');
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_ATUACAO_PERFIL' => null,
+        ]);
+    }
+
     public function test_it_rejects_invalid_data(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
