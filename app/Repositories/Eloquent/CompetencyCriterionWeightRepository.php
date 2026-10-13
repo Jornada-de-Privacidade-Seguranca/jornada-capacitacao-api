@@ -16,6 +16,15 @@ class CompetencyCriterionWeightRepository implements CompetencyCriterionWeightRe
             ->get();
     }
 
+    public function findByJourneyProfileId(int $journeyProfileId): Collection
+    {
+        return CompetencyCriterionWeight::query()
+            ->with(['journeyProfile', 'knowledgeArea'])
+            ->where('FK_PERFIS_JORNADA', $journeyProfileId)
+            ->orderBy('PK_PESO_CRIT_COMPETENCIA')
+            ->get();
+    }
+
     public function findOrFail(int $id): CompetencyCriterionWeight
     {
         return CompetencyCriterionWeight::query()

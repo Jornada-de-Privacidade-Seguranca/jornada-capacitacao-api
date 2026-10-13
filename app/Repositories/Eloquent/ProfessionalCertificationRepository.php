@@ -16,4 +16,15 @@ class ProfessionalCertificationRepository implements ProfessionalCertificationRe
             ->orderBy('PK_CERTIFICACAO_PROFISSIONAL')
             ->get();
     }
+
+    public function countExistingByIds(array $certificationIds): int
+    {
+        if ($certificationIds === []) {
+            return 0;
+        }
+
+        return ProfessionalCertification::query()
+            ->whereIn('PK_CERTIFICACAO_PROFISSIONAL', $certificationIds)
+            ->count();
+    }
 }

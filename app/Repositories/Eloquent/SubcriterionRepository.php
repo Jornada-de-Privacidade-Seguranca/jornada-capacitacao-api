@@ -16,6 +16,14 @@ class SubcriterionRepository implements SubcriterionRepositoryInterface
             ->get();
     }
 
+    public function allByCriterionId(int $criterionId): Collection
+    {
+        return Subcriterion::query()
+            ->where('FK_CRITERIOS', $criterionId)
+            ->orderBy('PK_SUBCRITERIOS')
+            ->get();
+    }
+
     public function findOrFail(int $id): Subcriterion
     {
         return Subcriterion::query()
