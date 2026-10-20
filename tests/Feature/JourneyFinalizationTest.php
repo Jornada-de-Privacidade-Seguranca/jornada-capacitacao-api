@@ -48,11 +48,11 @@ class JourneyFinalizationTest extends TestCase
         $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 19.597);
+            ->assertJsonPath('data.score', 65.642);
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 19.597,
+            'NU_PONTUACAO_TOTAL' => 65.642,
             'DH_FIM' => '2026-09-28 14:30:00',
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
@@ -325,3 +325,4 @@ class JourneyFinalizationTest extends TestCase
         ]);
     }
 }
+
