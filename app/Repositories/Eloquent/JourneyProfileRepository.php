@@ -8,10 +8,21 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class JourneyProfileRepository implements JourneyProfileRepositoryInterface
 {
-    public function all(int $page, int $perPage): LengthAwarePaginator
+    public function all(int $page, int $perPage, ?string $modality = null): LengthAwarePaginator
     {
+        $domainName = match ($modality) {
+            'Privacidade' => 'Privacidade',
+            'Segurança' => 'Segurança da Informação',
+            'Privacidade/Segurança' => 'Conjunta (Privacidade/Segurança)',
+            default => null,
+        };
+
         return JourneyProfile::query()
             ->whereNotNull('NO_PERFIS_PT')
+            ->when($domainName, fn ($query) => $query->whereHas(
+                'knowledgeDomain',
+                fn ($domainQuery) => $domainQuery->where('NO_DOMINIO_CONHECIMENTO_PT', $domainName),
+            ))
             ->orderBy('PK_PERFIS_JORNADA')
             ->paginate(perPage: $perPage, page: $page);
     }

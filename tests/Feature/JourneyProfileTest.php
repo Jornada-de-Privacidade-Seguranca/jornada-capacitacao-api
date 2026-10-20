@@ -74,6 +74,64 @@ class JourneyProfileTest extends TestCase
             ]);
     }
 
+    public function test_it_filters_journey_profiles_by_modality(): void
+    {
+        $user = $this->activeUser();
+        $privacy = $this->profileInDomain('Privacidade', 'Privacy profile');
+        $security = $this->profileInDomain('Segurança da Informação', 'Security profile');
+        $joint = $this->profileInDomain('Conjunta (Privacidade/Segurança)', 'Joint profile');
+
+        foreach ([
+            'Privacidade' => [$privacy, [$security, $joint]],
+            'Segurança' => [$security, [$privacy, $joint]],
+            'Privacidade/Segurança' => [$joint, [$privacy, $security]],
+        ] as $modality => [$expectedProfile, $excludedProfiles]) {
+            $response = $this->actingAs($user)
+                ->getJson('/api/journey-profiles?'.http_build_query(['modality' => $modality, 'per_page' => 100]))
+                ->assertOk()
+                ->assertJsonPath('success', true);
+
+            $profileIds = collect($response->json('data'))->pluck('id');
+            $this->assertContains($expectedProfile->PK_PERFIS_JORNADA, $profileIds);
+
+            foreach ($excludedProfiles as $excludedProfile) {
+                $this->assertNotContains($excludedProfile->PK_PERFIS_JORNADA, $profileIds);
+            }
+        }
+    }
+
+    public function test_it_preserves_pagination_when_filtering_by_modality(): void
+    {
+        $user = $this->activeUser();
+        $this->profileInDomain('Privacidade', 'First privacy profile');
+        $this->profileInDomain('Privacidade', 'Second privacy profile');
+        $this->profileInDomain('Segurança da Informação', 'Security profile');
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'modality' => 'Privacidade',
+                'page' => 2,
+                'per_page' => 1,
+            ]))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.pagination.current_page', 2)
+            ->assertJsonPath('meta.pagination.per_page', 1);
+    }
+
+    public function test_it_rejects_invalid_modality(): void
+    {
+        $user = $this->activeUser();
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?modality=Invalida')
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Validation error.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.modality.0', 'A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.');
+    }
+
     public function test_it_shows_a_journey_profile(): void
     {
         $user = $this->activeUser();
@@ -174,6 +232,19 @@ class JourneyProfileTest extends TestCase
             'NO_USUARIO' => 'Maria Silva',
             'DS_EMAIL' => fake()->unique()->safeEmail(),
             'ST_ATIVO' => 1,
+        ]);
+    }
+
+    private function profileInDomain(string $domainName, string $profileName): JourneyProfile
+    {
+        $domain = KnowledgeDomain::query()->firstOrCreate(
+            ['NO_DOMINIO_CONHECIMENTO_PT' => $domainName],
+            ['NO_DOMINIO_CONHECIMENTO_EN' => $domainName],
+        );
+
+        return JourneyProfile::factory()->create([
+            'FK_DOMINIO_CONHECIMENTO' => $domain->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => $profileName,
         ]);
     }
 }

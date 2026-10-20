@@ -20,6 +20,7 @@ class ListJourneyProfileRequest extends FormRequest
         return [
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'modality' => ['sometimes', 'string', 'in:Privacidade,Segurança,Privacidade/Segurança'],
         ];
     }
 
@@ -31,6 +32,7 @@ class ListJourneyProfileRequest extends FormRequest
             'per_page.integer' => 'A quantidade de registros por pagina deve ser um numero inteiro.',
             'per_page.min' => 'A quantidade de registros por pagina deve ser maior ou igual a 1.',
             'per_page.max' => 'A quantidade de registros por pagina nao pode ser maior que 100.',
+            'modality.in' => 'A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.',
         ];
     }
 
@@ -52,5 +54,10 @@ class ListJourneyProfileRequest extends FormRequest
     public function perPage(): int
     {
         return $this->integer('per_page', 10);
+    }
+
+    public function modality(): ?string
+    {
+        return $this->validated('modality');
     }
 }
