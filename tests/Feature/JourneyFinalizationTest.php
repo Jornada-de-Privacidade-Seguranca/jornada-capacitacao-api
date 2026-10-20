@@ -7,6 +7,7 @@ use App\Models\Competency;
 use App\Models\CompetencyCriterionWeight;
 use App\Models\Criterion;
 use App\Models\Difficulty;
+use App\Models\HigherEducationCourse;
 use App\Models\Journey;
 use App\Models\KnowledgeArea;
 use App\Models\ProfessionalExperience;
@@ -56,6 +57,41 @@ class JourneyFinalizationTest extends TestCase
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
         $this->assertDatabaseCount('RL_CERTIFICACAO_JORNADA', 0);
+    }
+
+    public function test_it_includes_the_weighted_contribution_of_one_selected_education_course(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture();
+        $journey->higherEducationCourses()->attach($this->educationCourse(8.829)->PK_CURSO_SUPERIOR);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 72,
+        ]);
+    }
+
+    public function test_it_sums_the_weighted_contributions_of_multiple_selected_education_types(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture();
+        $graduation = $this->educationCourse(8.829, 'Graduacao');
+        $postgraduate = $this->educationCourse(15.751, 'Pos-graduacao');
+        $journey->higherEducationCourses()->attach([
+            $graduation->PK_CURSO_SUPERIOR,
+            $postgraduate->PK_CURSO_SUPERIOR,
+        ]);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 75,
+        ]);
     }
 
     public function test_it_rejects_an_incomplete_journey_without_changing_it(): void
@@ -185,5 +221,24 @@ class JourneyFinalizationTest extends TestCase
         ]);
 
         return [$user, $journey];
+    }
+
+    private function educationCourse(float $subcriterionWeight, string $courseName = 'Curso Teste'): HigherEducationCourse
+    {
+        $criterion = Criterion::create([
+            'NO_CRITERIO_PT' => 'Formação Acadêmica',
+            'NO_CRITERIO_EN' => 'Education',
+            'NU_PESO_CRITERIO' => 14.7,
+        ]);
+        $subcriterion = Subcriterion::create([
+            'FK_CRITERIOS' => $criterion->PK_CRITERIOS,
+            'NO_SUBCRITERIO_PT' => $courseName,
+            'NU_PESO_SUBCRITERIO' => $subcriterionWeight,
+        ]);
+
+        return HigherEducationCourse::create([
+            'FK_SUBCRITERIOS' => $subcriterion->PK_SUBCRITERIOS,
+            'NO_CURSO_SUPERIOR_PT' => $courseName,
+        ]);
     }
 }

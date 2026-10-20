@@ -81,6 +81,31 @@ class JourneyCalculationServiceTest extends TestCase
         $this->assertSame(0.0, $service->calculateEnglishProficiencyScore(null));
     }
 
+    public function test_it_applies_the_configured_education_weight_to_selected_course_types(): void
+    {
+        $service = $this->service();
+        $criterion = new Criterion(['NU_PESO_CRITERIO' => 14.7]);
+        $graduation = $this->courseWithEducationWeight(8.829, 1, $criterion);
+        $postgraduate = $this->courseWithEducationWeight(15.751, 2, $criterion);
+
+        $this->assertSame(0.0, $service->calculateEducationCriterionScore([]));
+        $this->assertEqualsWithDelta(
+            1.297863,
+            $service->calculateEducationCriterionScore([$graduation]),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            3.61326,
+            $service->calculateEducationCriterionScore([$graduation, $postgraduate]),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            3.61326,
+            $service->calculateEducationCriterionScore([$graduation, $graduation, $postgraduate]),
+            0.0001,
+        );
+    }
+
     public function test_it_treats_a_missing_english_criterion_or_weight_as_zero(): void
     {
         Log::shouldReceive('warning')
@@ -183,8 +208,11 @@ class JourneyCalculationServiceTest extends TestCase
         ]);
         $service = $this->service(new Collection([$areaWeight]));
 
-        $graduation = new Subcriterion(['NU_PESO_SUBCRITERIO' => 8.829]);
-        $graduation->PK_SUBCRITERIOS = 1;
+        $graduation = $this->courseWithEducationWeight(
+            8.829,
+            1,
+            new Criterion(['NU_PESO_CRITERIO' => 14.7]),
+        )->subcriterion;
 
         $course = (new HigherEducationCourse)->setRelation('subcriterion', $graduation);
         $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Básico']);
@@ -213,7 +241,16 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(95.092425, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(112.347863, $service->calculateForJourney($journey), 0.0001);
+    }
+
+    private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
+    {
+        $subcriterion = new Subcriterion(['NU_PESO_SUBCRITERIO' => $weight]);
+        $subcriterion->PK_SUBCRITERIOS = $subcriterionId;
+        $subcriterion->setRelation('criterion', $criterion);
+
+        return (new HigherEducationCourse)->setRelation('subcriterion', $subcriterion);
     }
 
     private function service(?Collection $areaWeights = null): JourneyCalculationService
