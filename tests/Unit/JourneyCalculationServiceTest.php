@@ -199,6 +199,28 @@ class JourneyCalculationServiceTest extends TestCase
         $this->assertSame(100.0, $service->calculateCertificationScore(8));
     }
 
+    public function test_it_applies_the_certification_criterion_weight_after_limiting_the_count(): void
+    {
+        $service = $this->service();
+
+        $this->assertSame(0.0, $service->calculateProfessionalCertificationCriterionScore(0));
+        $this->assertEqualsWithDelta(
+            2.144,
+            $service->calculateProfessionalCertificationCriterionScore(1),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            10.72,
+            $service->calculateProfessionalCertificationCriterionScore(5),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            10.72,
+            $service->calculateProfessionalCertificationCriterionScore(8),
+            0.0001,
+        );
+    }
+
     public function test_it_calculates_only_acquired_competencies_with_area_weights(): void
     {
         $service = $this->service();
@@ -303,7 +325,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(60.894788, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(65.182788, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse

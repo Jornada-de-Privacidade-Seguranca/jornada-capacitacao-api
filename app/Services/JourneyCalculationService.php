@@ -15,6 +15,8 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
+    private const PROFESSIONAL_CERTIFICATION_CRITERION_WEIGHT = 10.72;
+
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -63,7 +65,7 @@ class JourneyCalculationService
         )
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
             + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
-            + $this->calculateCertificationScore($journey->professionalCertifications)
+            + $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications)
             + $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights);
     }
 
@@ -193,6 +195,13 @@ class JourneyCalculationService
             : collect($certifications)->count();
 
         return min(max($quantity, 0) * 100.0 / 5.0, 100.0);
+    }
+
+    public function calculateProfessionalCertificationCriterionScore(iterable|int $certifications): float
+    {
+        return $this->calculateCertificationScore($certifications)
+            * self::PROFESSIONAL_CERTIFICATION_CRITERION_WEIGHT
+            / 100.0;
     }
 
     public function calculateCompetencyScore(iterable $acquiredKnowledges, iterable $areaWeights): float
