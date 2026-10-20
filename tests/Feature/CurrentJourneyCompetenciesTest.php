@@ -85,6 +85,73 @@ class CurrentJourneyCompetenciesTest extends TestCase
             ->assertJsonPath('data.1.difficulty', null);
     }
 
+    public function test_it_filters_current_journey_competency_options_by_modality(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $this->createJourney($user, $profile, finishedAt: null);
+
+        $privacyDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Privacy',
+        ]);
+        $securityDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Segurança da Informação',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Information Security',
+        ]);
+        $jointDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Conjunta (Privacidade/Segurança)',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Joint (Privacy/security)',
+        ]);
+
+        $privacyCompetency = $this->createCompetency([
+            'FK_DOMINIO_CONHECIMENTO' => $privacyDomain->PK_DOMINIO_CONHECIMENTO,
+        ]);
+        $securityCompetency = $this->createCompetency([
+            'FK_DOMINIO_CONHECIMENTO' => $securityDomain->PK_DOMINIO_CONHECIMENTO,
+        ]);
+        $jointCompetency = $this->createCompetency([
+            'FK_DOMINIO_CONHECIMENTO' => $jointDomain->PK_DOMINIO_CONHECIMENTO,
+        ]);
+
+        foreach ([$privacyCompetency, $securityCompetency, $jointCompetency] as $competency) {
+            $this->attachCompetencyToProfile($profile, $competency);
+        }
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options?modality=Privacidade')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $privacyCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.1.id', $jointCompetency->PK_COMPETENCIAS);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options?modality=Segurança')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $securityCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.1.id', $jointCompetency->PK_COMPETENCIAS);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options?modality=Privacidade%2FSegurança')
+            ->assertOk()
+            ->assertJsonCount(3, 'data');
+    }
+
+    public function test_it_rejects_an_unsupported_modality_filter(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $this->createJourney($user, $profile, finishedAt: null);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options?modality=education')
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonValidationErrors(['modality']);
+    }
+
     public function test_it_returns_empty_competencies_when_no_answers_are_saved(): void
     {
         $user = $this->activeUser();

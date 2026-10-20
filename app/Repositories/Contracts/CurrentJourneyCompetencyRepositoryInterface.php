@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface CurrentJourneyCompetencyRepositoryInterface
 {
-    public function optionsForProfile(int $journeyProfileId): Collection;
+    public function optionsForProfile(int $journeyProfileId, ?string $modality = null): Collection;
 
     public function acquiredForJourney(int $journeyId, int $journeyProfileId): Collection;
 

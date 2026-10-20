@@ -18,11 +18,14 @@ class CurrentJourneyCompetencyService
         private readonly CurrentJourneyCompetencyRepositoryInterface $currentJourneyCompetencyRepository,
     ) {}
 
-    public function listOptionsForAuthenticatedUser(Usuario $authenticatedUser): Collection
+    public function listOptionsForAuthenticatedUser(Usuario $authenticatedUser, ?string $modality = null): Collection
     {
         $journey = $this->ongoingJourneyFor($authenticatedUser);
 
-        return $this->currentJourneyCompetencyRepository->optionsForProfile((int) $journey->FK_PERFIS_JORNADA);
+        return $this->currentJourneyCompetencyRepository->optionsForProfile(
+            (int) $journey->FK_PERFIS_JORNADA,
+            $modality,
+        );
     }
 
     public function answersForAuthenticatedUser(Usuario $authenticatedUser): array

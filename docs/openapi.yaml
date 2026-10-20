@@ -1922,10 +1922,18 @@ paths:
       tags:
         - Journeys
       summary: Lista competencias disponiveis para a jornada em andamento
-      description: Retorna somente as competencias ligadas ao perfil da jornada atual do usuario autenticado.
+      description: Retorna somente as competencias ligadas ao perfil da jornada atual do usuario autenticado. O filtro modality aceita Privacidade, Segurança ou Privacidade/Segurança; as duas primeiras modalidades incluem tambem competencias do dominio conjunto.
       operationId: listCurrentJourneyCompetencyOptions
       security:
         - sessionAuth: []
+      parameters:
+        - name: modality
+          in: query
+          required: false
+          description: Filtra por modalidade. Valores suportados Privacidade, Segurança e Privacidade/Segurança.
+          schema:
+            type: string
+            enum: ["Privacidade", "Segurança", "Privacidade/Segurança"]
       responses:
         "200":
           description: Competencias disponiveis encontradas com sucesso
@@ -1967,6 +1975,12 @@ paths:
                 $ref: "#/components/schemas/StandardError"
         "404":
           description: Nao existe jornada em andamento para este usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Modalidade informada invalida
           content:
             application/json:
               schema:

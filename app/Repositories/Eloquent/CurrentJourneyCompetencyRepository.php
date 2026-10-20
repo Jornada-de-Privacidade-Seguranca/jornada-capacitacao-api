@@ -9,15 +9,28 @@ use Illuminate\Database\Eloquent\Collection;
 
 class CurrentJourneyCompetencyRepository implements CurrentJourneyCompetencyRepositoryInterface
 {
-    public function optionsForProfile(int $journeyProfileId): Collection
+    public function optionsForProfile(int $journeyProfileId, ?string $modality = null): Collection
     {
-        return Competency::query()
+        $query = Competency::query()
             ->with(['knowledgeDomain', 'knowledgeArea', 'difficulty'])
             ->whereHas('journeyProfiles', function ($query) use ($journeyProfileId): void {
                 $query->where('TB_PERFIS_JORNADA.PK_PERFIS_JORNADA', $journeyProfileId);
-            })
-            ->orderBy('PK_COMPETENCIAS')
-            ->get();
+            });
+
+        $domainNames = match ($modality) {
+            'Privacidade' => ['Privacidade', 'Privacy', 'Conjunta (Privacidade/Segurança)', 'Joint (Privacy/security)'],
+            'Segurança' => ['Segurança da Informação', 'Information Security', 'Conjunta (Privacidade/Segurança)', 'Joint (Privacy/security)'],
+            default => null,
+        };
+
+        if ($domainNames !== null) {
+            $query->whereHas('knowledgeDomain', function ($query) use ($domainNames): void {
+                $query->whereIn('NO_DOMINIO_CONHECIMENTO_PT', $domainNames)
+                    ->orWhereIn('NO_DOMINIO_CONHECIMENTO_EN', $domainNames);
+            });
+        }
+
+        return $query->orderBy('PK_COMPETENCIAS')->get();
     }
 
     public function acquiredForJourney(int $journeyId, int $journeyProfileId): Collection
