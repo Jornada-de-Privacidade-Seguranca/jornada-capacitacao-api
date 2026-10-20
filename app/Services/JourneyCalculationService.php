@@ -15,6 +15,8 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
+    private const COMPETENCY_CRITERION_WEIGHT = 45.92;
+
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -216,7 +218,7 @@ class JourneyCalculationService
     {
         $weightsByArea = $this->areaWeightsByAreaId($areaWeights);
 
-        return collect($acquiredKnowledges)
+        $score = collect($acquiredKnowledges)
             ->filter(fn ($acquiredKnowledge): bool => (int) $acquiredKnowledge->TP_ADQUIRIDO === 1)
             ->sum(function ($acquiredKnowledge) use ($weightsByArea): float {
                 $competency = $acquiredKnowledge->competency ?? null;
@@ -230,6 +232,8 @@ class JourneyCalculationService
 
                 return $areaWeight * ($levelWeight / 5.0);
             });
+
+        return $score * (self::COMPETENCY_CRITERION_WEIGHT / 100.0);
     }
 
     private function areaWeightsByAreaId(iterable $areaWeights): Collection

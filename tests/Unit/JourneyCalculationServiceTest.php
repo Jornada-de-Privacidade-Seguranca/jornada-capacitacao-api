@@ -273,13 +273,13 @@ class JourneyCalculationServiceTest extends TestCase
             ]),
         ];
 
-        $this->assertSame(65.0, $service->calculateCompetencyScore([
+        $this->assertEqualsWithDelta(29.848, $service->calculateCompetencyScore([
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $advancedCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $specialistCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $missingWeightCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 0]))->setRelation('competency', $advancedCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => null]))->setRelation('competency', $specialistCompetency),
-        ], $areaWeights));
+        ], $areaWeights), 0.0001);
     }
 
     public function test_it_sums_multiple_weights_for_the_same_knowledge_area(): void
@@ -289,7 +289,7 @@ class JourneyCalculationServiceTest extends TestCase
         $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
         $competency->setRelation('difficulty', $difficulty);
 
-        $this->assertSame(32.0, $service->calculateCompetencyScore([
+        $this->assertEqualsWithDelta(14.6944, $service->calculateCompetencyScore([
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ], [
             new CompetencyCriterionWeight([
@@ -300,7 +300,7 @@ class JourneyCalculationServiceTest extends TestCase
                 'FK_AREA_CONHECIMENTO' => 10,
                 'NU_PESO_CRIT_COMPETENCIA' => 15,
             ]),
-        ]));
+        ]), 0.0001);
     }
 
     public function test_it_calculates_journey_total_using_profile_area_weights_from_repository(): void
@@ -345,7 +345,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(25.182788, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(114.471, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
