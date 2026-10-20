@@ -73,7 +73,13 @@ class JourneyCalculationService
 
     public function calculateEnglishProficiencyScore(?Subcriterion $subcriterion): float
     {
-        return (float) ($subcriterion?->NU_PESO_SUBCRITERIO ?? 0);
+        if ($subcriterion === null) {
+            return 0.0;
+        }
+
+        $mainCriterionWeight = (float) ($subcriterion->criterion?->NU_PESO_CRITERIO ?? 0);
+
+        return (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0) * ($mainCriterionWeight / 100.0);
     }
 
     private function calculateExperienceScoreAllowingNone(ProfessionalExperience|string|null $experience): float
