@@ -14,6 +14,8 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
+    private const PROFESSIONAL_EXPERIENCE_CRITERION_WEIGHT = 23.81;
+
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -55,8 +57,10 @@ class JourneyCalculationService
             ? collect()
             : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
 
-        return $this->calculateProfessionalExperienceScore($journey->professionalExperience)
-            + $this->calculateProfileExperienceScore($journey->profileExperience)
+        return $this->calculateProfessionalExperienceCriterionScore(
+            $journey->professionalExperience,
+            $journey->profileExperience,
+        )
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
             + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
             + $this->calculateCertificationScore($journey->professionalCertifications)
@@ -71,6 +75,16 @@ class JourneyCalculationService
     public function calculateProfileExperienceScore(ProfessionalExperience|string|null $experience): float
     {
         return $this->calculateExperienceScoreRejectingNone($experience);
+    }
+
+    public function calculateProfessionalExperienceCriterionScore(
+        ProfessionalExperience|string|null $professionalExperience,
+        ProfessionalExperience|string|null $profileExperience,
+    ): float {
+        $criterionScore = $this->calculateProfessionalExperienceScore($professionalExperience)
+            + $this->calculateProfileExperienceScore($profileExperience);
+
+        return $criterionScore * self::PROFESSIONAL_EXPERIENCE_CRITERION_WEIGHT / 100.0;
     }
 
     public function calculateEnglishProficiencyScore(?Subcriterion $subcriterion): float

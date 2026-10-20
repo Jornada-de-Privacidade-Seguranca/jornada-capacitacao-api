@@ -43,6 +43,27 @@ class JourneyCalculationServiceTest extends TestCase
         $service->calculateProfileExperienceScore('Nenhum');
     }
 
+    public function test_it_applies_the_professional_experience_criterion_weight_to_both_experience_answers(): void
+    {
+        $service = $this->service();
+
+        $this->assertEqualsWithDelta(
+            2.381,
+            $service->calculateProfessionalExperienceCriterionScore('Nenhum', 'Menos de 1 ano'),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            23.81,
+            $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            6.945377,
+            $service->calculateProfessionalExperienceCriterionScore('Entre 1 e 3 anos', 'Entre 4 e 6 anos'),
+            0.0001,
+        );
+    }
+
     public function test_it_counts_one_course_per_subcriterion_without_affinity(): void
     {
         $service = $this->service();
@@ -261,7 +282,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(87.561288, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(60.894788, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
