@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\JourneyProfile;
 use App\Models\ProfileType;
 use App\Models\Usuario;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -18,6 +19,7 @@ class UserRegistrationTest extends TestCase
     public function test_it_registers_a_user_pending_admin_activation(): void
     {
         $profileType = ProfileType::query()->where('NO_TIPO_PERFIL', 'Usuário')->firstOrFail();
+        $journeyProfile = JourneyProfile::query()->firstOrFail();
 
         $response = $this->postJson('/api/auth/register', [
             'name' => ' Maria Silva ',
@@ -28,6 +30,7 @@ class UserRegistrationTest extends TestCase
             'department' => ' Privacidade ',
             'registration_number' => ' MAT-123 ',
             'profile_type_id' => $profileType->PK_TIPO_PERFIL,
+            'journey_profile_id' => $journeyProfile->PK_PERFIS_JORNADA,
         ]);
 
         $response
@@ -40,6 +43,7 @@ class UserRegistrationTest extends TestCase
             ->assertJsonPath('data.department', 'Privacidade')
             ->assertJsonPath('data.registration_number', 'MAT-123')
             ->assertJsonPath('data.profile_type_id', $profileType->PK_TIPO_PERFIL)
+            ->assertJsonPath('data.journey_profile_id', $journeyProfile->PK_PERFIS_JORNADA)
             ->assertJsonPath('data.active_status', 2)
             ->assertJsonPath('data.account_status', 'pending_activation')
             ->assertJsonMissingPath('data.password');
@@ -51,6 +55,7 @@ class UserRegistrationTest extends TestCase
             'NO_SETOR' => 'Privacidade',
             'NU_MATRICULA' => 'MAT-123',
             'FK_TIPO_PERFIL' => $profileType->PK_TIPO_PERFIL,
+            'FK_PERFIL_JORNADA' => $journeyProfile->PK_PERFIS_JORNADA,
             'ST_ATIVO' => 2,
         ]);
 
@@ -112,6 +117,21 @@ class UserRegistrationTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonPath('errors.profile_type_id.0', 'Informe um tipo de perfil valido.');
+
+        $this->assertDatabaseMissing('TB_USUARIO', [
+            'DS_EMAIL' => 'maria.silva@example.com',
+        ]);
+    }
+
+    public function test_it_rejects_an_unknown_selected_journey_profile(): void
+    {
+        $this->postJson('/api/auth/register', $this->validPayload([
+            'journey_profile_id' => 999999,
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.journey_profile_id.0', 'Informe um perfil de jornada valido.');
 
         $this->assertDatabaseMissing('TB_USUARIO', [
             'DS_EMAIL' => 'maria.silva@example.com',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\IncompleteJourneyException;
 use App\Exceptions\JourneyProfileNotFoundException;
+use App\Exceptions\JourneyProfileSelectionException;
 use App\Exceptions\OngoingJourneyExistsException;
 use App\Http\Requests\ListUserJourneysRequest;
 use App\Http\Requests\ShowJourneyRequest;
@@ -82,6 +83,18 @@ class UserJourneyController
                 message: 'Perfil de jornada nao encontrado.',
                 status: Response::HTTP_NOT_FOUND,
                 code: 'JOURNEY_PROFILE_NOT_FOUND',
+            );
+        } catch (JourneyProfileSelectionException $exception) {
+            $isSelectionRequired = $exception->reason === JourneyProfileSelectionException::REQUIRED;
+            $message = $isSelectionRequired
+                ? 'Selecione seu perfil de jornada antes de iniciar a primeira jornada.'
+                : 'A primeira jornada deve usar o perfil de jornada selecionado.';
+
+            return ApiResponse::error(
+                message: $message,
+                status: Response::HTTP_UNPROCESSABLE_ENTITY,
+                code: $isSelectionRequired ? 'JOURNEY_PROFILE_SELECTION_REQUIRED' : 'JOURNEY_PROFILE_MISMATCH',
+                errors: ['journey_profile_id' => [$message]],
             );
         } catch (OngoingJourneyExistsException) {
             return ApiResponse::error(

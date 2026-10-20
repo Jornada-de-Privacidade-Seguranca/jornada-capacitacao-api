@@ -28,6 +28,8 @@ class AuthenticatedUserResource extends JsonResource
                 'user_type_id' => $this->FK_TIPO_USUARIO,
                 'profile_type_id' => $this->FK_TIPO_PERFIL,
                 'profile_type_name' => $this->profileType?->NO_TIPO_PERFIL,
+                'journey_profile_id' => $this->FK_PERFIL_JORNADA,
+                'journey_profile_name' => $this->selectedJourneyProfile?->NO_PERFIS_PT,
             ],
             'active_status' => $this->ST_ATIVO,
         ];

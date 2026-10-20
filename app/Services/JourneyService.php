@@ -6,6 +6,7 @@ use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\IncompleteJourneyException;
 use App\Exceptions\JourneyAlreadyFinishedException;
 use App\Exceptions\JourneyProfileNotFoundException;
+use App\Exceptions\JourneyProfileSelectionException;
 use App\Exceptions\NoOngoingJourneyException;
 use App\Exceptions\OngoingJourneyExistsException;
 use App\Models\Journey;
@@ -79,15 +80,51 @@ class JourneyService
         return DB::transaction(function () use ($requestedUser, $data) {
             $this->userRepository->lockForUpdate((int) $requestedUser->PK_USUARIO);
 
-            if ($this->journeyRepository->hasOngoingJourney((int) $requestedUser->PK_USUARIO)) {
+            $user = $this->userRepository->findById((int) $requestedUser->PK_USUARIO);
+            $journeyProfileId = (int) $data['journey_profile_id'];
+            $selectedJourneyProfileId = (int) ($user?->FK_PERFIL_JORNADA ?? 0);
+
+            if ($selectedJourneyProfileId === 0) {
+                throw new JourneyProfileSelectionException(JourneyProfileSelectionException::REQUIRED);
+            }
+
+            if (
+                ! $this->journeyRepository->hasJourneyForProfile((int) $requestedUser->PK_USUARIO, $selectedJourneyProfileId)
+                && $selectedJourneyProfileId !== $journeyProfileId
+            ) {
+                throw new JourneyProfileSelectionException(JourneyProfileSelectionException::MISMATCH);
+            }
+
+            if ($this->journeyRepository->hasOngoingJourneyForProfile((int) $requestedUser->PK_USUARIO, $journeyProfileId)) {
                 throw new OngoingJourneyExistsException;
             }
 
             return $this->journeyRepository->create([
                 'FK_USUARIO' => $requestedUser->PK_USUARIO,
-                'FK_PERFIS_JORNADA' => $data['journey_profile_id'],
+                'FK_PERFIS_JORNADA' => $journeyProfileId,
                 'DH_CRIADO_EM' => now(),
                 'DH_FIM' => null,
+            ]);
+        });
+    }
+
+    public function selectInitialJourneyProfile(Usuario $authenticatedUser, int $journeyProfileId): Usuario
+    {
+        $this->journeyProfileRepository->findOrFail($journeyProfileId);
+
+        return DB::transaction(function () use ($authenticatedUser, $journeyProfileId): Usuario {
+            $this->userRepository->lockForUpdate((int) $authenticatedUser->PK_USUARIO);
+            $user = $this->userRepository->findById((int) $authenticatedUser->PK_USUARIO);
+
+            if ($user?->FK_PERFIL_JORNADA !== null && $this->journeyRepository->hasJourneyForProfile(
+                (int) $authenticatedUser->PK_USUARIO,
+                (int) $user->FK_PERFIL_JORNADA,
+            )) {
+                throw new JourneyProfileSelectionException(JourneyProfileSelectionException::LOCKED);
+            }
+
+            return $this->userRepository->update($user ?? $authenticatedUser, [
+                'FK_PERFIL_JORNADA' => $journeyProfileId,
             ]);
         });
     }

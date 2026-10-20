@@ -21,6 +21,7 @@ class UserRegistrationResource extends JsonResource
             'department' => $this->NO_SETOR,
             'registration_number' => $this->NU_MATRICULA,
             'profile_type_id' => $this->FK_TIPO_PERFIL,
+            'journey_profile_id' => $this->FK_PERFIL_JORNADA,
             'active_status' => $this->ST_ATIVO,
             'account_status' => 'pending_activation',
             'created_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),

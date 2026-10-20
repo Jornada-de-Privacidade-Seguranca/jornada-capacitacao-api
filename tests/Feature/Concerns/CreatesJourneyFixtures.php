@@ -49,6 +49,17 @@ trait CreatesJourneyFixtures
         ]);
     }
 
+    private function selectJourneyProfile(Usuario $user, JourneyProfile $profile): void
+    {
+        $this->actingAs($user)->withCsrfToken()
+            ->putJson('/api/me/journey-profile', [
+                'journey_profile_id' => $profile->PK_PERFIS_JORNADA,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.journey_profile_id', $profile->PK_PERFIS_JORNADA);
+    }
+
     private function professionalExperience(string $description = 'Junior'): ProfessionalExperience
     {
         return ProfessionalExperience::create(['DS_EXPERIENCIA_ATUACAO_PT' => $description]);

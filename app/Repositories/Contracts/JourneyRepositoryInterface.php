@@ -11,6 +11,10 @@ interface JourneyRepositoryInterface
 
     public function hasOngoingJourney(int $userId): bool;
 
+    public function hasOngoingJourneyForProfile(int $userId, int $journeyProfileId): bool;
+
+    public function hasJourneyForProfile(int $userId, int $journeyProfileId): bool;
+
     public function create(array $data): Journey;
 
     public function findDetailedById(int $journeyId): ?Journey;
