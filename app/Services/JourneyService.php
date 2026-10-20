@@ -191,7 +191,7 @@ class JourneyService
             }
 
             $this->journeyRepository->update($journey, [
-                'NU_PONTUACAO_TOTAL' => (int) round($totalScore),
+                'NU_PONTUACAO_TOTAL' => $totalScore,
                 'DH_FIM' => now(),
             ]);
 

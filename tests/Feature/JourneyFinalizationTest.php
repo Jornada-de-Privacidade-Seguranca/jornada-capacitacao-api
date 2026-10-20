@@ -44,9 +44,14 @@ class JourneyFinalizationTest extends TestCase
             ->assertJsonPath('data.finished_at', '2026-09-28 14:30:00')
             ->assertJsonMissingPath('data.total_score');
 
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonPath('data.score', 71.05);
+
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 71,
+            'NU_PONTUACAO_TOTAL' => 71.05,
             'DH_FIM' => '2026-09-28 14:30:00',
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
