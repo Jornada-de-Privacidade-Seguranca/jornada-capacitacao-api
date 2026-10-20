@@ -64,6 +64,48 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.summary.professional_certifications_count', 1);
     }
 
+    public function test_it_groups_acquired_and_not_acquired_knowledges_by_domain(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00');
+        $profile = JourneyProfile::query()->findOrFail($journey->FK_PERFIS_JORNADA);
+        $privacyDomain = KnowledgeDomain::query()->findOrFail($profile->FK_DOMINIO_CONHECIMENTO);
+        $governanceDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Governanca',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Governance',
+        ]);
+        $difficulty = Difficulty::query()->firstOrFail();
+        $area = KnowledgeArea::query()->firstOrFail();
+
+        $notAcquiredCompetency = $this->competencyForDomain($privacyDomain, $area, $difficulty, 'Resposta negativa');
+        $unansweredCompetency = $this->competencyForDomain($governanceDomain, $area, $difficulty, 'Sem resposta');
+        $profile->competencies()->attach([$notAcquiredCompetency->PK_COMPETENCIAS, $unansweredCompetency->PK_COMPETENCIAS]);
+        AcquiredKnowledge::create([
+            'FK_JORNADA' => $journey->PK_JORNADA,
+            'FK_COMPETENCIAS' => $notAcquiredCompetency->PK_COMPETENCIAS,
+            'TP_ADQUIRIDO' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonCount(2, 'data.knowledges_by_domain')
+            ->assertJsonPath('data.knowledges_by_domain.0.knowledge_domain.name_pt', 'Privacidade')
+            ->assertJsonCount(1, 'data.knowledges_by_domain.0.acquired_knowledges')
+            ->assertJsonPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.name_pt', 'LGPD')
+            ->assertJsonPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.knowledge_area.name_pt', 'Governanca')
+            ->assertJsonPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.difficulty.name_pt', 'Basico')
+            ->assertJsonCount(1, 'data.knowledges_by_domain.0.not_acquired_knowledges')
+            ->assertJsonPath('data.knowledges_by_domain.0.not_acquired_knowledges.0.is_acquired', false)
+            ->assertJsonPath('data.knowledges_by_domain.0.not_acquired_knowledges.0.competency.name_pt', 'Resposta negativa')
+            ->assertJsonPath('data.knowledges_by_domain.1.knowledge_domain.name_pt', 'Governanca')
+            ->assertJsonCount(0, 'data.knowledges_by_domain.1.acquired_knowledges')
+            ->assertJsonPath('data.knowledges_by_domain.1.not_acquired_knowledges.0.type_acquired', null)
+            ->assertJsonPath('data.knowledges_by_domain.1.not_acquired_knowledges.0.competency.name_pt', 'Sem resposta')
+            ->assertJsonMissingPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.weight')
+            ->assertJsonMissingPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.weights');
+    }
+
     public function test_administrator_can_view_journey_from_any_user(): void
     {
         $admin = $this->activeUser('Admin Sistema', 1);
@@ -241,6 +283,21 @@ class UserJourneyDetailTest extends TestCase
             'NO_SETOR' => 'Capacitacao',
             'NU_MATRICULA' => '123',
             'ST_ATIVO' => 1,
+        ]);
+    }
+
+    private function competencyForDomain(
+        KnowledgeDomain $domain,
+        KnowledgeArea $area,
+        Difficulty $difficulty,
+        string $name,
+    ): Competency {
+        return Competency::create([
+            'FK_DOMINIO_CONHECIMENTO' => $domain->PK_DOMINIO_CONHECIMENTO,
+            'FK_AREA_CONHECIMENTO' => $area->PK_AREA_CONHECIMENTO,
+            'FK_DIFICULDADE' => $difficulty->PK_DIFICULDADE,
+            'NO_COMPETENCIAS_PT' => $name,
+            'NO_COMPETENCIAS_EN' => $name,
         ]);
     }
 

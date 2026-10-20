@@ -39,6 +39,7 @@ class JourneyDetailResource extends JsonResource
                 ])
                 ->values()
                 ->all(),
+            'knowledges_by_domain' => $this->knowledgesByDomain(),
             'professional_certifications' => $this->professionalCertifications
                 ->map(fn ($certification): array => [
                     'id' => $certification->PK_CERTIFICACAO_PROFISSIONAL,
@@ -87,6 +88,44 @@ class JourneyDetailResource extends JsonResource
                 ->values()
                 ->all() ?? [],
         ];
+    }
+
+    private function knowledgesByDomain(): array
+    {
+        $acquiredKnowledgesByCompetency = $this->acquiredKnowledges
+            ->keyBy('FK_COMPETENCIAS');
+
+        return $this->journeyProfile?->competencies
+            ?->groupBy(fn ($competency): string => (string) ($competency->FK_DOMINIO_CONHECIMENTO ?? 'null'))
+            ->map(function ($competencies) use ($acquiredKnowledgesByCompetency): array {
+                $domain = $competencies->first()?->knowledgeDomain;
+                $acquired = [];
+                $notAcquired = [];
+
+                foreach ($competencies as $competency) {
+                    $answer = $acquiredKnowledgesByCompetency->get($competency->PK_COMPETENCIAS);
+                    $item = [
+                        'id' => $answer?->PK_CONHECIMENTOS_ADQUIRIDOS,
+                        'type_acquired' => $answer?->TP_ADQUIRIDO,
+                        'is_acquired' => (int) $answer?->TP_ADQUIRIDO === 1,
+                        'competency' => $this->competency($competency),
+                    ];
+
+                    if ($item['is_acquired']) {
+                        $acquired[] = $item;
+                    } else {
+                        $notAcquired[] = $item;
+                    }
+                }
+
+                return [
+                    'knowledge_domain' => $this->knowledgeDomain($domain),
+                    'acquired_knowledges' => $acquired,
+                    'not_acquired_knowledges' => $notAcquired,
+                ];
+            })
+            ->values()
+            ->all() ?? [];
     }
 
     private function professionalExperience(): ?array
