@@ -42,7 +42,7 @@ class JourneyMutationConcurrencyTest extends TestCase
                     ->where('PK_JORNADA', $journey->PK_JORNADA)
                     ->update([
                         'DH_FIM' => '2026-08-01 10:00:00',
-                        'NU_PONTUACAO_TOTAL' => 71,
+                        'NU_PONTUACAO_TOTAL' => 71.05,
                     ]);
 
                 return $journey->fresh();
