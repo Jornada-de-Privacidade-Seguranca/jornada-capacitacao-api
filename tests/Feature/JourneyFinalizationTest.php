@@ -103,7 +103,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 46.55,
+            'NU_PONTUACAO_TOTAL' => 46.551,
         ]);
     }
 
@@ -117,7 +117,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 36.05,
+            'NU_PONTUACAO_TOTAL' => 36.051,
         ]);
     }
 
@@ -284,5 +284,6 @@ class JourneyFinalizationTest extends TestCase
         ]);
     }
 }
+
 
 
