@@ -221,6 +221,20 @@ class JourneyCalculationServiceTest extends TestCase
         );
     }
 
+    public function test_it_uses_the_configured_certification_criterion_weight(): void
+    {
+        $service = $this->service(certificationWeight: 12.5);
+
+        $this->assertSame(2.5, $service->calculateProfessionalCertificationCriterionScore(1));
+    }
+
+    public function test_it_returns_zero_when_the_certification_criterion_or_its_weight_is_missing(): void
+    {
+        $service = $this->service(certificationWeight: null);
+
+        $this->assertSame(0.0, $service->calculateProfessionalCertificationCriterionScore(5));
+    }
+
     public function test_it_calculates_only_acquired_competencies_with_area_weights(): void
     {
         $service = $this->service();
@@ -337,7 +351,11 @@ class JourneyCalculationServiceTest extends TestCase
         return (new HigherEducationCourse)->setRelation('subcriterion', $subcriterion);
     }
 
-    private function service(?Collection $areaWeights = null, ?float $criterionWeight = 23.81): JourneyCalculationService
+    private function service(
+        ?Collection $areaWeights = null,
+        ?float $criterionWeight = 23.81,
+        ?float $certificationWeight = 10.72,
+    ): JourneyCalculationService
     {
         $repository = new class($areaWeights ?? new Collection) implements CompetencyCriterionWeightRepositoryInterface
         {
@@ -361,9 +379,12 @@ class JourneyCalculationServiceTest extends TestCase
             }
         };
 
-        $criterionRepository = new class($criterionWeight) implements CriterionRepositoryInterface
+        $criterionRepository = new class($criterionWeight, $certificationWeight) implements CriterionRepositoryInterface
         {
-            public function __construct(private readonly ?float $weight) {}
+            public function __construct(
+                private readonly ?float $professionalExperienceWeight,
+                private readonly ?float $certificationWeight,
+            ) {}
 
             public function all(): Collection
             {
@@ -372,7 +393,7 @@ class JourneyCalculationServiceTest extends TestCase
 
             public function findOrFail(int $id): Criterion
             {
-                throw new \RuntimeException('Not implemented.');
+                throw new \LogicException('Not used by JourneyCalculationService tests.');
             }
 
             public function findEnglishCriterionId(): ?int
@@ -382,7 +403,11 @@ class JourneyCalculationServiceTest extends TestCase
 
             public function findWeightByName(string $name): ?float
             {
-                return $this->weight;
+                return match ($name) {
+                    Criterion::PROFESSIONAL_EXPERIENCE_NAME => $this->professionalExperienceWeight,
+                    Criterion::PROFESSIONAL_CERTIFICATION_NAME => $this->certificationWeight,
+                    default => null,
+                };
             }
         };
 

@@ -15,8 +15,6 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
-    private const PROFESSIONAL_CERTIFICATION_CRITERION_WEIGHT = 10.72;
-
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -199,8 +197,14 @@ class JourneyCalculationService
 
     public function calculateProfessionalCertificationCriterionScore(iterable|int $certifications): float
     {
+        $weight = $this->criterionRepository->findWeightByName(Criterion::PROFESSIONAL_CERTIFICATION_NAME);
+
+        if ($weight === null) {
+            return 0.0;
+        }
+
         return $this->calculateCertificationScore($certifications)
-            * self::PROFESSIONAL_CERTIFICATION_CRITERION_WEIGHT
+            * $weight
             / 100.0;
     }
 

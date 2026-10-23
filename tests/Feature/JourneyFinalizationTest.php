@@ -268,6 +268,11 @@ class JourneyFinalizationTest extends TestCase
             'NO_SUBCRITERIO_PT' => 'Intermediário - Leitura e Escrita',
             'NU_PESO_SUBCRITERIO' => 26.0505,
         ]);
+        Criterion::create([
+            'NO_CRITERIO_PT' => 'Certificação Profissional',
+            'NO_CRITERIO_EN' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            'NU_PESO_CRITERIO' => 10.72,
+        ]);
         $area = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Governanca']);
         $difficulty = Difficulty::create(['NO_DIFICULDADE_PT' => 'Basico']);
         $competency = Competency::create([
