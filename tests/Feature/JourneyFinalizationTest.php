@@ -187,4 +187,3 @@ class JourneyFinalizationTest extends TestCase
         return [$user, $journey];
     }
 }
-
