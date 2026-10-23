@@ -12,4 +12,6 @@ interface CriterionRepositoryInterface
     public function findOrFail(int $id): Criterion;
 
     public function findEnglishCriterionId(): ?int;
+
+    public function findWeightByName(string $name): ?float;
 }

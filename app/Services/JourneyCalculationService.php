@@ -7,6 +7,7 @@ use App\Models\Journey;
 use App\Models\ProfessionalExperience;
 use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
-    private const PROFESSIONAL_EXPERIENCE_CRITERION_WEIGHT = 23.81;
+    private const PROFESSIONAL_EXPERIENCE_CRITERION_NAME = 'Experiência Profissional';
 
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
@@ -49,6 +50,7 @@ class JourneyCalculationService
 
     public function __construct(
         private readonly CompetencyCriterionWeightRepositoryInterface $competencyCriterionWeightRepository,
+        private readonly CriterionRepositoryInterface $criterionRepository,
     ) {}
 
     public function calculateForJourney(Journey $journey): float
@@ -84,7 +86,9 @@ class JourneyCalculationService
         $criterionScore = $this->calculateProfessionalExperienceScore($professionalExperience)
             + $this->calculateProfileExperienceScore($profileExperience);
 
-        return $criterionScore * self::PROFESSIONAL_EXPERIENCE_CRITERION_WEIGHT / 100.0;
+        $criterionWeight = $this->criterionRepository->findWeightByName(self::PROFESSIONAL_EXPERIENCE_CRITERION_NAME) ?? 0.0;
+
+        return $criterionScore * $criterionWeight / 100.0;
     }
 
     public function calculateEnglishProficiencyScore(?Subcriterion $subcriterion): float
