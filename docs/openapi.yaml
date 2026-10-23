@@ -1361,6 +1361,10 @@ paths:
         peso principal de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 10,72%),
         com contribuicao maxima limitada ao peso total do criterio. Se o peso
         estiver ausente, a contribuicao sera zero. Uma nova chamada
+        pontuacao de Competencias aplica ao total adquirido o peso de
+        TB_CRITERIOS.NU_PESO_CRITERIO para o criterio Competencias (ou Competencies);
+        quando o criterio ou seu peso nao estiver cadastrado, a contribuicao e zero.
+        A pontuacao e interna e nao e retornada por este endpoint. Uma nova chamada
         quando a jornada mais recente ja esta finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:

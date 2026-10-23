@@ -15,8 +15,6 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
-    private const COMPETENCY_CRITERION_WEIGHT = 45.92;
-
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -66,7 +64,7 @@ class JourneyCalculationService
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
             + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
             + $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications)
-            + $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights);
+            + $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights);
     }
 
     public function calculateProfessionalExperienceScore(ProfessionalExperience|string|null $experience): float
@@ -218,7 +216,7 @@ class JourneyCalculationService
     {
         $weightsByArea = $this->areaWeightsByAreaId($areaWeights);
 
-        $score = collect($acquiredKnowledges)
+        return collect($acquiredKnowledges)
             ->filter(fn ($acquiredKnowledge): bool => (int) $acquiredKnowledge->TP_ADQUIRIDO === 1)
             ->sum(function ($acquiredKnowledge) use ($weightsByArea): float {
                 $competency = $acquiredKnowledge->competency ?? null;
@@ -232,8 +230,13 @@ class JourneyCalculationService
 
                 return $areaWeight * ($levelWeight / 5.0);
             });
+    }
 
-        return $score * (self::COMPETENCY_CRITERION_WEIGHT / 100.0);
+    public function calculateCompetencyCriterionScore(iterable $acquiredKnowledges, iterable $areaWeights): float
+    {
+        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::COMPETENCIES_NAME_EN) ?? 0.0;
+
+        return $this->calculateCompetencyScore($acquiredKnowledges, $areaWeights) * ($criterionWeight / 100.0);
     }
 
     private function areaWeightsByAreaId(iterable $areaWeights): Collection

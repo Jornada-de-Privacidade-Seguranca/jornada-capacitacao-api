@@ -234,8 +234,55 @@ class JourneyFinalizationTest extends TestCase
             ->assertJsonPath('code', 'CSRF_TOKEN_MISMATCH');
     }
 
-    private function completedAnswersFixture(?float $experienceWeight = 23.81, bool $createExperienceCriterion = true): array
+    public function test_it_applies_the_competency_weight_to_multiple_acquired_competencies(): void
     {
+        [$user, $journey] = $this->completedAnswersFixture(includeSecondCompetency: true);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 71.152,
+        ]);
+    }
+
+    public function test_it_uses_the_competency_criterion_weight_from_the_database(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture(competencyWeight: 50.0);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 66.05,
+        ]);
+    }
+
+    public function test_it_counts_a_missing_competency_criterion_weight_as_zero(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture(includeCompetencyCriterion: false);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 61.05,
+        ]);
+    }
+
+    private function completedAnswersFixture(
+        ?float $experienceWeight = 23.81,
+        bool $createExperienceCriterion = true,
+        float $competencyWeight = 45.92,
+        bool $includeCompetencyCriterion = true,
+        bool $includeSecondCompetency = false,
+    ): array {
         $user = $this->activeUser('Maria Silva', 2);
         $profile = $this->journeyProfile('Privacidade');
         $professionalExperience = ProfessionalExperience::create([
@@ -273,6 +320,20 @@ class JourneyFinalizationTest extends TestCase
             'NO_CRITERIO_EN' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
             'NU_PESO_CRITERIO' => 10.72,
         ]);
+        $competencyCriterion = Criterion::query()
+            ->where('NO_CRITERIO_PT', Criterion::COMPETENCIES_NAME_PT)
+            ->orWhere('NO_CRITERIO_EN', Criterion::COMPETENCIES_NAME_EN)
+            ->first();
+        if ($includeCompetencyCriterion) {
+            $competencyCriterion ??= new Criterion;
+            $competencyCriterion->fill([
+                'NO_CRITERIO_PT' => Criterion::COMPETENCIES_NAME_PT,
+                'NO_CRITERIO_EN' => Criterion::COMPETENCIES_NAME_EN,
+                'NU_PESO_CRITERIO' => $competencyWeight,
+            ])->save();
+        } elseif ($competencyCriterion !== null) {
+            $competencyCriterion->delete();
+        }
         $area = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Governanca']);
         $difficulty = Difficulty::create(['NO_DIFICULDADE_PT' => 'Basico']);
         $competency = Competency::create([
@@ -302,6 +363,30 @@ class JourneyFinalizationTest extends TestCase
             'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
             'TP_ADQUIRIDO' => 1,
         ]);
+
+        if ($includeSecondCompetency) {
+            $secondArea = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Risco']);
+            $advanced = Difficulty::create(['NO_DIFICULDADE_PT' => 'Avancado']);
+            $secondCompetency = Competency::create([
+                'FK_AREA_CONHECIMENTO' => $secondArea->PK_AREA_CONHECIMENTO,
+                'FK_DIFICULDADE' => $advanced->PK_DIFICULDADE,
+                'NO_COMPETENCIAS_PT' => 'Gestao de riscos',
+            ]);
+            ProfileCompetency::create([
+                'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+                'FK_COMPETENCIAS' => $secondCompetency->PK_COMPETENCIAS,
+            ]);
+            CompetencyCriterionWeight::create([
+                'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+                'FK_AREA_CONHECIMENTO' => $secondArea->PK_AREA_CONHECIMENTO,
+                'NU_PESO_CRIT_COMPETENCIA' => 15,
+            ]);
+            AcquiredKnowledge::create([
+                'FK_JORNADA' => $journey->PK_JORNADA,
+                'FK_COMPETENCIAS' => $secondCompetency->PK_COMPETENCIAS,
+                'TP_ADQUIRIDO' => 1,
+            ]);
+        }
 
         return [$user, $journey];
     }
