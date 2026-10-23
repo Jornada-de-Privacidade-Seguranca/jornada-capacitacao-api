@@ -95,8 +95,13 @@ class JourneyDetailResource extends JsonResource
         $acquiredKnowledgesByCompetency = $this->acquiredKnowledges
             ->keyBy('FK_COMPETENCIAS');
 
-        return $this->journeyProfile?->competencies
-            ?->groupBy(fn ($competency): string => (string) ($competency->FK_DOMINIO_CONHECIMENTO ?? 'null'))
+        $competencies = ($this->journeyProfile?->competencies ?? collect())
+            ->merge($this->acquiredKnowledges->pluck('competency')->filter())
+            ->keyBy('PK_COMPETENCIAS')
+            ->sortKeys();
+
+        return $competencies
+            ->groupBy(fn ($competency): string => (string) ($competency->FK_DOMINIO_CONHECIMENTO ?? 'null'))
             ->map(function ($competencies) use ($acquiredKnowledgesByCompetency): array {
                 $domain = $competencies->first()?->knowledgeDomain;
                 $acquired = [];
@@ -124,8 +129,9 @@ class JourneyDetailResource extends JsonResource
                     'not_acquired_knowledges' => $notAcquired,
                 ];
             })
+            ->sortBy(fn (array $group): int => $group['knowledge_domain']['id'] ?? PHP_INT_MAX)
             ->values()
-            ->all() ?? [];
+            ->all();
     }
 
     private function professionalExperience(): ?array

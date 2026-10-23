@@ -3562,7 +3562,7 @@ components:
             $ref: "#/components/schemas/UserJourneyAcquiredKnowledge"
         knowledges_by_domain:
           type: array
-          description: Competencias do perfil agrupadas por dominio e classificadas como adquiridas ou nao adquiridas. Competencias sem resposta sao listadas como nao adquiridas; pesos internos nao sao expostos.
+          description: Competencias do perfil e competencias com respostas existentes agrupadas por dominio e classificadas como adquiridas ou nao adquiridas. Competencias sem resposta sao listadas como nao adquiridas; competencias que nao possuem dominio aparecem por ultimo com knowledge_domain nulo. Os grupos sao ordenados pelo id do dominio em ordem crescente e os itens pelo id da competencia em ordem crescente; pesos internos nao sao expostos.
           items:
             $ref: "#/components/schemas/UserJourneyKnowledgesByDomain"
         professional_certifications:
@@ -3665,9 +3665,7 @@ components:
       type: object
       properties:
         id:
-          type:
-            - integer
-            - "null"
+          type: integer
           example: 1
         type_acquired:
           type:
@@ -3691,11 +3689,30 @@ components:
         acquired_knowledges:
           type: array
           items:
-            $ref: "#/components/schemas/UserJourneyAcquiredKnowledge"
+            $ref: "#/components/schemas/UserJourneyDomainKnowledgeItem"
         not_acquired_knowledges:
           type: array
           items:
-            $ref: "#/components/schemas/UserJourneyAcquiredKnowledge"
+            $ref: "#/components/schemas/UserJourneyDomainKnowledgeItem"
+    UserJourneyDomainKnowledgeItem:
+      type: object
+      description: Em itens sem resposta, id e type_acquired sao nulos.
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        type_acquired:
+          type:
+            - integer
+            - "null"
+          example: 1
+        is_acquired:
+          type: boolean
+          example: false
+        competency:
+          $ref: "#/components/schemas/UserJourneyCompetency"
     UserJourneyProfessionalCertification:
       type: object
       properties:
