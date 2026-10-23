@@ -144,6 +144,7 @@ class JourneyCalculationService
     public function calculateEducationCriterionScore(iterable $courses): float
     {
         $courses = collect($courses);
+        // Todos os tipos de curso selecionados pertencem ao criterio de Formacao Academica.
         $criterionWeight = $courses
             ->map(fn ($course): mixed => $course->subcriterion?->criterion?->NU_PESO_CRITERIO)
             ->first(fn ($weight): bool => $weight !== null);

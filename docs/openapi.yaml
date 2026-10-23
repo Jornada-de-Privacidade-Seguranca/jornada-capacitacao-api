@@ -1345,10 +1345,14 @@ paths:
         estiver ausente, a contribuicao de Ingles sera zero; isso e equivalente
         a um peso explicitamente configurado como zero. Esses pesos permanecem
         internos e nao sao retornados por este endpoint. A contribuicao do
-        criterio Formacao Academica aplica o peso principal configurado
-        de 14,70% aos pesos dos tipos de curso selecionados, considerando cada
-        tipo uma unica vez. A pontuacao total permanece interna e nao e
-        retornada por este endpoint. Uma nova chamada
+        contribuicao do criterio Formacao Academica aplica o peso principal de
+        TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 14,70%) aos pesos dos tipos de
+        curso selecionados, considerando cada tipo uma unica vez. Quando esse
+        peso estiver nulo ou indisponivel, a contribuicao de Formacao Academica
+        sera zero. Todos os tipos selecionados usam o peso do criterio de
+        Formacao Academica obtido pelo primeiro curso com criterio associado.
+        A pontuacao total permanece interna e nao e retornada por este endpoint.
+        Uma nova chamada
         quando a jornada mais recente ja esta finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:

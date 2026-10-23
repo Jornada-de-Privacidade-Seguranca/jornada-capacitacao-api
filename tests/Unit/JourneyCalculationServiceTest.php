@@ -106,6 +106,15 @@ class JourneyCalculationServiceTest extends TestCase
         );
     }
 
+    public function test_it_treats_a_null_education_criterion_weight_as_zero(): void
+    {
+        $service = $this->service();
+        $criterion = new Criterion(['NU_PESO_CRITERIO' => null]);
+        $graduation = $this->courseWithEducationWeight(8.829, 1, $criterion);
+
+        $this->assertSame(0.0, $service->calculateEducationCriterionScore([$graduation]));
+    }
+
     public function test_it_treats_a_missing_english_criterion_or_weight_as_zero(): void
     {
         Log::shouldReceive('warning')
