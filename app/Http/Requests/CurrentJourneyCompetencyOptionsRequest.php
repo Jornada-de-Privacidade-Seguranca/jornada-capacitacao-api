@@ -23,6 +23,13 @@ class CurrentJourneyCompetencyOptionsRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'modality.in' => 'Modalidade informada e invalida.',
+        ];
+    }
+
     public function modality(): ?string
     {
         return $this->validated('modality');
@@ -31,7 +38,7 @@ class CurrentJourneyCompetencyOptionsRequest extends FormRequest
     protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(ApiResponse::error(
-            message: 'Validation error.',
+            message: 'Modalidade informada e invalida.',
             status: Response::HTTP_UNPROCESSABLE_ENTITY,
             code: 'VALIDATION_ERROR',
             errors: $validator->errors()->toArray(),

@@ -106,36 +106,75 @@ class CurrentJourneyCompetenciesTest extends TestCase
 
         $privacyCompetency = $this->createCompetency([
             'FK_DOMINIO_CONHECIMENTO' => $privacyDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_COMPETENCIAS_PT' => 'Competencia de privacidade',
+            'NO_COMPETENCIAS_EN' => 'Privacy competency',
         ]);
         $securityCompetency = $this->createCompetency([
             'FK_DOMINIO_CONHECIMENTO' => $securityDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_COMPETENCIAS_PT' => 'Competencia de seguranca',
+            'NO_COMPETENCIAS_EN' => 'Security competency',
         ]);
         $jointCompetency = $this->createCompetency([
             'FK_DOMINIO_CONHECIMENTO' => $jointDomain->PK_DOMINIO_CONHECIMENTO,
+            'NO_COMPETENCIAS_PT' => 'Competencia compartilhada',
+            'NO_COMPETENCIAS_EN' => 'Joint competency',
+        ]);
+        $unclassifiedCompetency = $this->createCompetency([
+            'NO_COMPETENCIAS_PT' => 'Competencia sem dominio',
+            'NO_COMPETENCIAS_EN' => 'Competency without a domain',
         ]);
 
-        foreach ([$privacyCompetency, $securityCompetency, $jointCompetency] as $competency) {
+        foreach ([$privacyCompetency, $securityCompetency, $jointCompetency, $unclassifiedCompetency] as $competency) {
             $this->attachCompetencyToProfile($profile, $competency);
         }
 
-        $this->actingAs($user)
+        $privacyResponse = $this->actingAs($user)
             ->getJson('/api/journeys/current/competencies/options?modality=Privacidade')
             ->assertOk()
             ->assertJsonCount(2, 'data')
             ->assertJsonPath('data.0.id', $privacyCompetency->PK_COMPETENCIAS)
-            ->assertJsonPath('data.1.id', $jointCompetency->PK_COMPETENCIAS);
+            ->assertJsonPath('data.0.name_pt', 'Competencia de privacidade')
+            ->assertJsonPath('data.1.id', $jointCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.1.name_pt', 'Competencia compartilhada');
+        $this->assertNotContains(
+            $unclassifiedCompetency->PK_COMPETENCIAS,
+            array_column($privacyResponse->json('data'), 'id'),
+        );
 
-        $this->actingAs($user)
+        $securityResponse = $this->actingAs($user)
             ->getJson('/api/journeys/current/competencies/options?modality=Segurança')
             ->assertOk()
             ->assertJsonCount(2, 'data')
             ->assertJsonPath('data.0.id', $securityCompetency->PK_COMPETENCIAS)
-            ->assertJsonPath('data.1.id', $jointCompetency->PK_COMPETENCIAS);
+            ->assertJsonPath('data.0.name_pt', 'Competencia de seguranca')
+            ->assertJsonPath('data.1.id', $jointCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.1.name_pt', 'Competencia compartilhada');
+        $this->assertNotContains(
+            $unclassifiedCompetency->PK_COMPETENCIAS,
+            array_column($securityResponse->json('data'), 'id'),
+        );
 
         $this->actingAs($user)
             ->getJson('/api/journeys/current/competencies/options?modality=Privacidade%2FSegurança')
             ->assertOk()
-            ->assertJsonCount(3, 'data');
+            ->assertJsonCount(4, 'data')
+            ->assertJsonPath('data.0.id', $privacyCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.0.name_pt', 'Competencia de privacidade')
+            ->assertJsonPath('data.1.id', $securityCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.1.name_pt', 'Competencia de seguranca')
+            ->assertJsonPath('data.2.id', $jointCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.2.name_pt', 'Competencia compartilhada')
+            ->assertJsonPath('data.3.id', $unclassifiedCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.3.name_pt', 'Competencia sem dominio');
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options')
+            ->assertOk()
+            ->assertJsonCount(4, 'data')
+            ->assertJsonPath('data.0.id', $privacyCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.1.id', $securityCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.2.id', $jointCompetency->PK_COMPETENCIAS)
+            ->assertJsonPath('data.3.id', $unclassifiedCompetency->PK_COMPETENCIAS);
     }
 
     public function test_it_rejects_an_unsupported_modality_filter(): void
@@ -148,6 +187,20 @@ class CurrentJourneyCompetenciesTest extends TestCase
             ->getJson('/api/journeys/current/competencies/options?modality=education')
             ->assertUnprocessable()
             ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Modalidade informada e invalida.')
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonValidationErrors(['modality']);
+    }
+
+    public function test_it_validates_modality_before_checking_for_an_ongoing_journey(): void
+    {
+        $user = $this->activeUser();
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options?modality=education')
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Modalidade informada e invalida.')
             ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonValidationErrors(['modality']);
     }
