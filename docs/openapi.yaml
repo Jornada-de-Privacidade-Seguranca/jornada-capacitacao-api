@@ -1430,7 +1430,7 @@ paths:
       tags:
         - Journeys
       summary: Busca o detalhe de uma jornada por ID
-      description: Retorna o detalhe completo de uma jornada, incluindo respostas do questionario, conhecimentos adquiridos e certificacoes profissionais. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      description: Retorna o detalhe completo de uma jornada, incluindo respostas do questionario, conhecimentos adquiridos e nao adquiridos agrupados por dominio e certificacoes profissionais. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: getJourneyDetail
       security:
         - sessionAuth: []
@@ -1549,6 +1549,32 @@ paths:
                               id: 1
                               name_pt: Basico
                               name_en: Basic
+                      knowledges_by_domain:
+                        - knowledge_domain:
+                            id: 1
+                            name_pt: Privacidade
+                            name_en: Privacy
+                          acquired_knowledges:
+                            - id: 1
+                              type_acquired: 1
+                              is_acquired: true
+                              competency:
+                                id: 1
+                                name_pt: LGPD
+                                name_en: LGPD
+                                knowledge_domain:
+                                  id: 1
+                                  name_pt: Privacidade
+                                  name_en: Privacy
+                                knowledge_area:
+                                  id: 1
+                                  name_pt: Governanca
+                                  name_en: Governance
+                                difficulty:
+                                  id: 1
+                                  name_pt: Basico
+                                  name_en: Basic
+                          not_acquired_knowledges: []
                       professional_certifications:
                         - id: 1
                           name: CIPM
@@ -3504,6 +3530,7 @@ components:
         - score
         - answers
         - acquired_knowledges
+        - knowledges_by_domain
         - professional_certifications
         - summary
       properties:
@@ -3546,6 +3573,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserJourneyAcquiredKnowledge"
+        knowledges_by_domain:
+          type: array
+          description: Competencias do perfil e competencias com respostas existentes agrupadas por dominio e classificadas como adquiridas ou nao adquiridas. Competencias sem resposta sao listadas como nao adquiridas; competencias que nao possuem dominio aparecem por ultimo com knowledge_domain nulo. Os grupos sao ordenados pelo id do dominio em ordem crescente e os itens pelo id da competencia em ordem crescente; pesos internos nao sao expostos.
+          items:
+            $ref: "#/components/schemas/UserJourneyKnowledgesByDomain"
         professional_certifications:
           type: array
           items:
@@ -3656,6 +3688,42 @@ components:
         is_acquired:
           type: boolean
           example: true
+        competency:
+          $ref: "#/components/schemas/UserJourneyCompetency"
+    UserJourneyKnowledgesByDomain:
+      type: object
+      required:
+        - knowledge_domain
+        - acquired_knowledges
+        - not_acquired_knowledges
+      properties:
+        knowledge_domain:
+          $ref: "#/components/schemas/UserJourneyKnowledgeDomain"
+        acquired_knowledges:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyDomainKnowledgeItem"
+        not_acquired_knowledges:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserJourneyDomainKnowledgeItem"
+    UserJourneyDomainKnowledgeItem:
+      type: object
+      description: Em itens sem resposta, id e type_acquired sao nulos.
+      properties:
+        id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        type_acquired:
+          type:
+            - integer
+            - "null"
+          example: 1
+        is_acquired:
+          type: boolean
+          example: false
         competency:
           $ref: "#/components/schemas/UserJourneyCompetency"
     UserJourneyProfessionalCertification:

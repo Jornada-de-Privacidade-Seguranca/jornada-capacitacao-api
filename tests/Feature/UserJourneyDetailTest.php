@@ -64,6 +64,125 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.summary.professional_certifications_count', 1);
     }
 
+    public function test_it_groups_acquired_and_not_acquired_knowledges_by_domain(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00');
+        $profile = JourneyProfile::query()->findOrFail($journey->FK_PERFIS_JORNADA);
+        $privacyDomain = KnowledgeDomain::query()->findOrFail($profile->FK_DOMINIO_CONHECIMENTO);
+        $governanceDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Governanca',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Governance',
+        ]);
+        $difficulty = Difficulty::query()->firstOrFail();
+        $area = KnowledgeArea::query()->firstOrFail();
+
+        $notAcquiredCompetency = $this->competencyForDomain($privacyDomain, $area, $difficulty, 'Resposta negativa');
+        $unansweredCompetency = $this->competencyForDomain($governanceDomain, $area, $difficulty, 'Sem resposta');
+        $profile->competencies()->attach([$notAcquiredCompetency->PK_COMPETENCIAS, $unansweredCompetency->PK_COMPETENCIAS]);
+        AcquiredKnowledge::create([
+            'FK_JORNADA' => $journey->PK_JORNADA,
+            'FK_COMPETENCIAS' => $notAcquiredCompetency->PK_COMPETENCIAS,
+            'TP_ADQUIRIDO' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonCount(2, 'data.knowledges_by_domain')
+            ->assertJsonPath('data.knowledges_by_domain.0.knowledge_domain.name_pt', 'Privacidade')
+            ->assertJsonCount(1, 'data.knowledges_by_domain.0.acquired_knowledges')
+            ->assertJsonPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.name_pt', 'LGPD')
+            ->assertJsonPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.knowledge_area.name_pt', 'Governanca')
+            ->assertJsonPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.difficulty.name_pt', 'Basico')
+            ->assertJsonCount(1, 'data.knowledges_by_domain.0.not_acquired_knowledges')
+            ->assertJsonPath('data.knowledges_by_domain.0.not_acquired_knowledges.0.is_acquired', false)
+            ->assertJsonPath('data.knowledges_by_domain.0.not_acquired_knowledges.0.competency.name_pt', 'Resposta negativa')
+            ->assertJsonPath('data.knowledges_by_domain.1.knowledge_domain.name_pt', 'Governanca')
+            ->assertJsonCount(0, 'data.knowledges_by_domain.1.acquired_knowledges')
+            ->assertJsonPath('data.knowledges_by_domain.1.not_acquired_knowledges.0.type_acquired', null)
+            ->assertJsonPath('data.knowledges_by_domain.1.not_acquired_knowledges.0.competency.name_pt', 'Sem resposta')
+            ->assertJsonMissingPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.weight')
+            ->assertJsonMissingPath('data.knowledges_by_domain.0.acquired_knowledges.0.competency.weights');
+    }
+
+    public function test_it_orders_domain_groups_and_competencies_and_includes_existing_answers_outside_the_profile(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00');
+        $profile = JourneyProfile::query()->findOrFail($journey->FK_PERFIS_JORNADA);
+        $existingAnswer = AcquiredKnowledge::query()->where('FK_JORNADA', $journey->PK_JORNADA)->firstOrFail();
+        $existingCompetency = Competency::query()->findOrFail($existingAnswer->FK_COMPETENCIAS);
+        $area = KnowledgeArea::query()->firstOrFail();
+        $difficulty = Difficulty::query()->firstOrFail();
+
+        $earlierDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Dominio anterior',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Earlier domain',
+        ]);
+        $laterDomain = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Dominio posterior',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Later domain',
+        ]);
+        $firstCompetency = $this->competencyForDomain($earlierDomain, $area, $difficulty, 'Primeira competencia');
+        $secondCompetency = $this->competencyForDomain($earlierDomain, $area, $difficulty, 'Segunda competencia');
+        $laterCompetency = $this->competencyForDomain($laterDomain, $area, $difficulty, 'Competencia posterior');
+
+        $profile->competencies()->detach();
+        $profile->competencies()->attach([
+            $laterCompetency->PK_COMPETENCIAS,
+            $secondCompetency->PK_COMPETENCIAS,
+            $firstCompetency->PK_COMPETENCIAS,
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonCount(3, 'data.knowledges_by_domain')
+            ->assertJsonPath('data.knowledges_by_domain.0.knowledge_domain.id', $existingCompetency->FK_DOMINIO_CONHECIMENTO)
+            ->assertJsonPath('data.knowledges_by_domain.0.acquired_knowledges.0.id', $existingAnswer->PK_CONHECIMENTOS_ADQUIRIDOS)
+            ->assertJsonPath('data.knowledges_by_domain.1.knowledge_domain.id', $earlierDomain->PK_DOMINIO_CONHECIMENTO)
+            ->assertJsonPath('data.knowledges_by_domain.1.not_acquired_knowledges.0.competency.name_pt', 'Primeira competencia')
+            ->assertJsonPath('data.knowledges_by_domain.1.not_acquired_knowledges.1.competency.name_pt', 'Segunda competencia')
+            ->assertJsonPath('data.knowledges_by_domain.2.knowledge_domain.id', $laterDomain->PK_DOMINIO_CONHECIMENTO);
+    }
+
+    public function test_it_lists_competencies_without_a_domain_in_a_null_domain_group(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00');
+        $profile = JourneyProfile::query()->findOrFail($journey->FK_PERFIS_JORNADA);
+        $domainlessCompetency = Competency::create([
+            'FK_DOMINIO_CONHECIMENTO' => null,
+            'FK_AREA_CONHECIMENTO' => KnowledgeArea::query()->firstOrFail()->PK_AREA_CONHECIMENTO,
+            'FK_DIFICULDADE' => Difficulty::query()->firstOrFail()->PK_DIFICULDADE,
+            'NO_COMPETENCIAS_PT' => 'Sem dominio',
+            'NO_COMPETENCIAS_EN' => 'No domain',
+        ]);
+        $profile->competencies()->attach($domainlessCompetency->PK_COMPETENCIAS);
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonCount(2, 'data.knowledges_by_domain')
+            ->assertJsonPath('data.knowledges_by_domain.1.knowledge_domain', null)
+            ->assertJsonPath('data.knowledges_by_domain.1.not_acquired_knowledges.0.competency.name_pt', 'Sem dominio');
+    }
+
+    public function test_it_returns_no_knowledge_groups_when_profile_has_no_competencies_or_answers(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00');
+        $profile = JourneyProfile::query()->findOrFail($journey->FK_PERFIS_JORNADA);
+        $profile->competencies()->detach();
+        $journey->acquiredKnowledges()->delete();
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonCount(0, 'data.knowledges_by_domain');
+    }
+
     public function test_administrator_can_view_journey_from_any_user(): void
     {
         $admin = $this->activeUser('Admin Sistema', 1);
@@ -241,6 +360,21 @@ class UserJourneyDetailTest extends TestCase
             'NO_SETOR' => 'Capacitacao',
             'NU_MATRICULA' => '123',
             'ST_ATIVO' => 1,
+        ]);
+    }
+
+    private function competencyForDomain(
+        KnowledgeDomain $domain,
+        KnowledgeArea $area,
+        Difficulty $difficulty,
+        string $name,
+    ): Competency {
+        return Competency::create([
+            'FK_DOMINIO_CONHECIMENTO' => $domain->PK_DOMINIO_CONHECIMENTO,
+            'FK_AREA_CONHECIMENTO' => $area->PK_AREA_CONHECIMENTO,
+            'FK_DIFICULDADE' => $difficulty->PK_DIFICULDADE,
+            'NO_COMPETENCIAS_PT' => $name,
+            'NO_COMPETENCIAS_EN' => $name,
         ]);
     }
 
