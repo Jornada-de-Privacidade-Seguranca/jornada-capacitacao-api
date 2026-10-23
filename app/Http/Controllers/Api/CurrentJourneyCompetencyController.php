@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exceptions\NoOngoingJourneyException;
+use App\Http\Requests\CurrentJourneyCompetencyOptionsRequest;
 use App\Http\Requests\ReplaceCurrentJourneyCompetenciesRequest;
 use App\Http\Resources\CurrentJourneyCompetencyOptionResource;
 use App\Http\Resources\CurrentJourneyCompetencyStateResource;
@@ -18,10 +19,13 @@ class CurrentJourneyCompetencyController
 {
     public function __construct(private readonly CurrentJourneyCompetencyService $currentJourneyCompetencyService) {}
 
-    public function options(Request $request): JsonResponse
+    public function options(CurrentJourneyCompetencyOptionsRequest $request): JsonResponse
     {
         try {
-            $competencies = $this->currentJourneyCompetencyService->listOptionsForAuthenticatedUser($request->user());
+            $competencies = $this->currentJourneyCompetencyService->listOptionsForAuthenticatedUser(
+                $request->user(),
+                $request->modality(),
+            );
         } catch (NoOngoingJourneyException) {
             return $this->ongoingJourneyNotFound();
         } catch (Throwable $exception) {
