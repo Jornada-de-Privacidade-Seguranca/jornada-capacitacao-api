@@ -80,6 +80,20 @@ class JourneyCalculationServiceTest extends TestCase
         $this->assertSame(0.0, $service->calculateEnglishProficiencyScore(null));
     }
 
+    public function test_it_treats_a_missing_english_criterion_or_weight_as_zero(): void
+    {
+        $service = $this->service();
+        $weightedSubcriterion = new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335]);
+        $criterionWithoutWeight = new Criterion(['NU_PESO_CRITERIO' => null]);
+        $weightedSubcriterion->setRelation('criterion', $criterionWithoutWeight);
+
+        $this->assertSame(0.0, $service->calculateEnglishProficiencyScore($weightedSubcriterion));
+        $this->assertSame(
+            0.0,
+            $service->calculateEnglishProficiencyScore(new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335])),
+        );
+    }
+
     public function test_it_calculates_certification_score_with_maximum_limit(): void
     {
         $service = $this->service();

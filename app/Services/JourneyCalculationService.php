@@ -77,6 +77,9 @@ class JourneyCalculationService
             return 0.0;
         }
 
+        // NU_PESO_CRITERIO is nullable in the legacy schema. A null weight or
+        // missing criterion means this subcriterion contributes zero to the
+        // total, matching criteria explicitly configured with weight zero.
         $mainCriterionWeight = (float) ($subcriterion->criterion?->NU_PESO_CRITERIO ?? 0);
 
         return (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0) * ($mainCriterionWeight / 100.0);

@@ -1341,8 +1341,10 @@ paths:
         TB_JORNADA.NU_PONTUACAO_TOTAL e registra a finalizacao em DH_FIM. Cursos e
         certificacoes sao opcionais e contribuem com zero quando ausentes. A
         pontuacao de Ingles aplica o peso principal configurado ao peso do
-        subcriterio selecionado. Esses pesos permanecem internos e nao sao
-        retornados por este endpoint. Uma nova chamada
+        subcriterio selecionado. Se o peso principal for nulo ou o criterio
+        estiver ausente, a contribuicao de Ingles sera zero; isso e equivalente
+        a um peso explicitamente configurado como zero. Esses pesos permanecem
+        internos e nao sao retornados por este endpoint. Uma nova chamada
         quando a jornada mais recente ja esta finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:
