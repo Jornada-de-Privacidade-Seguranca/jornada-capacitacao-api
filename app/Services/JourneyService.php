@@ -185,7 +185,7 @@ class JourneyService
             }
 
             try {
-                $totalScore = round($this->journeyCalculationService->calculateForJourney($journey), 3);
+                $totalScore = $this->journeyCalculationService->calculateForJourney($journey);
             } catch (InvalidArgumentException) {
                 throw new IncompleteJourneyException(['answers.profile_experience']);
             }
@@ -356,4 +356,3 @@ class JourneyService
         ];
     }
 }
-
