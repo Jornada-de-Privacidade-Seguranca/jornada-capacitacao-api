@@ -174,12 +174,10 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->exists();
     }
 
-    public function hasOngoingJourneyForProfile(int $userId, int $journeyProfileId): bool
+    public function hasAnyJourney(int $userId): bool
     {
         return Journey::query()
             ->where('FK_USUARIO', $userId)
-            ->where('FK_PERFIS_JORNADA', $journeyProfileId)
-            ->whereNull('DH_FIM')
             ->exists();
     }
 

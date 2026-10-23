@@ -864,7 +864,7 @@ paths:
       tags:
         - Journeys
       summary: Inicia uma nova jornada para um usuario
-      description: Registra uma jornada para o usuario informado. A primeira jornada exige o perfil de jornada selecionado na conta; depois dela, outros perfis podem ser iniciados. O usuario pode ter no maximo uma jornada em andamento por perfil. Usuarios comuns so podem iniciar jornadas para si mesmos; administradores podem iniciar jornadas para qualquer usuario. Dados gerais (experiencia profissional, atuacao de perfil, proficiencia em ingles), cursos, certificacoes e competencias sao preenchidos depois, em etapas proprias (ver PATCH /journeys/{journey}/answers, POST /journeys/{journey}/courses, POST /journeys/{journey}/certifications e POST /journeys/{journey}/competencies). Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      description: Registra uma jornada para o usuario informado. A primeira jornada exige o perfil de jornada selecionado na conta; contas com historico de jornadas podem iniciar outros perfis sem selecao previa. O usuario pode ter no maximo uma jornada em andamento, independentemente do perfil. Usuarios comuns so podem iniciar jornadas para si mesmos; administradores podem iniciar jornadas para qualquer usuario. Dados gerais (experiencia profissional, atuacao de perfil, proficiencia em ingles), cursos, certificacoes e competencias sao preenchidos depois, em etapas proprias (ver PATCH /journeys/{journey}/answers, POST /journeys/{journey}/courses, POST /journeys/{journey}/certifications e POST /journeys/{journey}/competencies). Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: createUserJourney
       security:
         - sessionAuth: []
@@ -949,7 +949,7 @@ paths:
                     errors: []
                     code: JOURNEY_PROFILE_NOT_FOUND
         "409":
-          description: Usuario ja possui uma jornada em andamento para o mesmo perfil
+          description: Usuario ja possui uma jornada em andamento
           content:
             application/json:
               schema:

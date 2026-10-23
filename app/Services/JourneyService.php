@@ -82,20 +82,21 @@ class JourneyService
 
             $user = $this->userRepository->findById((int) $requestedUser->PK_USUARIO);
             $journeyProfileId = (int) $data['journey_profile_id'];
-            $selectedJourneyProfileId = (int) ($user?->FK_PERFIL_JORNADA ?? 0);
+            $hasJourneyHistory = $this->journeyRepository->hasAnyJourney((int) $requestedUser->PK_USUARIO);
 
-            if ($selectedJourneyProfileId === 0) {
-                throw new JourneyProfileSelectionException(JourneyProfileSelectionException::REQUIRED);
+            if (! $hasJourneyHistory) {
+                $selectedJourneyProfileId = (int) ($user?->FK_PERFIL_JORNADA ?? 0);
+
+                if ($selectedJourneyProfileId === 0) {
+                    throw new JourneyProfileSelectionException(JourneyProfileSelectionException::REQUIRED);
+                }
+
+                if ($selectedJourneyProfileId !== $journeyProfileId) {
+                    throw new JourneyProfileSelectionException(JourneyProfileSelectionException::MISMATCH);
+                }
             }
 
-            if (
-                ! $this->journeyRepository->hasJourneyForProfile((int) $requestedUser->PK_USUARIO, $selectedJourneyProfileId)
-                && $selectedJourneyProfileId !== $journeyProfileId
-            ) {
-                throw new JourneyProfileSelectionException(JourneyProfileSelectionException::MISMATCH);
-            }
-
-            if ($this->journeyRepository->hasOngoingJourneyForProfile((int) $requestedUser->PK_USUARIO, $journeyProfileId)) {
+            if ($this->journeyRepository->hasOngoingJourney((int) $requestedUser->PK_USUARIO)) {
                 throw new OngoingJourneyExistsException;
             }
 
