@@ -242,4 +242,3 @@ class JourneyFinalizationTest extends TestCase
         ]);
     }
 }
-
