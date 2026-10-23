@@ -2688,7 +2688,10 @@ paths:
           maximum: 100
       - name: modality
         in: query
-        description: Filtra perfis pelo domínio de conhecimento associado.
+        description: >-
+          Filtra os perfis por modalidade. Privacidade retorna perfis dos domínios Privacidade e Conjunta (Privacidade/Segurança).
+          Segurança retorna perfis dos domínios Segurança da Informação e Conjunta (Privacidade/Segurança).
+          Privacidade/Segurança retorna todos os perfis, sem filtrar por domínio.
         required: false
         schema:
           type: string

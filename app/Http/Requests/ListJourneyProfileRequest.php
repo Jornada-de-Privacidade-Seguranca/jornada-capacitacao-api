@@ -32,6 +32,7 @@ class ListJourneyProfileRequest extends FormRequest
             'per_page.integer' => 'A quantidade de registros por pagina deve ser um numero inteiro.',
             'per_page.min' => 'A quantidade de registros por pagina deve ser maior ou igual a 1.',
             'per_page.max' => 'A quantidade de registros por pagina nao pode ser maior que 100.',
+            'modality.string' => 'A modalidade deve ser um texto.',
             'modality.in' => 'A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.',
         ];
     }
