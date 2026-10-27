@@ -3,7 +3,7 @@
 Taiga: https://tree.taiga.io/project/jotaf-dashboard/us/120
 
 Taiga story ID: `9645278`
-Status: in-progress
+Status: ready-for-human
 
 ## Objetivo
 
