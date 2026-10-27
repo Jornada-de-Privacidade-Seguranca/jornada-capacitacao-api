@@ -1345,7 +1345,7 @@ paths:
         estiver ausente, a contribuicao de Ingles sera zero; isso e equivalente
         a um peso explicitamente configurado como zero. Esses pesos permanecem
         internos e nao sao retornados por este endpoint. A contribuicao do
-        contribuicao do criterio Formacao Academica aplica o peso principal de
+        criterio Formacao Academica aplica o peso principal de
         TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 14,70%) aos pesos dos tipos de
         curso selecionados, considerando cada tipo uma unica vez. Quando esse
         peso estiver nulo ou indisponivel, a contribuicao de Formacao Academica

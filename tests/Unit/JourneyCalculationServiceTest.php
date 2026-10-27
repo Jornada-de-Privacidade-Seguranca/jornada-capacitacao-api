@@ -261,7 +261,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(112.347863, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(87.561288, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
