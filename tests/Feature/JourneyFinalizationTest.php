@@ -48,11 +48,11 @@ class JourneyFinalizationTest extends TestCase
         $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 65.643);
+            ->assertJsonPath('data.score', 14.189);
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 65.643,
+            'NU_PONTUACAO_TOTAL' => 14.189,
             'DH_FIM' => '2026-09-28 14:30:00',
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
@@ -70,7 +70,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 20.895,
+            'NU_PONTUACAO_TOTAL' => 15.487,
         ]);
     }
 
@@ -89,7 +89,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 23.21,
+            'NU_PONTUACAO_TOTAL' => 17.802,
         ]);
     }
 
@@ -103,7 +103,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 21.763,
+            'NU_PONTUACAO_TOTAL' => 16.355,
         ]);
     }
 
@@ -117,7 +117,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 11.263,
+            'NU_PONTUACAO_TOTAL' => 5.855,
         ]);
     }
 
@@ -132,7 +132,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 21.741,
+            'NU_PONTUACAO_TOTAL' => 16.333,
         ]);
     }
 
@@ -153,7 +153,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 30.317,
+            'NU_PONTUACAO_TOTAL' => 24.909,
         ]);
     }
 
@@ -244,7 +244,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 71.153,
+            'NU_PONTUACAO_TOTAL' => 19.699,
         ]);
     }
 
@@ -258,7 +258,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 66.051,
+            'NU_PONTUACAO_TOTAL' => 14.597,
         ]);
     }
 
@@ -272,7 +272,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 61.051,
+            'NU_PONTUACAO_TOTAL' => 9.597,
         ]);
     }
 

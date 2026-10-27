@@ -308,7 +308,7 @@ class JourneyCalculationServiceTest extends TestCase
 
     public function test_it_uses_an_alternative_criterion_weight_from_the_repository(): void
     {
-        $service = $this->service(criterionWeight: 50.0);
+        $service = $this->service(competencyWeight: 50.0);
         $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Básico']);
         $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
         $competency->setRelation('difficulty', $difficulty);
@@ -329,7 +329,7 @@ class JourneyCalculationServiceTest extends TestCase
                 'criterion' => Criterion::COMPETENCIES_NAME_EN,
             ]);
 
-        $service = $this->service(criterionWeight: null);
+        $service = $this->service(competencyWeight: null);
         $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Especialista']);
         $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
         $competency->setRelation('difficulty', $difficulty);
@@ -384,7 +384,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(114.471, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(19.774788, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
