@@ -121,6 +121,42 @@ class JourneyFinalizationTest extends TestCase
         ]);
     }
 
+    public function test_it_applies_the_weighted_contribution_of_one_certification(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture();
+        $journey->professionalCertifications()->attach($this->certification('Certificacao 1')->PK_CERTIFICACAO_PROFISSIONAL);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 21.741,
+        ]);
+    }
+
+    public function test_it_caps_the_weighted_contribution_at_five_certifications(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture();
+        $certificationIds = [];
+
+        for ($count = 1; $count <= 6; $count++) {
+            $certificationIds[] = $this->certification('Certificacao '.$count)->PK_CERTIFICACAO_PROFISSIONAL;
+        }
+
+        $journey->professionalCertifications()->attach($certificationIds);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 30.317,
+        ]);
+    }
+
     public function test_it_rejects_an_incomplete_journey_without_changing_it(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -231,6 +267,11 @@ class JourneyFinalizationTest extends TestCase
             'FK_CRITERIOS' => $englishCriterion->PK_CRITERIOS,
             'NO_SUBCRITERIO_PT' => 'Intermediário - Leitura e Escrita',
             'NU_PESO_SUBCRITERIO' => 26.0505,
+        ]);
+        Criterion::create([
+            'NO_CRITERIO_PT' => 'Certificação Profissional',
+            'NO_CRITERIO_EN' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            'NU_PESO_CRITERIO' => 10.72,
         ]);
         $area = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Governanca']);
         $difficulty = Difficulty::create(['NO_DIFICULDADE_PT' => 'Basico']);

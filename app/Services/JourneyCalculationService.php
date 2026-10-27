@@ -63,7 +63,7 @@ class JourneyCalculationService
         )
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
             + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
-            + $this->calculateCertificationScore($journey->professionalCertifications)
+            + $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications)
             + $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights);
     }
 
@@ -193,6 +193,23 @@ class JourneyCalculationService
             : collect($certifications)->count();
 
         return min(max($quantity, 0) * 100.0 / 5.0, 100.0);
+    }
+
+    public function calculateProfessionalCertificationCriterionScore(iterable|int $certifications): float
+    {
+        $weight = $this->criterionRepository->findWeightByName(Criterion::PROFESSIONAL_CERTIFICATION_NAME);
+
+        if ($weight === null) {
+            Log::warning('Professional certification criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            ]);
+
+            return 0.0;
+        }
+
+        return $this->calculateCertificationScore($certifications)
+            * $weight
+            / 100.0;
     }
 
     public function calculateCompetencyScore(iterable $acquiredKnowledges, iterable $areaWeights): float

@@ -1356,7 +1356,11 @@ paths:
         experiencia profissional e tempo de atuacao no perfil (ate 50 pontos
         cada) e aplica o peso de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente
         23,81%). Se esse peso estiver ausente, a contribuicao sera zero. Ingles
-        e calculado separadamente. Uma nova chamada
+        e calculado separadamente. A contribuicao do criterio Certificacao
+        Profissional preserva 20 pontos por certificacao ate cinco e aplica o
+        peso principal de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 10,72%),
+        com contribuicao maxima limitada ao peso total do criterio. Se o peso
+        estiver ausente, a contribuicao sera zero. Uma nova chamada
         quando a jornada mais recente ja esta finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:

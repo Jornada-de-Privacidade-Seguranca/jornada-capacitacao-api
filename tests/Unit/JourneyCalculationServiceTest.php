@@ -199,6 +199,48 @@ class JourneyCalculationServiceTest extends TestCase
         $this->assertSame(100.0, $service->calculateCertificationScore(8));
     }
 
+    public function test_it_applies_the_certification_criterion_weight_after_limiting_the_count(): void
+    {
+        $service = $this->service();
+
+        $this->assertSame(0.0, $service->calculateProfessionalCertificationCriterionScore(0));
+        $this->assertEqualsWithDelta(
+            2.144,
+            $service->calculateProfessionalCertificationCriterionScore(1),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            10.72,
+            $service->calculateProfessionalCertificationCriterionScore(5),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            10.72,
+            $service->calculateProfessionalCertificationCriterionScore(8),
+            0.0001,
+        );
+    }
+
+    public function test_it_uses_the_configured_certification_criterion_weight(): void
+    {
+        $service = $this->service(certificationWeight: 12.5);
+
+        $this->assertSame(2.5, $service->calculateProfessionalCertificationCriterionScore(1));
+    }
+
+    public function test_it_logs_and_returns_zero_when_the_certification_criterion_weight_is_missing(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Professional certification criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            ]);
+
+        $service = $this->service(certificationWeight: null);
+
+        $this->assertSame(0.0, $service->calculateProfessionalCertificationCriterionScore(5));
+    }
+
     public function test_it_calculates_only_acquired_competencies_with_area_weights(): void
     {
         $service = $this->service();
@@ -303,7 +345,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(60.894788, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(25.182788, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
@@ -315,8 +357,11 @@ class JourneyCalculationServiceTest extends TestCase
         return (new HigherEducationCourse)->setRelation('subcriterion', $subcriterion);
     }
 
-    private function service(?Collection $areaWeights = null, ?float $criterionWeight = 23.81): JourneyCalculationService
-    {
+    private function service(
+        ?Collection $areaWeights = null,
+        ?float $criterionWeight = 23.81,
+        ?float $certificationWeight = 10.72,
+    ): JourneyCalculationService {
         $repository = new class($areaWeights ?? new Collection) implements CompetencyCriterionWeightRepositoryInterface
         {
             public function __construct(private readonly Collection $areaWeights) {}
@@ -339,9 +384,12 @@ class JourneyCalculationServiceTest extends TestCase
             }
         };
 
-        $criterionRepository = new class($criterionWeight) implements CriterionRepositoryInterface
+        $criterionRepository = new class($criterionWeight, $certificationWeight) implements CriterionRepositoryInterface
         {
-            public function __construct(private readonly ?float $weight) {}
+            public function __construct(
+                private readonly ?float $professionalExperienceWeight,
+                private readonly ?float $certificationWeight,
+            ) {}
 
             public function all(): Collection
             {
@@ -350,7 +398,7 @@ class JourneyCalculationServiceTest extends TestCase
 
             public function findOrFail(int $id): Criterion
             {
-                throw new \RuntimeException('Not implemented.');
+                throw new \LogicException('Not used by JourneyCalculationService tests.');
             }
 
             public function findEnglishCriterionId(): ?int
@@ -360,7 +408,11 @@ class JourneyCalculationServiceTest extends TestCase
 
             public function findWeightByName(string $name): ?float
             {
-                return $this->weight;
+                return match ($name) {
+                    Criterion::PROFESSIONAL_EXPERIENCE_NAME => $this->professionalExperienceWeight,
+                    Criterion::PROFESSIONAL_CERTIFICATION_NAME => $this->certificationWeight,
+                    default => null,
+                };
             }
         };
 

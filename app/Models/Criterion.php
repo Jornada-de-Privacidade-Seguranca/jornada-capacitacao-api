@@ -12,6 +12,8 @@ class Criterion extends JornadaModel
 
     public const PROFESSIONAL_EXPERIENCE_NAME = 'Professional Experience';
 
+    public const PROFESSIONAL_CERTIFICATION_NAME = 'Professional Certification';
+
     protected $table = 'TB_CRITERIOS';
 
     protected $primaryKey = 'PK_CRITERIOS';
