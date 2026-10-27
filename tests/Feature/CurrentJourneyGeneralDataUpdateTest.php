@@ -119,10 +119,11 @@ class CurrentJourneyGeneralDataUpdateTest extends TestCase
             ->assertJsonPath('errors', []);
     }
 
-    public function test_it_rejects_missing_required_fields(): void
+    public function test_it_requires_at_least_one_general_data_field(): void
     {
         $user = $this->activeUser();
-        $this->currentJourneyFor($user);
+        $journey = $this->currentJourneyFor($user);
+        $message = 'Informe ao menos um dos dados gerais: nivel de ingles, experiencia profissional ou tempo de atuacao no perfil.';
 
         $this->actingAs($user)
             ->putJsonWithCsrf('/api/journeys/current/general-data', [])
@@ -130,9 +131,262 @@ class CurrentJourneyGeneralDataUpdateTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Validation error.')
             ->assertJsonPath('code', 'VALIDATION_ERROR')
-            ->assertJsonPath('errors.english_level_id.0', 'Informe o nivel de ingles.')
-            ->assertJsonPath('errors.professional_experience_id.0', 'Informe a experiencia profissional.')
-            ->assertJsonPath('errors.profile_experience_id.0', 'Informe o tempo de atuacao no perfil.');
+            ->assertJsonPath('errors.english_level_id.0', $message)
+            ->assertJsonPath('errors.professional_experience_id.0', $message)
+            ->assertJsonPath('errors.profile_experience_id.0', $message);
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_SUBCRITERIOS_INGLES' => null,
+            'FK_EXPERIENCIA_PROFISSIONAL' => null,
+            'FK_ATUACAO_PERFIL' => null,
+        ]);
+    }
+
+    public function test_it_saves_a_single_field_and_reports_the_journey_as_incomplete(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $professionalExperience = $this->professionalExperience('Entre 1 e 3 anos', 'Between 1 and 3 years');
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'professional_experience_id' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.journey_id', $journey->PK_JORNADA)
+            ->assertJsonPath('data.is_complete', false)
+            ->assertJsonPath('data.english_level', null)
+            ->assertJsonPath('data.professional_experience.id', $professionalExperience->PK_EXPERIENCIA_ATUACAO)
+            ->assertJsonPath('data.profile_experience', null);
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_SUBCRITERIOS_INGLES' => null,
+            'FK_EXPERIENCIA_PROFISSIONAL' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
+            'FK_ATUACAO_PERFIL' => null,
+        ]);
+    }
+
+    public function test_it_keeps_fields_not_sent_when_updating_a_single_field(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $initialPayload = $this->payload(
+            $this->englishSubcriterion('Basico', 'Basic'),
+            $this->professionalExperience('Entre 1 e 3 anos', 'Between 1 and 3 years'),
+            $this->professionalExperience('Entre 4 e 6 anos', 'Between 4 and 6 years'),
+        );
+        $newEnglishLevel = $this->englishSubcriterion('Avancado', 'Advanced');
+
+        $this->actingAs($user)->putJsonWithCsrf('/api/journeys/current/general-data', $initialPayload)->assertOk();
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'english_level_id' => $newEnglishLevel->PK_SUBCRITERIOS,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', true)
+            ->assertJsonPath('data.english_level.id', $newEnglishLevel->PK_SUBCRITERIOS)
+            ->assertJsonPath('data.professional_experience.id', $initialPayload['professional_experience_id'])
+            ->assertJsonPath('data.profile_experience.id', $initialPayload['profile_experience_id']);
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_SUBCRITERIOS_INGLES' => $newEnglishLevel->PK_SUBCRITERIOS,
+            'FK_EXPERIENCIA_PROFISSIONAL' => $initialPayload['professional_experience_id'],
+            'FK_ATUACAO_PERFIL' => $initialPayload['profile_experience_id'],
+        ]);
+    }
+
+    public function test_it_completes_general_data_one_step_at_a_time(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $englishLevel = $this->englishSubcriterion('Intermediario', 'Intermediate');
+        $professionalExperience = $this->professionalExperience('Entre 1 e 3 anos', 'Between 1 and 3 years');
+        $profileExperience = $this->professionalExperience('Entre 4 e 6 anos', 'Between 4 and 6 years');
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'professional_experience_id' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', false);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'profile_experience_id' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', false)
+            ->assertJsonPath('data.professional_experience.id', $professionalExperience->PK_EXPERIENCIA_ATUACAO)
+            ->assertJsonPath('data.profile_experience.id', $profileExperience->PK_EXPERIENCIA_ATUACAO);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'english_level_id' => $englishLevel->PK_SUBCRITERIOS,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', true)
+            ->assertJsonPath('data.english_level.id', $englishLevel->PK_SUBCRITERIOS)
+            ->assertJsonPath('data.professional_experience.id', $professionalExperience->PK_EXPERIENCIA_ATUACAO)
+            ->assertJsonPath('data.profile_experience.id', $profileExperience->PK_EXPERIENCIA_ATUACAO);
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_SUBCRITERIOS_INGLES' => $englishLevel->PK_SUBCRITERIOS,
+            'FK_EXPERIENCIA_PROFISSIONAL' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
+            'FK_ATUACAO_PERFIL' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
+        ]);
+    }
+
+    public function test_it_updates_two_fields_and_keeps_the_third(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $englishLevel = $this->englishSubcriterion('Basico', 'Basic');
+        $initialProfessionalExperience = $this->professionalExperience('Entre 1 e 3 anos', 'Between 1 and 3 years');
+        $professionalExperience = $this->professionalExperience('Entre 7 e 10 anos', 'Between 7 and 10 years');
+        $profileExperience = $this->professionalExperience('Mais de 10 anos', 'More than 10 years');
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'english_level_id' => $englishLevel->PK_SUBCRITERIOS,
+                'professional_experience_id' => $initialProfessionalExperience->PK_EXPERIENCIA_ATUACAO,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', false)
+            ->assertJsonPath('data.profile_experience', null);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'professional_experience_id' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
+                'profile_experience_id' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', true)
+            ->assertJsonPath('data.english_level.id', $englishLevel->PK_SUBCRITERIOS)
+            ->assertJsonPath('data.professional_experience.id', $professionalExperience->PK_EXPERIENCIA_ATUACAO)
+            ->assertJsonPath('data.profile_experience.id', $profileExperience->PK_EXPERIENCIA_ATUACAO);
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_SUBCRITERIOS_INGLES' => $englishLevel->PK_SUBCRITERIOS,
+            'FK_EXPERIENCIA_PROFISSIONAL' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
+            'FK_ATUACAO_PERFIL' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
+        ]);
+    }
+
+    public function test_it_rejects_a_nonexistent_id_sent_alone_without_changing_saved_fields(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $payload = $this->payload(
+            $this->englishSubcriterion('Basico', 'Basic'),
+            $this->professionalExperience('Entre 1 e 3 anos', 'Between 1 and 3 years'),
+            $this->professionalExperience('Entre 4 e 6 anos', 'Between 4 and 6 years'),
+        );
+
+        $this->actingAs($user)->putJsonWithCsrf('/api/journeys/current/general-data', $payload)->assertOk();
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'profile_experience_id' => 999999,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.profile_experience_id.0', 'O tempo de atuacao no perfil informado nao existe.')
+            ->assertJsonMissingPath('errors.english_level_id')
+            ->assertJsonMissingPath('errors.professional_experience_id');
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_SUBCRITERIOS_INGLES' => $payload['english_level_id'],
+            'FK_EXPERIENCIA_PROFISSIONAL' => $payload['professional_experience_id'],
+            'FK_ATUACAO_PERFIL' => $payload['profile_experience_id'],
+        ]);
+    }
+
+    public function test_it_rejects_null_values_instead_of_clearing_saved_fields(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $payload = $this->payload(
+            $this->englishSubcriterion('Basico', 'Basic'),
+            $this->professionalExperience('Entre 1 e 3 anos', 'Between 1 and 3 years'),
+            $this->professionalExperience('Entre 4 e 6 anos', 'Between 4 and 6 years'),
+        );
+
+        $this->actingAs($user)->putJsonWithCsrf('/api/journeys/current/general-data', $payload)->assertOk();
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'english_level_id' => null,
+                'professional_experience_id' => $payload['professional_experience_id'],
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.english_level_id.0', 'O nivel de ingles deve ser um numero inteiro.');
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_SUBCRITERIOS_INGLES' => $payload['english_level_id'],
+            'FK_EXPERIENCIA_PROFISSIONAL' => $payload['professional_experience_id'],
+            'FK_ATUACAO_PERFIL' => $payload['profile_experience_id'],
+        ]);
+    }
+
+    public function test_it_does_not_check_english_configuration_when_english_level_is_not_sent(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $profileExperience = $this->professionalExperience('Entre 4 e 6 anos', 'Between 4 and 6 years');
+
+        Criterion::query()
+            ->where('NO_CRITERIO_EN', Criterion::ENGLISH_PROFICIENCY_NAME)
+            ->update(['NO_CRITERIO_EN' => 'Unavailable English criterion']);
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'profile_experience_id' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.profile_experience.id', $profileExperience->PK_EXPERIENCIA_ATUACAO);
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_ATUACAO_PERFIL' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
+        ]);
+    }
+
+    public function test_finalization_still_requires_general_data_saved_partially(): void
+    {
+        $user = $this->activeUser();
+        $journey = $this->currentJourneyFor($user);
+        $englishLevel = $this->englishSubcriterion('Basico', 'Basic');
+
+        $this->actingAs($user)
+            ->putJsonWithCsrf('/api/journeys/current/general-data', [
+                'english_level_id' => $englishLevel->PK_SUBCRITERIOS,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.is_complete', false);
+
+        $missingFields = $this->actingAs($user)
+            ->postJsonWithCsrf('/api/journeys/current/finalize')
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'INCOMPLETE_JOURNEY')
+            ->json('errors.fields');
+
+        $this->assertContains('answers.professional_experience', $missingFields);
+        $this->assertContains('answers.profile_experience', $missingFields);
+        $this->assertNotContains('answers.english_proficiency', $missingFields);
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'DH_FIM' => null,
+        ]);
     }
 
     public function test_it_rejects_update_without_csrf_token(): void

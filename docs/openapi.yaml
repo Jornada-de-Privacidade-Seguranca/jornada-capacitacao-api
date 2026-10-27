@@ -1758,7 +1758,7 @@ paths:
       tags:
         - Journeys
       summary: Salva os dados gerais da jornada atual
-      description: Atualiza nivel de ingles, experiencia profissional e tempo de atuacao no perfil na jornada em andamento do usuario autenticado. Este endpoint nao calcula nem retorna pontuacao. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token e envie o header X-CSRF-TOKEN.
+      description: Atualiza nivel de ingles, experiencia profissional e/ou tempo de atuacao no perfil na jornada em andamento do usuario autenticado. O salvamento e parcial; somente os campos enviados sao atualizados e os demais sao mantidos. Pelo menos um dos tres campos deve ser enviado, e valores null nao limpam campos ja salvos (retornam 422). A resposta sempre devolve os tres campos e is_complete; a finalizacao da jornada continua exigindo os tres preenchidos. Este endpoint nao calcula nem retorna pontuacao. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token e envie o header X-CSRF-TOKEN.
       operationId: updateCurrentJourneyGeneralData
       security:
         - sessionAuth: []
@@ -1771,9 +1771,19 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateCurrentJourneyGeneralDataPayload"
             examples:
-              valid:
+              allFields:
+                summary: Todos os campos
                 value:
                   english_level_id: 10
+                  professional_experience_id: 2
+                  profile_experience_id: 3
+              singleField:
+                summary: Um campo isolado
+                value:
+                  professional_experience_id: 2
+              twoFields:
+                summary: Mais de um campo (o nao enviado e mantido)
+                value:
                   professional_experience_id: 2
                   profile_experience_id: 3
       responses:
@@ -1784,7 +1794,23 @@ paths:
               schema:
                 $ref: "#/components/schemas/CurrentJourneyGeneralDataResponse"
               examples:
+                partial:
+                  summary: Apos salvar somente a experiencia profissional
+                  value:
+                    success: true
+                    message: Dados gerais da jornada salvos com sucesso.
+                    data:
+                      journey_id: 15
+                      status: ongoing
+                      is_complete: false
+                      english_level: null
+                      professional_experience:
+                        id: 2
+                        description_pt: Entre 1 e 3 anos
+                        description_en: Between 1 and 3 years
+                      profile_experience: null
                 ok:
+                  summary: Com os tres campos preenchidos
                   value:
                     success: true
                     message: Dados gerais da jornada salvos com sucesso.
@@ -1850,6 +1876,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
               examples:
+                noFieldSent:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      english_level_id:
+                        - "Informe ao menos um dos dados gerais: nivel de ingles, experiencia profissional ou tempo de atuacao no perfil."
+                      professional_experience_id:
+                        - "Informe ao menos um dos dados gerais: nivel de ingles, experiencia profissional ou tempo de atuacao no perfil."
+                      profile_experience_id:
+                        - "Informe ao menos um dos dados gerais: nivel de ingles, experiencia profissional ou tempo de atuacao no perfil."
+                    code: VALIDATION_ERROR
+                nonexistentId:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      profile_experience_id:
+                        - O tempo de atuacao no perfil informado nao existe.
+                    code: VALIDATION_ERROR
                 invalidEnglishCriterion:
                   value:
                     success: false
@@ -3168,10 +3214,15 @@ components:
             $ref: "#/components/schemas/CurrentJourneyExperienceOption"
     UpdateCurrentJourneyGeneralDataPayload:
       type: object
-      required:
-        - english_level_id
-        - professional_experience_id
-        - profile_experience_id
+      description: Salvamento parcial. Envie ao menos um dos campos; os campos omitidos mantem o valor salvo na jornada.
+      minProperties: 1
+      anyOf:
+        - required:
+            - english_level_id
+        - required:
+            - professional_experience_id
+        - required:
+            - profile_experience_id
       properties:
         english_level_id:
           type: integer

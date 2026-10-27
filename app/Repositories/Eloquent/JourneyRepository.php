@@ -152,11 +152,21 @@ class JourneyRepository implements JourneyRepositoryInterface
 
     public function updateGeneralData(Journey $journey, array $data): Journey
     {
-        $journey->fill([
-            'FK_SUBCRITERIOS_INGLES' => $data['english_level_id'],
-            'FK_EXPERIENCIA_PROFISSIONAL' => $data['professional_experience_id'],
-            'FK_ATUACAO_PERFIL' => $data['profile_experience_id'],
-        ]);
+        $columns = [
+            'english_level_id' => 'FK_SUBCRITERIOS_INGLES',
+            'professional_experience_id' => 'FK_EXPERIENCIA_PROFISSIONAL',
+            'profile_experience_id' => 'FK_ATUACAO_PERFIL',
+        ];
+
+        $attributes = [];
+
+        foreach ($columns as $field => $column) {
+            if (array_key_exists($field, $data)) {
+                $attributes[$column] = $data[$field];
+            }
+        }
+
+        $journey->fill($attributes);
         $journey->save();
 
         return $journey->load([
