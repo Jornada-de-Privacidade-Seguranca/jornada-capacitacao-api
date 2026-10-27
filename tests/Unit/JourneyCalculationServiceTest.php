@@ -323,6 +323,12 @@ class JourneyCalculationServiceTest extends TestCase
 
     public function test_it_treats_a_missing_competency_criterion_weight_as_zero(): void
     {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Competency criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::COMPETENCIES_NAME_EN,
+            ]);
+
         $service = $this->service(criterionWeight: null);
         $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Especialista']);
         $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);

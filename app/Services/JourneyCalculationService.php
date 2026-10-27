@@ -234,9 +234,20 @@ class JourneyCalculationService
 
     public function calculateCompetencyCriterionScore(iterable $acquiredKnowledges, iterable $areaWeights): float
     {
-        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::COMPETENCIES_NAME_EN) ?? 0.0;
+        $criterionScore = $this->calculateCompetencyScore($acquiredKnowledges, $areaWeights);
+        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::COMPETENCIES_NAME_EN);
 
-        return $this->calculateCompetencyScore($acquiredKnowledges, $areaWeights) * ($criterionWeight / 100.0);
+        if ($criterionWeight === null) {
+            if ($criterionScore > 0.0) {
+                Log::warning('Competency criterion weight is not configured; using a zero contribution.', [
+                    'criterion' => Criterion::COMPETENCIES_NAME_EN,
+                ]);
+            }
+
+            return 0.0;
+        }
+
+        return $criterionScore * ($criterionWeight / 100.0);
     }
 
     private function areaWeightsByAreaId(iterable $areaWeights): Collection
