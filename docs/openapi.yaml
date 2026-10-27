@@ -4679,7 +4679,7 @@ components:
           type: string
           example: Journey profile retrieved successfully.
         data:
-          $ref: "#/components/schemas/JourneyProfile"
+          $ref: "#/components/schemas/JourneyProfileDetail"
     SelectedJourneyProfileResponse:
       type: object
       required:
@@ -4735,6 +4735,22 @@ components:
             - "null"
           description: ID do dominio de conhecimento associado ao perfil de jornada.
           example: 1
+    JourneyProfileDetail:
+      allOf:
+        - $ref: "#/components/schemas/JourneyProfile"
+        - type: object
+          required:
+            - competencies_count
+            - knowledge_areas_count
+          properties:
+            competencies_count:
+              type: integer
+              description: Total de competencias associadas ao perfil de jornada.
+              example: 12
+            knowledge_areas_count:
+              type: integer
+              description: Total de areas de conhecimento distintas entre as competencias do perfil.
+              example: 5
     ValidationError:
       type: object
       properties:

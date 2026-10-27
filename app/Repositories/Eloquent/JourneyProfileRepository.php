@@ -5,6 +5,7 @@ namespace App\Repositories\Eloquent;
 use App\Models\JourneyProfile;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class JourneyProfileRepository implements JourneyProfileRepositoryInterface
 {
@@ -33,6 +34,20 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
     {
         return JourneyProfile::query()
             ->whereNotNull('NO_PERFIS_PT')
+            ->select('TB_PERFIS_JORNADA.*')
+            ->selectSub(
+                DB::table('RL_PERFIS_COMPETENCIAS')
+                    ->whereColumn('RL_PERFIS_COMPETENCIAS.FK_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA')
+                    ->selectRaw('COUNT(DISTINCT RL_PERFIS_COMPETENCIAS.FK_COMPETENCIAS)'),
+                'competencies_count',
+            )
+            ->selectSub(
+                DB::table('RL_PERFIS_COMPETENCIAS')
+                    ->join('TB_COMPETENCIAS', 'TB_COMPETENCIAS.PK_COMPETENCIAS', '=', 'RL_PERFIS_COMPETENCIAS.FK_COMPETENCIAS')
+                    ->whereColumn('RL_PERFIS_COMPETENCIAS.FK_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA')
+                    ->selectRaw('COUNT(DISTINCT TB_COMPETENCIAS.FK_AREA_CONHECIMENTO)'),
+                'knowledge_areas_count',
+            )
             ->findOrFail($id);
     }
 }
