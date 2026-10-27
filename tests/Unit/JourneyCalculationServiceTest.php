@@ -110,9 +110,20 @@ class JourneyCalculationServiceTest extends TestCase
     {
         $service = $this->service();
         $criterion = new Criterion(['NU_PESO_CRITERIO' => null]);
-        $graduation = $this->courseWithEducationWeight(8.829, 1, $criterion);
+        $courseWithNullWeight = $this->courseWithEducationWeight(8.829, 1, $criterion);
+        $courseWithoutCriterion = (new HigherEducationCourse)->setRelation(
+            'subcriterion',
+            new Subcriterion(['NU_PESO_SUBCRITERIO' => 8.829]),
+        );
 
-        $this->assertSame(0.0, $service->calculateEducationCriterionScore([$graduation]));
+        Log::shouldReceive('warning')
+            ->twice()
+            ->with('Education criterion weight is not configured; using a zero contribution.', [
+                'criterion' => 'Education',
+            ]);
+
+        $this->assertSame(0.0, $service->calculateEducationCriterionScore([$courseWithNullWeight]));
+        $this->assertSame(0.0, $service->calculateEducationCriterionScore([$courseWithoutCriterion]));
     }
 
     public function test_it_treats_a_missing_english_criterion_or_weight_as_zero(): void
