@@ -14,6 +14,11 @@ class AuthenticatedUserController
         return ApiResponse::success(
             data: (new AuthenticatedUserResource($request->user()))->resolve(),
             message: 'Usuario autenticado recuperado com sucesso.',
+            meta: [
+                'session' => [
+                    'lifetime_minutes' => config('session.lifetime'),
+                ],
+            ],
         );
     }
 }

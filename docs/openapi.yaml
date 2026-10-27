@@ -211,7 +211,7 @@ paths:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. A resposta inclui meta.session.lifetime_minutes conforme config('session.lifetime'). No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
       parameters:
@@ -251,6 +251,9 @@ paths:
                         profile_type_id: 1
                         profile_type_name: Aluno
                       active_status: 1
+                    meta:
+                      session:
+                        lifetime_minutes: 120
                 administrator:
                   value:
                     success: true
@@ -267,6 +270,9 @@ paths:
                         profile_type_id: null
                         profile_type_name: null
                       active_status: 1
+                    meta:
+                      session:
+                        lifetime_minutes: 120
         "401":
           description: Credenciais invalidas
           content:
@@ -343,7 +349,7 @@ paths:
       tags:
         - Auth
       summary: Recupera o usuario autenticado
-      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
+      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui meta.session.lifetime_minutes conforme config('session.lifetime'). Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
       operationId: getAuthenticatedUser
       security:
         - sessionAuth: []
@@ -374,6 +380,9 @@ paths:
                         journey_profile_name: Encarregado pelo Tratamento de Dados Pessoais
                         journey_profile_name_en: Data Protection Officer
                       active_status: 1
+                    meta:
+                      session:
+                        lifetime_minutes: 120
         "401":
           description: Usuario nao autenticado
           content:
@@ -3183,6 +3192,7 @@ components:
         - success
         - message
         - data
+        - meta
       properties:
         success:
           type: boolean
@@ -3192,12 +3202,15 @@ components:
           example: Login realizado com sucesso.
         data:
           $ref: "#/components/schemas/AuthenticatedUser"
+        meta:
+          $ref: "#/components/schemas/SessionMetadata"
     AuthenticatedUserResponse:
       type: object
       required:
         - success
         - message
         - data
+        - meta
       properties:
         success:
           type: boolean
@@ -3207,6 +3220,22 @@ components:
           example: Usuario autenticado recuperado com sucesso.
         data:
           $ref: "#/components/schemas/AuthenticatedUser"
+        meta:
+          $ref: "#/components/schemas/SessionMetadata"
+    SessionMetadata:
+      type: object
+      required:
+        - session
+      properties:
+        session:
+          type: object
+          required:
+            - lifetime_minutes
+          properties:
+            lifetime_minutes:
+              type: integer
+              description: Duracao da sessao em minutos conforme SESSION_LIFETIME.
+              example: 120
     AuthenticatedUser:
       type: object
       required:

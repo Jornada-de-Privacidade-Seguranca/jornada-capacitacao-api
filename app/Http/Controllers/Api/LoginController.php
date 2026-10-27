@@ -47,6 +47,11 @@ class LoginController
         return ApiResponse::success(
             data: (new AuthenticatedUserResource($user))->resolve(),
             message: 'Login realizado com sucesso.',
+            meta: [
+                'session' => [
+                    'lifetime_minutes' => config('session.lifetime'),
+                ],
+            ],
         );
     }
 }
