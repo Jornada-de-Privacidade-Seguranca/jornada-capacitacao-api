@@ -74,6 +74,12 @@ class JourneyCalculationServiceTest extends TestCase
 
     public function test_it_uses_zero_when_professional_experience_criterion_weight_is_missing(): void
     {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Professional experience criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_EXPERIENCE_NAME,
+            ]);
+
         $service = $this->service(criterionWeight: null);
 
         $this->assertSame(0.0, $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'));

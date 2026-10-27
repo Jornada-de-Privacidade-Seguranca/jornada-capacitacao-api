@@ -15,8 +15,6 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
-    private const PROFESSIONAL_EXPERIENCE_CRITERION_NAME = 'Experiência Profissional';
-
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -86,7 +84,15 @@ class JourneyCalculationService
         $criterionScore = $this->calculateProfessionalExperienceScore($professionalExperience)
             + $this->calculateProfileExperienceScore($profileExperience);
 
-        $criterionWeight = $this->criterionRepository->findWeightByName(self::PROFESSIONAL_EXPERIENCE_CRITERION_NAME) ?? 0.0;
+        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::PROFESSIONAL_EXPERIENCE_NAME);
+
+        if ($criterionWeight === null) {
+            Log::warning('Professional experience criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_EXPERIENCE_NAME,
+            ]);
+
+            return 0.0;
+        }
 
         return $criterionScore * $criterionWeight / 100.0;
     }
