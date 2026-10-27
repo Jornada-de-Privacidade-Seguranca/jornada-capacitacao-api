@@ -1,0 +1,121 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Exceptions\InvalidAccountStateException;
+use App\Http\Requests\ListPendingUsersRequest;
+use App\Http\Resources\AdministeredUserResource;
+use App\Http\Resources\PendingUserActivationResource;
+use App\Services\UserAccountAdministrationService;
+use App\Support\ApiResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Throwable;
+
+class UserAccountAdministrationController
+{
+    public function __construct(private readonly UserAccountAdministrationService $service) {}
+
+    public function pending(ListPendingUsersRequest $request): JsonResponse
+    {
+        try {
+            $users = $this->service->pendingActivationUsers(
+                authenticatedUser: $request->user(),
+                page: (int) $request->validated('page'),
+                perPage: (int) $request->validated('per_page'),
+            );
+        } catch (AccessDeniedHttpException) {
+            return $this->forbiddenResponse();
+        } catch (Throwable) {
+            return ApiResponse::error(
+                message: 'Nao foi possivel buscar as contas pendentes no momento.',
+                status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                code: 'PENDING_USERS_SEARCH_FAILED',
+            );
+        }
+
+        return ApiResponse::paginated(
+            resource: PendingUserActivationResource::collection($users)->resolve(),
+            paginator: $users,
+            message: 'Contas pendentes retornadas com sucesso.',
+        );
+    }
+
+    public function activate(Request $request, int $user): JsonResponse
+    {
+        try {
+            $account = $this->service->activate($request->user(), $user);
+        } catch (AccessDeniedHttpException) {
+            return $this->forbiddenResponse();
+        } catch (ModelNotFoundException) {
+            return $this->notFoundResponse();
+        } catch (InvalidAccountStateException) {
+            return $this->invalidStateResponse();
+        } catch (Throwable) {
+            return ApiResponse::error(
+                message: 'Nao foi possivel ativar a conta no momento.',
+                status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                code: 'USER_ACTIVATION_FAILED',
+            );
+        }
+
+        return ApiResponse::success(
+            data: (new AdministeredUserResource($account))->resolve(),
+            message: 'Conta ativada com sucesso.',
+        );
+    }
+
+    public function deactivate(Request $request, int $user): JsonResponse
+    {
+        try {
+            $account = $this->service->deactivate($request->user(), $user);
+        } catch (AccessDeniedHttpException) {
+            return $this->forbiddenResponse();
+        } catch (ModelNotFoundException) {
+            return $this->notFoundResponse();
+        } catch (InvalidAccountStateException) {
+            return $this->invalidStateResponse();
+        } catch (Throwable) {
+            return ApiResponse::error(
+                message: 'Nao foi possivel desativar a conta no momento.',
+                status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                code: 'USER_DEACTIVATION_FAILED',
+            );
+        }
+
+        return ApiResponse::success(
+            data: (new AdministeredUserResource($account))->resolve(),
+            message: 'Conta desativada com sucesso.',
+        );
+    }
+
+    private function forbiddenResponse(): JsonResponse
+    {
+        return ApiResponse::error(
+            message: 'Voce nao possui permissao para gerenciar contas de usuario.',
+            status: Response::HTTP_FORBIDDEN,
+            code: 'USER_ACCOUNT_ADMINISTRATION_FORBIDDEN',
+        );
+    }
+
+    private function notFoundResponse(): JsonResponse
+    {
+        return ApiResponse::error(
+            message: 'Usuario nao encontrado.',
+            status: Response::HTTP_NOT_FOUND,
+            code: 'USER_NOT_FOUND',
+        );
+    }
+
+    private function invalidStateResponse(): JsonResponse
+    {
+        return ApiResponse::error(
+            message: 'A conta nao esta em um estado que permita esta operacao.',
+            status: Response::HTTP_CONFLICT,
+            code: 'INVALID_USER_ACCOUNT_STATE',
+        );
+    }
+}

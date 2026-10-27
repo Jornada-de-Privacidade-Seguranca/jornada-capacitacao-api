@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\JourneyProfileSelectionController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\TemplateExampleController;
+use App\Http\Controllers\Api\UserAccountAdministrationController;
 use App\Http\Controllers\Api\UserJourneyController;
 use App\Http\Controllers\Api\UserRegistrationController;
 use App\Http\Middleware\AuthenticateSessionUser;
@@ -39,6 +40,9 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
 
     Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
         Route::get('/me', AuthenticatedUserController::class);
+        Route::get('/admin/users/pending-activation', [UserAccountAdministrationController::class, 'pending']);
+        Route::post('/admin/users/{user}/activate', [UserAccountAdministrationController::class, 'activate']);
+        Route::post('/admin/users/{user}/deactivate', [UserAccountAdministrationController::class, 'deactivate']);
         Route::put('/me/journey-profile', [JourneyProfileSelectionController::class, 'update']);
         Route::get('/dashboard', DashboardController::class);
         Route::apiResource('journey-profiles', JourneyProfileController::class)

@@ -4,6 +4,7 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Usuario;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -45,5 +46,20 @@ class UserRepository implements UserRepositoryInterface
         $user->save();
 
         return $user->refresh()->load(['profileType', 'selectedJourneyProfile']);
+    }
+
+    public function findByIdForUpdate(int $id): ?Usuario
+    {
+        return Usuario::query()->whereKey($id)->lockForUpdate()->first();
+    }
+
+    public function pendingActivationPaginated(int $page, int $perPage): LengthAwarePaginator
+    {
+        return Usuario::query()
+            ->where('ST_ATIVO', 2)
+            ->whereNull('FK_TIPO_USUARIO')
+            ->orderBy('DH_CRIADO_EM')
+            ->orderBy('PK_USUARIO')
+            ->paginate($perPage, ['*'], 'page', $page);
     }
 }

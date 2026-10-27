@@ -185,6 +185,134 @@ paths:
                     message: Muitas tentativas. Tente novamente mais tarde.
                     errors: []
                     code: TOO_MANY_ATTEMPTS
+  /admin/users/pending-activation:
+    get:
+      tags:
+        - Auth
+      summary: Lista contas pendentes de ativacao
+      description: Lista contas com ST_ATIVO igual a 2 e FK_TIPO_USUARIO nulo. Somente administradores ativos podem consultar. A listagem e paginada.
+      operationId: listPendingUserActivations
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        "200":
+          description: Contas pendentes retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingUserActivationListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario autenticado sem permissao de administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Parametros de paginacao invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+  /admin/users/{user}/activate:
+    post:
+      tags:
+        - Auth
+      summary: Ativa uma conta pendente como usuario comum
+      description: Somente um administrador autenticado pode ativar uma conta com ST_ATIVO igual a 2 e FK_TIPO_USUARIO nulo. A rota exige CSRF.
+      operationId: activatePendingUser
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Conta ativada como usuario comum
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdministeredUserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario autenticado sem permissao de administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Usuario nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "409":
+          description: Conta nao esta pendente de ativacao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+  /admin/users/{user}/deactivate:
+    post:
+      tags:
+        - Auth
+      summary: Desativa um usuario comum ativo
+      description: Somente um administrador autenticado pode desativar conta ativa de usuario comum. A rota exige CSRF e preserva o tipo de usuario comum.
+      operationId: deactivateCommonUser
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Usuario comum desativado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdministeredUserResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario autenticado sem permissao de administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Usuario nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "409":
+          description: Conta nao e de usuario comum ativo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
   /auth/csrf-token:
     get:
       tags:
@@ -2872,7 +3000,7 @@ components:
       name: user
       in: path
       required: true
-      description: Identificador do usuario cujas jornadas serao listadas.
+      description: Identificador do usuario associado a operacao.
       schema:
         type: integer
         minimum: 1
@@ -3054,6 +3182,101 @@ components:
         code:
           type: string
           example: ERROR_CODE
+    PendingUserActivationListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Contas pendentes retornadas com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PendingUserActivation"
+        meta:
+          type: object
+          required:
+            - pagination
+          properties:
+            pagination:
+              $ref: "#/components/schemas/PaginationMeta"
+    PendingUserActivation:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - organization
+        - department
+        - registration_number
+        - created_at
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        organization:
+          type:
+            - string
+            - "null"
+        department:
+          type:
+            - string
+            - "null"
+        registration_number:
+          type:
+            - string
+            - "null"
+        created_at:
+          type:
+            - string
+            - "null"
+          pattern: '^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$'
+          example: "2026-10-20 09:30:00"
+    AdministeredUserResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          required:
+            - id
+            - name
+            - email
+            - active_status
+            - user_type_id
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+            active_status:
+              type: integer
+              enum: [1, 2]
+            user_type_id:
+              type: integer
+              enum: [2]
     UserRegistrationResponse:
       type: object
       required:
