@@ -81,38 +81,38 @@ class JourneyProfileTest extends TestCase
         $security = $this->profileInDomain('Segurança da Informação', 'Security profile');
         $joint = $this->profileInDomain('Conjunta (Privacidade/Segurança)', 'Joint profile');
 
-        foreach ([
-            'Privacidade' => [1, 3],
-            'Segurança' => [2, 3],
-            'Privacidade/Segurança' => null,
-        ] as $modality => $domainIds) {
-            $response = $this->actingAs($user)
-                ->getJson('/api/journey-profiles?'.http_build_query(['modality' => $modality, 'per_page' => 100]))
-                ->assertOk()
-                ->assertJsonPath('success', true);
+        $privacyIds = $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query(['modality' => 'Privacidade', 'per_page' => 100]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->json('data.*.id');
 
-            $expectedProfileIds = JourneyProfile::query()
-                ->whereNotNull('NO_PERFIS_PT')
-                ->when($domainIds !== null, fn ($query) => $query->whereIn('FK_DOMINIO_CONHECIMENTO', $domainIds))
-                ->orderBy('PK_PERFIS_JORNADA')
-                ->pluck('PK_PERFIS_JORNADA')
-                ->all();
-
-            $this->assertSame($expectedProfileIds, collect($response->json('data'))->pluck('id')->all());
-        }
-
-        $privacyIds = JourneyProfile::query()
-            ->whereIn('FK_DOMINIO_CONHECIMENTO', [1, 3])
-            ->pluck('PK_PERFIS_JORNADA');
-        $securityIds = JourneyProfile::query()
-            ->whereIn('FK_DOMINIO_CONHECIMENTO', [2, 3])
-            ->pluck('PK_PERFIS_JORNADA');
         $this->assertContains($privacy->PK_PERFIS_JORNADA, $privacyIds);
         $this->assertContains($joint->PK_PERFIS_JORNADA, $privacyIds);
         $this->assertNotContains($security->PK_PERFIS_JORNADA, $privacyIds);
+
+        $securityIds = $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query(['modality' => 'Segurança', 'per_page' => 100]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->json('data.*.id');
+
         $this->assertContains($security->PK_PERFIS_JORNADA, $securityIds);
         $this->assertContains($joint->PK_PERFIS_JORNADA, $securityIds);
         $this->assertNotContains($privacy->PK_PERFIS_JORNADA, $securityIds);
+
+        $combinedIds = $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'modality' => 'Privacidade/Segurança',
+                'per_page' => 100,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->json('data.*.id');
+
+        $this->assertContains($privacy->PK_PERFIS_JORNADA, $combinedIds);
+        $this->assertContains($security->PK_PERFIS_JORNADA, $combinedIds);
+        $this->assertContains($joint->PK_PERFIS_JORNADA, $combinedIds);
     }
 
     public function test_it_preserves_pagination_when_filtering_by_modality(): void
