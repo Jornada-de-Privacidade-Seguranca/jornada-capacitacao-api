@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\AcquiredKnowledge;
 use App\Models\Competency;
 use App\Models\CompetencyCriterionWeight;
+use App\Models\Criterion;
 use App\Models\Difficulty;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
@@ -14,6 +15,7 @@ use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
 use App\Services\JourneyCalculationService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -65,14 +67,38 @@ class JourneyCalculationServiceTest extends TestCase
         );
     }
 
-    public function test_it_uses_the_persisted_english_subcriterion_weight(): void
+    public function test_it_applies_the_english_main_criterion_weight_to_subcriterion_score(): void
     {
         $service = $this->service();
+        $criterion = new Criterion(['NU_PESO_CRITERIO' => 4.85]);
+        $none = (new Subcriterion(['NU_PESO_SUBCRITERIO' => 0]))->setRelation('criterion', $criterion);
+        $intermediate = (new Subcriterion(['NU_PESO_SUBCRITERIO' => 26.05]))->setRelation('criterion', $criterion);
+        $advanced = (new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335]))->setRelation('criterion', $criterion);
 
-        $this->assertSame(26.05, $service->calculateEnglishProficiencyScore(new Subcriterion([
-            'NU_PESO_SUBCRITERIO' => 26.05,
-        ])));
+        $this->assertSame(0.0, $service->calculateEnglishProficiencyScore($none));
+        $this->assertEqualsWithDelta(1.263425, $service->calculateEnglishProficiencyScore($intermediate), 0.000001);
+        $this->assertEqualsWithDelta(3.0717475, $service->calculateEnglishProficiencyScore($advanced), 0.000001);
         $this->assertSame(0.0, $service->calculateEnglishProficiencyScore(null));
+    }
+
+    public function test_it_treats_a_missing_english_criterion_or_weight_as_zero(): void
+    {
+        Log::shouldReceive('warning')
+            ->twice()
+            ->with('Peso do critério de Inglês não configurado.', [
+                'criterion' => Criterion::ENGLISH_PROFICIENCY_NAME,
+            ]);
+
+        $service = $this->service();
+        $weightedSubcriterion = new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335]);
+        $criterionWithoutWeight = new Criterion(['NU_PESO_CRITERIO' => null]);
+        $weightedSubcriterion->setRelation('criterion', $criterionWithoutWeight);
+
+        $this->assertSame(0.0, $service->calculateEnglishProficiencyScore($weightedSubcriterion));
+        $this->assertSame(
+            0.0,
+            $service->calculateEnglishProficiencyScore(new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335])),
+        );
     }
 
     public function test_it_calculates_certification_score_with_maximum_limit(): void
@@ -174,9 +200,10 @@ class JourneyCalculationServiceTest extends TestCase
         $journey->setRelation('profileExperience', new ProfessionalExperience([
             'DS_EXPERIENCIA_ATUACAO_PT' => 'Entre 7 e 10 anos',
         ]));
-        $journey->setRelation('englishSubcriterion', new Subcriterion([
+        $englishCriterion = new Criterion(['NU_PESO_CRITERIO' => 4.85]);
+        $journey->setRelation('englishSubcriterion', (new Subcriterion([
             'NU_PESO_SUBCRITERIO' => 26.05,
-        ]));
+        ]))->setRelation('criterion', $englishCriterion));
         $journey->setRelation('higherEducationCourses', new Collection([$course]));
         $journey->setRelation('professionalCertifications', new Collection([
             new ProfessionalCertification,
@@ -186,7 +213,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(119.879, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(95.092425, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function service(?Collection $areaWeights = null): JourneyCalculationService

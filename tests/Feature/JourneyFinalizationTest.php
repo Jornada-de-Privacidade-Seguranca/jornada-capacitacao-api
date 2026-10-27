@@ -47,11 +47,11 @@ class JourneyFinalizationTest extends TestCase
         $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 71.051);
+            ->assertJsonPath('data.score', 46.263);
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 71.051,
+            'NU_PONTUACAO_TOTAL' => 46.263,
             'DH_FIM' => '2026-09-28 14:30:00',
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
@@ -147,6 +147,7 @@ class JourneyFinalizationTest extends TestCase
         ]);
         $englishCriterion = Criterion::create([
             'NO_CRITERIO_PT' => 'Nível de Proficiência - Inglês',
+            'NU_PESO_CRITERIO' => 4.85,
         ]);
         $english = Subcriterion::create([
             'FK_CRITERIOS' => $englishCriterion->PK_CRITERIOS,
