@@ -228,8 +228,14 @@ class JourneyCalculationServiceTest extends TestCase
         $this->assertSame(2.5, $service->calculateProfessionalCertificationCriterionScore(1));
     }
 
-    public function test_it_returns_zero_when_the_certification_criterion_or_its_weight_is_missing(): void
+    public function test_it_logs_and_returns_zero_when_the_certification_criterion_weight_is_missing(): void
     {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Professional certification criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            ]);
+
         $service = $this->service(certificationWeight: null);
 
         $this->assertSame(0.0, $service->calculateProfessionalCertificationCriterionScore(5));

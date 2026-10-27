@@ -200,6 +200,10 @@ class JourneyCalculationService
         $weight = $this->criterionRepository->findWeightByName(Criterion::PROFESSIONAL_CERTIFICATION_NAME);
 
         if ($weight === null) {
+            Log::warning('Professional certification criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            ]);
+
             return 0.0;
         }
 
