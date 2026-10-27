@@ -58,7 +58,7 @@ class JourneyCalculationService
         return $this->calculateProfessionalExperienceScore($journey->professionalExperience)
             + $this->calculateProfileExperienceScore($journey->profileExperience)
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
-            + $this->calculateCourseScore($journey->higherEducationCourses)
+            + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
             + $this->calculateCertificationScore($journey->professionalCertifications)
             + $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights);
     }
@@ -139,6 +139,27 @@ class JourneyCalculationService
                 return [(string) $key => (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0)];
             })
             ->sum();
+    }
+
+    public function calculateEducationCriterionScore(iterable $courses): float
+    {
+        $courses = collect($courses);
+        // Todos os tipos de curso selecionados pertencem ao criterio de Formacao Academica.
+        $criterionWeight = $courses
+            ->map(fn ($course): mixed => $course->subcriterion?->criterion?->NU_PESO_CRITERIO)
+            ->first(fn ($weight): bool => $weight !== null);
+
+        if ($criterionWeight === null) {
+            if ($courses->isNotEmpty()) {
+                Log::warning('Education criterion weight is not configured; using a zero contribution.', [
+                    'criterion' => Criterion::EDUCATION_NAME,
+                ]);
+            }
+
+            return 0.0;
+        }
+
+        return $this->calculateCourseScore($courses) * (float) $criterionWeight / 100.0;
     }
 
     public function calculateCertificationScore(iterable|int $certifications): float

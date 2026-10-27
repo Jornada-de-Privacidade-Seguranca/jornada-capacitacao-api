@@ -20,7 +20,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         'professionalExperience',
         'profileExperience',
         'englishSubcriterion.criterion',
-        'higherEducationCourses.subcriterion',
+        'higherEducationCourses.subcriterion.criterion',
         'acquiredKnowledges.competency.knowledgeDomain',
         'acquiredKnowledges.competency.knowledgeArea',
         'acquiredKnowledges.competency.difficulty',
