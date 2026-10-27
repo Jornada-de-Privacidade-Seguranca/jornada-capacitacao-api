@@ -1631,6 +1631,7 @@ paths:
                       status: ongoing
                       is_completed: false
                       score: null
+                      criterion_scores: null
                       answers:
                         professional_experience:
                           id: 1
@@ -3763,6 +3764,7 @@ components:
         - status
         - is_completed
         - score
+        - criterion_scores
         - answers
         - acquired_knowledges
         - knowledges_by_domain
@@ -3802,6 +3804,38 @@ components:
           format: float
           description: Pontuacao final persistida ao concluir a jornada; permanece nula durante a jornada e nao e recalculada nas consultas.
           example: 126.329
+        criterion_scores:
+          type:
+            - object
+            - "null"
+          description: Contribuicoes ponderadas por criterio em jornadas concluidas, arredondadas para tres casas decimais. A soma corresponde a score; o valor e nulo em jornadas em andamento.
+          required:
+            - professional_experience
+            - english_proficiency
+            - education
+            - professional_certifications
+            - competencies
+          properties:
+            professional_experience:
+              type: number
+              format: float
+              example: 8.334
+            english_proficiency:
+              type: number
+              format: float
+              example: 1.263
+            education:
+              type: number
+              format: float
+              example: 0
+            professional_certifications:
+              type: number
+              format: float
+              example: 0
+            competencies:
+              type: number
+              format: float
+              example: 4.592
         answers:
           $ref: "#/components/schemas/UserJourneyAnswers"
         acquired_knowledges:

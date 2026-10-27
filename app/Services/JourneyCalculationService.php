@@ -53,18 +53,50 @@ class JourneyCalculationService
 
     public function calculateForJourney(Journey $journey): float
     {
+        return array_sum($this->calculateCriterionContributions($journey));
+    }
+
+    /** @return array<string, float> */
+    public function calculateCriterionScoresForJourney(Journey $journey): array
+    {
+        $contributions = $this->calculateCriterionContributions($journey);
+        $targetMilliPoints = (int) round(array_sum($contributions) * 1000);
+        $roundedMilliPoints = [];
+        $remainders = [];
+
+        foreach ($contributions as $criterion => $contribution) {
+            $scaled = max(0.0, $contribution) * 1000;
+            $roundedMilliPoints[$criterion] = (int) floor($scaled);
+            $remainders[$criterion] = $scaled - $roundedMilliPoints[$criterion];
+        }
+
+        $remainingMilliPoints = $targetMilliPoints - array_sum($roundedMilliPoints);
+        uksort($remainders, fn (string $left, string $right): int => $remainders[$right] <=> $remainders[$left]);
+
+        foreach (array_slice(array_keys($remainders), 0, $remainingMilliPoints) as $criterion) {
+            $roundedMilliPoints[$criterion]++;
+        }
+
+        return array_map(fn (int $score): float => $score / 1000, $roundedMilliPoints);
+    }
+
+    /** @return array<string, float> */
+    private function calculateCriterionContributions(Journey $journey): array
+    {
         $areaWeights = $journey->FK_PERFIS_JORNADA === null
             ? collect()
             : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
 
-        return $this->calculateProfessionalExperienceCriterionScore(
-            $journey->professionalExperience,
-            $journey->profileExperience,
-        )
-            + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
-            + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
-            + $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications)
-            + $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights);
+        return [
+            'professional_experience' => $this->calculateProfessionalExperienceCriterionScore(
+                $journey->professionalExperience,
+                $journey->profileExperience,
+            ),
+            'english_proficiency' => $this->calculateEnglishProficiencyScore($journey->englishSubcriterion),
+            'education' => $this->calculateEducationCriterionScore($journey->higherEducationCourses),
+            'professional_certifications' => $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications),
+            'competencies' => $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights),
+        ];
     }
 
     public function calculateProfessionalExperienceScore(ProfessionalExperience|string|null $experience): float

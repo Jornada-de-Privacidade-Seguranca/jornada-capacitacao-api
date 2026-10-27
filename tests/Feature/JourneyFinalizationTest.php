@@ -45,10 +45,17 @@ class JourneyFinalizationTest extends TestCase
             ->assertJsonPath('data.finished_at', '2026-09-28 14:30:00')
             ->assertJsonMissingPath('data.total_score');
 
-        $this->actingAs($user)
+        $detail = $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 14.189);
+            ->assertJsonPath('data.score', 14.189)
+            ->assertJsonPath('data.criterion_scores.professional_experience', 8.334)
+            ->assertJsonPath('data.criterion_scores.english_proficiency', 1.263)
+            ->assertJsonPath('data.criterion_scores.education', 0)
+            ->assertJsonPath('data.criterion_scores.professional_certifications', 0)
+            ->assertJsonPath('data.criterion_scores.competencies', 4.592);
+
+        $this->assertEquals(14.189, array_sum($detail->json('data.criterion_scores')), '', 0.000001);
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
@@ -57,6 +64,31 @@ class JourneyFinalizationTest extends TestCase
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
         $this->assertDatabaseCount('RL_CERTIFICACAO_JORNADA', 0);
+    }
+
+    public function test_it_returns_weighted_scores_for_each_criterion_that_sum_to_the_final_score(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture();
+        $journey->higherEducationCourses()->attach($this->educationCourse(8.829)->PK_CURSO_SUPERIOR);
+        $journey->professionalCertifications()->attach(
+            $this->certification('Certificacao Teste')->PK_CERTIFICACAO_PROFISSIONAL,
+        );
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $detail = $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonPath('data.score', 17.631)
+            ->assertJsonPath('data.criterion_scores.professional_experience', 8.334)
+            ->assertJsonPath('data.criterion_scores.english_proficiency', 1.263)
+            ->assertJsonPath('data.criterion_scores.education', 1.298)
+            ->assertJsonPath('data.criterion_scores.professional_certifications', 2.144)
+            ->assertJsonPath('data.criterion_scores.competencies', 4.592);
+
+        $this->assertEquals(17.631, array_sum($detail->json('data.criterion_scores')), '', 0.000001);
     }
 
     public function test_it_includes_the_weighted_contribution_of_one_selected_education_course(): void

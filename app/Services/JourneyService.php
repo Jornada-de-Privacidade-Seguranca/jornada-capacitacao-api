@@ -198,6 +198,13 @@ class JourneyService
 
         $this->ensureCompletedJourneyHasRequiredData($journey);
 
+        if ($journey->DH_FIM !== null) {
+            $journey->setAttribute(
+                'criterion_scores',
+                $this->journeyCalculationService->calculateCriterionScoresForJourney($journey),
+            );
+        }
+
         return $journey;
     }
 
