@@ -18,4 +18,3 @@ Implementado em `feature/taiga-129-session-lifetime`. Ambos os endpoints adicion
 Validação: `composer check` passou: 290 testes, 1794 assertions; Pint, PHPStan e PHPMD passaram. Teste focado de renovação também passou com 7 assertions.
 
 Verificação HTTP manual em servidor local com SQLite isolado e `SESSION_LIFETIME=31`: `GET /api/auth/csrf-token` retornou 200; `POST /api/auth/login` com CSRF retornou sucesso e metadata 31; `GET /api/me` autenticado retornou sucesso e metadata 31. Só foram criadas sessões no banco temporário, que foi removido após a verificação.
-
