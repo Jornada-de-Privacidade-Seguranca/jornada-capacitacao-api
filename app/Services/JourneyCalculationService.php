@@ -64,7 +64,7 @@ class JourneyCalculationService
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
             + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
             + $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications)
-            + $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights);
+            + $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights);
     }
 
     public function calculateProfessionalExperienceScore(ProfessionalExperience|string|null $experience): float
@@ -230,6 +230,24 @@ class JourneyCalculationService
 
                 return $areaWeight * ($levelWeight / 5.0);
             });
+    }
+
+    public function calculateCompetencyCriterionScore(iterable $acquiredKnowledges, iterable $areaWeights): float
+    {
+        $criterionScore = $this->calculateCompetencyScore($acquiredKnowledges, $areaWeights);
+        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::COMPETENCIES_NAME_EN);
+
+        if ($criterionWeight === null) {
+            if ($criterionScore > 0.0) {
+                Log::warning('Competency criterion weight is not configured; using a zero contribution.', [
+                    'criterion' => Criterion::COMPETENCIES_NAME_EN,
+                ]);
+            }
+
+            return 0.0;
+        }
+
+        return $criterionScore * ($criterionWeight / 100.0);
     }
 
     private function areaWeightsByAreaId(iterable $areaWeights): Collection
