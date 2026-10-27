@@ -15,6 +15,7 @@ use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
 use App\Services\JourneyCalculationService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -82,6 +83,12 @@ class JourneyCalculationServiceTest extends TestCase
 
     public function test_it_treats_a_missing_english_criterion_or_weight_as_zero(): void
     {
+        Log::shouldReceive('warning')
+            ->twice()
+            ->with('Peso do critério de Inglês não configurado.', [
+                'criterion' => Criterion::ENGLISH_PROFICIENCY_NAME,
+            ]);
+
         $service = $this->service();
         $weightedSubcriterion = new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335]);
         $criterionWithoutWeight = new Criterion(['NU_PESO_CRITERIO' => null]);

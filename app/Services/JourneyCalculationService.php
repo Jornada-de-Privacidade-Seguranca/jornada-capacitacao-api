@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Criterion;
 use App\Models\Journey;
 use App\Models\ProfessionalExperience;
 use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -77,12 +79,18 @@ class JourneyCalculationService
             return 0.0;
         }
 
-        // NU_PESO_CRITERIO is nullable in the legacy schema. A null weight or
-        // missing criterion means this subcriterion contributes zero to the
-        // total, matching criteria explicitly configured with weight zero.
-        $mainCriterionWeight = (float) ($subcriterion->criterion?->NU_PESO_CRITERIO ?? 0);
+        // NU_PESO_CRITERIO é nullable no schema legado. Sem critério ou peso,
+        // a contribuição é zero, mas o problema de configuração deve ficar visível.
+        $criterion = $subcriterion->criterion;
+        $mainCriterionWeight = $criterion?->NU_PESO_CRITERIO;
 
-        return (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0) * ($mainCriterionWeight / 100.0);
+        if ($mainCriterionWeight === null) {
+            Log::warning('Peso do critério de Inglês não configurado.', [
+                'criterion' => Criterion::ENGLISH_PROFICIENCY_NAME,
+            ]);
+        }
+
+        return (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0) * ((float) ($mainCriterionWeight ?? 0) / 100.0);
     }
 
     private function calculateExperienceScoreAllowingNone(ProfessionalExperience|string|null $experience): float
