@@ -152,7 +152,7 @@ class JourneyCalculationService
         if ($criterionWeight === null) {
             if ($courses->isNotEmpty()) {
                 Log::warning('Education criterion weight is not configured; using a zero contribution.', [
-                    'criterion' => 'Education',
+                    'criterion' => Criterion::EDUCATION_NAME,
                 ]);
             }
 

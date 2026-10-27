@@ -8,6 +8,8 @@ class Criterion extends JornadaModel
 {
     public const ENGLISH_PROFICIENCY_NAME = 'Proficiency Level - English';
 
+    public const EDUCATION_NAME = 'Education';
+
     protected $table = 'TB_CRITERIOS';
 
     protected $primaryKey = 'PK_CRITERIOS';

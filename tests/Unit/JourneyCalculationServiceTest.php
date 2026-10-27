@@ -119,7 +119,7 @@ class JourneyCalculationServiceTest extends TestCase
         Log::shouldReceive('warning')
             ->twice()
             ->with('Education criterion weight is not configured; using a zero contribution.', [
-                'criterion' => 'Education',
+                'criterion' => Criterion::EDUCATION_NAME,
             ]);
 
         $this->assertSame(0.0, $service->calculateEducationCriterionScore([$courseWithNullWeight]));
