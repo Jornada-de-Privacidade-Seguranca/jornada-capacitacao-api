@@ -74,6 +74,86 @@ class JourneyProfileTest extends TestCase
             ]);
     }
 
+    public function test_it_searches_journey_profile_names_and_descriptions_without_case_or_accent_sensitivity(): void
+    {
+        $user = $this->activeUser();
+        $profile = JourneyProfile::factory()->create([
+            'NO_PERFIS_PT' => 'Proteção Codex 123XYZ',
+            'NO_PERFIS_EN' => 'Information Security Codex 123XYZ',
+            'DS_PERFIS_PT' => 'Especialista em Governança Codex 123XYZ',
+            'DS_PERFIS_EN' => 'Privacy program owner Codex 123XYZ',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?search=PROTECAO%20CODEX%20123XYZ')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $profile->PK_PERFIS_JORNADA);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?search=information%20security%20codex%20123xyz')
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $profile->PK_PERFIS_JORNADA);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?search=governanca%20codex%20123xyz')
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $profile->PK_PERFIS_JORNADA);
+    }
+
+    public function test_it_returns_no_journey_profiles_when_search_has_no_matches(): void
+    {
+        $this->actingAs($this->activeUser())
+            ->getJson('/api/journey-profiles?search=nao-existe-este-perfil')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.pagination.total', 0)
+            ->assertJsonPath('meta.pagination.last_page', 1)
+            ->assertJsonPath('meta.pagination.has_next_page', false);
+    }
+
+    public function test_it_paginates_only_journey_profiles_matching_search(): void
+    {
+        $user = $this->activeUser();
+        $profiles = collect([
+            'Analista de CodexRisco123XYZ',
+            'Consultor de CodexRisco123XYZ',
+            'Gestor de CodexRisco123XYZ',
+        ])->map(fn (string $name): JourneyProfile => JourneyProfile::factory()->create([
+            'NO_PERFIS_PT' => $name,
+        ]));
+        JourneyProfile::factory()->create(['NO_PERFIS_PT' => 'Analista de Privacidade']);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'search' => 'codexrisco123xyz',
+                'page' => 2,
+                'per_page' => 1,
+            ]))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $profiles[1]->PK_PERFIS_JORNADA)
+            ->assertJsonPath('meta.pagination.current_page', 2)
+            ->assertJsonPath('meta.pagination.per_page', 1)
+            ->assertJsonPath('meta.pagination.total', 3)
+            ->assertJsonPath('meta.pagination.last_page', 3)
+            ->assertJsonPath('meta.pagination.has_next_page', true);
+    }
+
+    public function test_it_rejects_non_string_search(): void
+    {
+        $this->actingAs($this->activeUser())
+            ->getJson('/api/journey-profiles?search%5B%5D=perfil')
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonPath('errors.search.0', 'A busca deve ser um texto.');
+    }
+
     public function test_it_filters_journey_profiles_by_modality(): void
     {
         $user = $this->activeUser();
