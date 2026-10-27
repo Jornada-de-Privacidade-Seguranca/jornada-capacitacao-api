@@ -10,9 +10,9 @@ class JourneyProfileService
 {
     public function __construct(private readonly JourneyProfileRepositoryInterface $journeyProfileRepository) {}
 
-    public function list(int $page, int $perPage): LengthAwarePaginator
+    public function list(int $page, int $perPage, ?string $modality = null): LengthAwarePaginator
     {
-        return $this->journeyProfileRepository->all($page, $perPage);
+        return $this->journeyProfileRepository->all($page, $perPage, $modality);
     }
 
     public function find(int $id): JourneyProfile

@@ -2686,6 +2686,19 @@ paths:
           default: 10
           minimum: 1
           maximum: 100
+      - name: modality
+        in: query
+        description: >-
+          Filtra os perfis por modalidade. Privacidade retorna perfis dos domínios Privacidade e Conjunta (Privacidade/Segurança).
+          Segurança retorna perfis dos domínios Segurança da Informação e Conjunta (Privacidade/Segurança).
+          Privacidade/Segurança retorna todos os perfis, sem filtrar por domínio.
+        required: false
+        schema:
+          type: string
+          enum:
+            - Privacidade
+            - Segurança
+            - Privacidade/Segurança
     get:
       tags:
         - JourneyProfiles
@@ -2720,6 +2733,14 @@ paths:
                     errors:
                       page:
                         - A pagina atual deve ser maior ou igual a 1.
+                    code: VALIDATION_ERROR
+                invalidModality:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      modality:
+                        - A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.
                     code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:
