@@ -174,6 +174,21 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->exists();
     }
 
+    public function hasAnyJourney(int $userId): bool
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->exists();
+    }
+
+    public function hasJourneyForProfile(int $userId, int $journeyProfileId): bool
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->where('FK_PERFIS_JORNADA', $journeyProfileId)
+            ->exists();
+    }
+
     public function create(array $data): Journey
     {
         $journey = Journey::query()->create($data);

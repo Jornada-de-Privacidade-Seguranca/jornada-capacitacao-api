@@ -19,6 +19,7 @@ class UserJourneyCreateTest extends TestCase
     {
         $user = $this->activeUser('Maria Silva', 2);
         $profile = $this->journeyProfile('Privacidade');
+        $this->selectJourneyProfile($user, $profile);
 
         $response = $this->actingAs($user)->withCsrfToken()
             ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
@@ -49,6 +50,7 @@ class UserJourneyCreateTest extends TestCase
         $admin = $this->activeUser('Admin Sistema', 1);
         $user = $this->activeUser('Joao Souza', 2);
         $profile = $this->journeyProfile('Seguranca');
+        $this->selectJourneyProfile($user, $profile);
 
         $response = $this->actingAs($admin)->withCsrfToken()
             ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
@@ -65,11 +67,31 @@ class UserJourneyCreateTest extends TestCase
         ]);
     }
 
+    public function test_administrator_cannot_start_a_users_first_journey_without_profile_selection(): void
+    {
+        $admin = $this->activeUser('Admin Sistema', 1);
+        $user = $this->activeUser('Joao Souza', 2);
+        $profile = $this->journeyProfile('Seguranca');
+
+        $this->actingAs($admin)->withCsrfToken()
+            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
+                'journey_profile_id' => $profile->PK_PERFIS_JORNADA,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'JOURNEY_PROFILE_SELECTION_REQUIRED');
+
+        $this->assertDatabaseMissing('TB_JORNADA', [
+            'FK_USUARIO' => $user->PK_USUARIO,
+        ]);
+    }
+
     public function test_common_user_cannot_start_journey_for_another_user(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
         $otherUser = $this->activeUser('Joao Souza', 2);
         $profile = $this->journeyProfile('Privacidade');
+        $this->selectJourneyProfile($user, $profile);
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson("/api/users/{$otherUser->PK_USUARIO}/journeys", [
@@ -137,6 +159,71 @@ class UserJourneyCreateTest extends TestCase
             ->assertJsonPath('errors', []);
     }
 
+    public function test_it_requires_profile_selection_before_starting_the_first_journey(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
+                'journey_profile_id' => $profile->PK_PERFIS_JORNADA,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Selecione seu perfil de jornada antes de iniciar a primeira jornada.')
+            ->assertJsonPath('code', 'JOURNEY_PROFILE_SELECTION_REQUIRED')
+            ->assertJsonPath('errors.journey_profile_id.0', 'Selecione seu perfil de jornada antes de iniciar a primeira jornada.');
+
+        $this->assertDatabaseCount('TB_JORNADA', 0);
+    }
+
+    public function test_it_rejects_a_first_journey_for_a_profile_other_than_the_selected_profile(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $selectedProfile = $this->journeyProfile('Privacidade');
+        $requestedProfile = $this->journeyProfile('Seguranca');
+        $this->selectJourneyProfile($user, $selectedProfile);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
+                'journey_profile_id' => $requestedProfile->PK_PERFIS_JORNADA,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'A primeira jornada deve usar o perfil de jornada selecionado.')
+            ->assertJsonPath('code', 'JOURNEY_PROFILE_MISMATCH')
+            ->assertJsonPath('errors.journey_profile_id.0', 'A primeira jornada deve usar o perfil de jornada selecionado.');
+
+        $this->assertDatabaseCount('TB_JORNADA', 0);
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $user->PK_USUARIO,
+            'FK_PERFIL_JORNADA' => $selectedProfile->PK_PERFIS_JORNADA,
+        ]);
+    }
+
+    public function test_existing_user_with_journey_history_can_start_without_profile_selection(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $previousProfile = $this->journeyProfile('Seguranca');
+        $newProfile = $this->journeyProfile('Privacidade');
+        $this->journey($user, $previousProfile, '2026-08-01 09:00:00', '2026-08-01 10:00:00');
+
+        $response = $this->actingAs($user)->withCsrfToken()
+            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
+                'journey_profile_id' => $newProfile->PK_PERFIS_JORNADA,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.journey_profile.id', $newProfile->PK_PERFIS_JORNADA);
+
+        $this->assertDatabaseCount('TB_JORNADA', 2);
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $response->json('data.id'),
+            'FK_USUARIO' => $user->PK_USUARIO,
+            'FK_PERFIS_JORNADA' => $newProfile->PK_PERFIS_JORNADA,
+            'DH_FIM' => null,
+        ]);
+    }
+
     public function test_it_rejects_missing_required_fields(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -197,8 +284,9 @@ class UserJourneyCreateTest extends TestCase
     {
         $user = $this->activeUser('Maria Silva', 2);
         $ongoingProfile = $this->journeyProfile('Privacidade');
-        $requestedProfile = $this->journeyProfile('Seguranca');
+        $requestedProfile = $ongoingProfile;
         $ongoingJourney = $this->journey($user, $ongoingProfile, '2026-08-01 09:00:00');
+        $this->selectJourneyProfile($user, $ongoingProfile);
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
@@ -216,16 +304,14 @@ class UserJourneyCreateTest extends TestCase
             'FK_PERFIS_JORNADA' => $ongoingProfile->PK_PERFIS_JORNADA,
             'DH_FIM' => null,
         ]);
-        $this->assertDatabaseMissing('TB_JORNADA', [
-            'FK_USUARIO' => $user->PK_USUARIO,
-            'FK_PERFIS_JORNADA' => $requestedProfile->PK_PERFIS_JORNADA,
-        ]);
+        $this->assertDatabaseCount('TB_JORNADA', 1);
     }
 
     public function test_it_allows_creating_new_journey_when_previous_journeys_are_finished(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
         $profile = $this->journeyProfile('Privacidade');
+        $this->selectJourneyProfile($user, $profile);
         $this->journey($user, $profile, '2026-08-01 09:00:00', '2026-08-01 10:00:00');
 
         $response = $this->actingAs($user)->withCsrfToken()
@@ -239,6 +325,34 @@ class UserJourneyCreateTest extends TestCase
             'PK_JORNADA' => $response->json('data.id'),
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'DH_FIM' => null,
+        ]);
+    }
+
+    public function test_it_prevents_multiple_ongoing_journeys_across_profiles(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $initialProfile = $this->journeyProfile('Privacidade');
+        $otherProfile = $this->journeyProfile('Seguranca');
+        $this->selectJourneyProfile($user, $initialProfile);
+
+        $first = $this->actingAs($user)->withCsrfToken()
+            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
+                'journey_profile_id' => $initialProfile->PK_PERFIS_JORNADA,
+            ])
+            ->assertCreated();
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
+                'journey_profile_id' => $otherProfile->PK_PERFIS_JORNADA,
+            ])
+            ->assertConflict()
+            ->assertJsonPath('code', 'JOURNEY_IN_PROGRESS');
+
+        $this->assertDatabaseCount('TB_JORNADA', 1);
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $first->json('data.id'),
+            'FK_PERFIS_JORNADA' => $initialProfile->PK_PERFIS_JORNADA,
             'DH_FIM' => null,
         ]);
     }
