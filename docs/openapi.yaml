@@ -1354,10 +1354,9 @@ paths:
         A pontuacao total permanece interna e nao e retornada por este endpoint.
         A contribuicao de Experiencia Profissional soma as pontuacoes de
         experiencia profissional e tempo de atuacao no perfil (ate 50 pontos
-        cada) e aplica o peso principal configurado de 23,81%. Ingles e
-        calculado separadamente. A contribuicao usa o peso de
-        TB_CRITERIOS.NU_PESO_CRITERIO atualmente configurado em 23,81%; se estiver
-        ausente, a contribuicao sera zero. Uma nova chamada
+        cada) e aplica o peso de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente
+        23,81%). Se esse peso estiver ausente, a contribuicao sera zero. Ingles
+        e calculado separadamente. Uma nova chamada
         quando a jornada mais recente ja esta finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:
