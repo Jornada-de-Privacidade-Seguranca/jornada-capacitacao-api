@@ -266,7 +266,16 @@ class JourneyService
             throw new NoOngoingJourneyException;
         }
 
-        $englishSubcriterion = $this->subcriterionRepository->findOrFail((int) $data['english_level_id']);
+        if (array_key_exists('english_level_id', $data)) {
+            $this->ensureEnglishLevel((int) $data['english_level_id']);
+        }
+
+        return $this->journeyRepository->updateGeneralData($journey, $data);
+    }
+
+    private function ensureEnglishLevel(int $englishLevelId): void
+    {
+        $englishSubcriterion = $this->subcriterionRepository->findOrFail($englishLevelId);
         $englishCriterionId = $this->criterionRepository->findEnglishCriterionId();
 
         if ($englishCriterionId === null) {
@@ -278,8 +287,6 @@ class JourneyService
                 'english_level_id' => ['O nivel de ingles informado nao pertence ao criterio de ingles.'],
             ]);
         }
-
-        return $this->journeyRepository->updateGeneralData($journey, $data);
     }
 
     private function canViewUserJourneys(Usuario $authenticatedUser, Usuario $requestedUser): bool
