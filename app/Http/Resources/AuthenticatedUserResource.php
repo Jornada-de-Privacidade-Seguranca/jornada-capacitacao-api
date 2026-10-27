@@ -30,6 +30,7 @@ class AuthenticatedUserResource extends JsonResource
                 'profile_type_name' => $this->profileType?->NO_TIPO_PERFIL,
                 'journey_profile_id' => $this->FK_PERFIL_JORNADA,
                 'journey_profile_name' => $this->selectedJourneyProfile?->NO_PERFIS_PT,
+                'journey_profile_name_en' => $this->selectedJourneyProfile?->NO_PERFIS_EN,
             ],
             'active_status' => $this->ST_ATIVO,
         ];

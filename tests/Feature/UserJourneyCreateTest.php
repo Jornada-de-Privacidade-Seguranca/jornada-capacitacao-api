@@ -67,6 +67,25 @@ class UserJourneyCreateTest extends TestCase
         ]);
     }
 
+    public function test_administrator_cannot_start_a_users_first_journey_without_profile_selection(): void
+    {
+        $admin = $this->activeUser('Admin Sistema', 1);
+        $user = $this->activeUser('Joao Souza', 2);
+        $profile = $this->journeyProfile('Seguranca');
+
+        $this->actingAs($admin)->withCsrfToken()
+            ->postJson("/api/users/{$user->PK_USUARIO}/journeys", [
+                'journey_profile_id' => $profile->PK_PERFIS_JORNADA,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'JOURNEY_PROFILE_SELECTION_REQUIRED');
+
+        $this->assertDatabaseMissing('TB_JORNADA', [
+            'FK_USUARIO' => $user->PK_USUARIO,
+        ]);
+    }
+
     public function test_common_user_cannot_start_journey_for_another_user(): void
     {
         $user = $this->activeUser('Maria Silva', 2);

@@ -27,6 +27,12 @@ class JourneyProfileSelectionTest extends TestCase
             ->assertJsonPath('data.journey_profile_id', $profile->PK_PERFIS_JORNADA)
             ->assertJsonPath('data.journey_profile.id', $profile->PK_PERFIS_JORNADA);
 
+        $this->actingAs($user)->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.profile.journey_profile_id', $profile->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.profile.journey_profile_name', $profile->NO_PERFIS_PT)
+            ->assertJsonPath('data.profile.journey_profile_name_en', $profile->NO_PERFIS_EN);
+
         $this->assertDatabaseHas('TB_USUARIO', [
             'PK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIL_JORNADA' => $profile->PK_PERFIS_JORNADA,
@@ -140,6 +146,7 @@ class JourneyProfileSelectionTest extends TestCase
         return JourneyProfile::create([
             'FK_DOMINIO_CONHECIMENTO' => $domain->PK_DOMINIO_CONHECIMENTO,
             'NO_PERFIS_PT' => $name,
+            'NO_PERFIS_EN' => $name.' Profile',
             'DS_PERFIS_PT' => $name,
         ]);
     }

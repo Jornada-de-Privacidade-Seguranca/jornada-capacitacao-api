@@ -372,6 +372,7 @@ paths:
                         profile_type_name: Aluno
                         journey_profile_id: 1
                         journey_profile_name: Encarregado pelo Tratamento de Dados Pessoais
+                        journey_profile_name_en: Data Protection Officer
                       active_status: 1
         "401":
           description: Usuario nao autenticado
@@ -3181,6 +3182,7 @@ components:
         - profile_type_name
         - journey_profile_id
         - journey_profile_name
+        - journey_profile_name_en
       properties:
         role:
           type: string
@@ -3220,6 +3222,11 @@ components:
             - string
             - "null"
           example: Encarregado pelo Tratamento de Dados Pessoais
+        journey_profile_name_en:
+          type:
+            - string
+            - "null"
+          example: Data Protection Officer
     JourneyFinalizationResponse:
       type: object
       required:

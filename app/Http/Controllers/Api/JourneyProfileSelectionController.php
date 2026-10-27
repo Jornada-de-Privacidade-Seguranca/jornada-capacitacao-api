@@ -30,14 +30,38 @@ class JourneyProfileSelectionController
                 code: 'JOURNEY_PROFILE_NOT_FOUND',
             );
         } catch (JourneyProfileSelectionException $exception) {
-            if ($exception->reason !== JourneyProfileSelectionException::LOCKED) {
-                throw $exception;
-            }
+            [$message, $status, $code, $errors] = match ($exception->reason) {
+                JourneyProfileSelectionException::LOCKED => [
+                    'O perfil inicial nao pode ser alterado depois de iniciar uma jornada.',
+                    Response::HTTP_CONFLICT,
+                    'JOURNEY_PROFILE_SELECTION_LOCKED',
+                    [],
+                ],
+                JourneyProfileSelectionException::REQUIRED => [
+                    'Selecione seu perfil de jornada antes de iniciar a primeira jornada.',
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    'JOURNEY_PROFILE_SELECTION_REQUIRED',
+                    ['journey_profile_id' => ['Selecione seu perfil de jornada antes de iniciar a primeira jornada.']],
+                ],
+                JourneyProfileSelectionException::MISMATCH => [
+                    'A primeira jornada deve usar o perfil de jornada selecionado.',
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    'JOURNEY_PROFILE_MISMATCH',
+                    ['journey_profile_id' => ['A primeira jornada deve usar o perfil de jornada selecionado.']],
+                ],
+                default => [
+                    'Nao foi possivel salvar o perfil de jornada no momento.',
+                    Response::HTTP_INTERNAL_SERVER_ERROR,
+                    'JOURNEY_PROFILE_SELECTION_FAILED',
+                    [],
+                ],
+            };
 
             return ApiResponse::error(
-                message: 'O perfil inicial nao pode ser alterado depois de iniciar uma jornada.',
-                status: Response::HTTP_CONFLICT,
-                code: 'JOURNEY_PROFILE_SELECTION_LOCKED',
+                message: $message,
+                status: $status,
+                code: $code,
+                errors: $errors,
             );
         } catch (Throwable) {
             return ApiResponse::error(
