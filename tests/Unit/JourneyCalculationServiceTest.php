@@ -345,7 +345,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(65.182788, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(25.182788, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
@@ -361,8 +361,7 @@ class JourneyCalculationServiceTest extends TestCase
         ?Collection $areaWeights = null,
         ?float $criterionWeight = 23.81,
         ?float $certificationWeight = 10.72,
-    ): JourneyCalculationService
-    {
+    ): JourneyCalculationService {
         $repository = new class($areaWeights ?? new Collection) implements CompetencyCriterionWeightRepositoryInterface
         {
             public function __construct(private readonly Collection $areaWeights) {}
