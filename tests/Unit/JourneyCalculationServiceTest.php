@@ -13,6 +13,7 @@ use App\Models\ProfessionalCertification;
 use App\Models\ProfessionalExperience;
 use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use App\Services\JourneyCalculationService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
@@ -41,6 +42,47 @@ class JourneyCalculationServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $service->calculateProfileExperienceScore('Nenhum');
+    }
+
+    public function test_it_applies_the_professional_experience_criterion_weight_to_both_experience_answers(): void
+    {
+        $service = $this->service(criterionWeight: 23.81);
+
+        $this->assertEqualsWithDelta(
+            2.381,
+            $service->calculateProfessionalExperienceCriterionScore('Nenhum', 'Menos de 1 ano'),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            23.81,
+            $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            6.945377,
+            $service->calculateProfessionalExperienceCriterionScore('Entre 1 e 3 anos', 'Entre 4 e 6 anos'),
+            0.0001,
+        );
+    }
+
+    public function test_it_uses_the_configured_professional_experience_criterion_weight(): void
+    {
+        $service = $this->service(criterionWeight: 30.0);
+
+        $this->assertSame(30.0, $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'));
+    }
+
+    public function test_it_uses_zero_when_professional_experience_criterion_weight_is_missing(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Professional experience criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_EXPERIENCE_NAME,
+            ]);
+
+        $service = $this->service(criterionWeight: null);
+
+        $this->assertSame(0.0, $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'));
     }
 
     public function test_it_counts_one_course_per_subcriterion_without_affinity(): void
@@ -261,7 +303,7 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(87.561288, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(60.894788, $service->calculateForJourney($journey), 0.0001);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
@@ -273,7 +315,7 @@ class JourneyCalculationServiceTest extends TestCase
         return (new HigherEducationCourse)->setRelation('subcriterion', $subcriterion);
     }
 
-    private function service(?Collection $areaWeights = null): JourneyCalculationService
+    private function service(?Collection $areaWeights = null, ?float $criterionWeight = 23.81): JourneyCalculationService
     {
         $repository = new class($areaWeights ?? new Collection) implements CompetencyCriterionWeightRepositoryInterface
         {
@@ -297,6 +339,31 @@ class JourneyCalculationServiceTest extends TestCase
             }
         };
 
-        return new JourneyCalculationService($repository);
+        $criterionRepository = new class($criterionWeight) implements CriterionRepositoryInterface
+        {
+            public function __construct(private readonly ?float $weight) {}
+
+            public function all(): Collection
+            {
+                return new Collection;
+            }
+
+            public function findOrFail(int $id): Criterion
+            {
+                throw new \RuntimeException('Not implemented.');
+            }
+
+            public function findEnglishCriterionId(): ?int
+            {
+                return null;
+            }
+
+            public function findWeightByName(string $name): ?float
+            {
+                return $this->weight;
+            }
+        };
+
+        return new JourneyCalculationService($repository, $criterionRepository);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Journey;
 use App\Models\ProfessionalExperience;
 use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -47,6 +48,7 @@ class JourneyCalculationService
 
     public function __construct(
         private readonly CompetencyCriterionWeightRepositoryInterface $competencyCriterionWeightRepository,
+        private readonly CriterionRepositoryInterface $criterionRepository,
     ) {}
 
     public function calculateForJourney(Journey $journey): float
@@ -55,8 +57,10 @@ class JourneyCalculationService
             ? collect()
             : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
 
-        return $this->calculateProfessionalExperienceScore($journey->professionalExperience)
-            + $this->calculateProfileExperienceScore($journey->profileExperience)
+        return $this->calculateProfessionalExperienceCriterionScore(
+            $journey->professionalExperience,
+            $journey->profileExperience,
+        )
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
             + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
             + $this->calculateCertificationScore($journey->professionalCertifications)
@@ -71,6 +75,26 @@ class JourneyCalculationService
     public function calculateProfileExperienceScore(ProfessionalExperience|string|null $experience): float
     {
         return $this->calculateExperienceScoreRejectingNone($experience);
+    }
+
+    public function calculateProfessionalExperienceCriterionScore(
+        ProfessionalExperience|string|null $professionalExperience,
+        ProfessionalExperience|string|null $profileExperience,
+    ): float {
+        $criterionScore = $this->calculateProfessionalExperienceScore($professionalExperience)
+            + $this->calculateProfileExperienceScore($profileExperience);
+
+        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::PROFESSIONAL_EXPERIENCE_NAME);
+
+        if ($criterionWeight === null) {
+            Log::warning('Professional experience criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_EXPERIENCE_NAME,
+            ]);
+
+            return 0.0;
+        }
+
+        return $criterionScore * $criterionWeight / 100.0;
     }
 
     public function calculateEnglishProficiencyScore(?Subcriterion $subcriterion): float

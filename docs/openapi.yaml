@@ -1352,7 +1352,11 @@ paths:
         sera zero. Todos os tipos selecionados usam o peso do criterio de
         Formacao Academica obtido pelo primeiro curso com criterio associado.
         A pontuacao total permanece interna e nao e retornada por este endpoint.
-        Uma nova chamada
+        A contribuicao de Experiencia Profissional soma as pontuacoes de
+        experiencia profissional e tempo de atuacao no perfil (ate 50 pontos
+        cada) e aplica o peso de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente
+        23,81%). Se esse peso estiver ausente, a contribuicao sera zero. Ingles
+        e calculado separadamente. Uma nova chamada
         quando a jornada mais recente ja esta finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:

@@ -26,4 +26,14 @@ class CriterionRepository implements CriterionRepositoryInterface
             ->where('NO_CRITERIO_EN', Criterion::ENGLISH_PROFICIENCY_NAME)
             ->value('PK_CRITERIOS');
     }
+
+    public function findWeightByName(string $name): ?float
+    {
+        $weight = Criterion::query()
+            ->where('NO_CRITERIO_PT', $name)
+            ->orWhere('NO_CRITERIO_EN', $name)
+            ->value('NU_PESO_CRITERIO');
+
+        return $weight === null ? null : (float) $weight;
+    }
 }

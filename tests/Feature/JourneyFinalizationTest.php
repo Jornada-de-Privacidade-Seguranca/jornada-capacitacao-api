@@ -48,11 +48,11 @@ class JourneyFinalizationTest extends TestCase
         $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 46.263);
+            ->assertJsonPath('data.score', 19.597);
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 46.263,
+            'NU_PONTUACAO_TOTAL' => 19.597,
             'DH_FIM' => '2026-09-28 14:30:00',
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
@@ -70,7 +70,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 47.561,
+            'NU_PONTUACAO_TOTAL' => 20.895,
         ]);
     }
 
@@ -83,6 +83,19 @@ class JourneyFinalizationTest extends TestCase
             $graduation->PK_CURSO_SUPERIOR,
             $postgraduate->PK_CURSO_SUPERIOR,
         ]);
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 23.21,
+        ]);
+    }
+
+    public function test_it_uses_the_configured_professional_experience_criterion_weight(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture(30.0);
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson('/api/journeys/current/finalize')
@@ -90,7 +103,21 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 49.877,
+            'NU_PONTUACAO_TOTAL' => 21.763,
+        ]);
+    }
+
+    public function test_it_uses_zero_when_professional_experience_criterion_weight_is_missing(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture(null, false);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 11.263,
         ]);
     }
 
@@ -171,7 +198,7 @@ class JourneyFinalizationTest extends TestCase
             ->assertJsonPath('code', 'CSRF_TOKEN_MISMATCH');
     }
 
-    private function completedAnswersFixture(): array
+    private function completedAnswersFixture(?float $experienceWeight = 23.81, bool $createExperienceCriterion = true): array
     {
         $user = $this->activeUser('Maria Silva', 2);
         $profile = $this->journeyProfile('Privacidade');
@@ -185,6 +212,21 @@ class JourneyFinalizationTest extends TestCase
             'NO_CRITERIO_PT' => 'Nível de Proficiência - Inglês',
             'NU_PESO_CRITERIO' => 4.85,
         ]);
+        $experienceCriterion = Criterion::query()
+            ->where('NO_CRITERIO_PT', 'Experiência Profissional')
+            ->orWhere('NO_CRITERIO_EN', 'Professional Experience')
+            ->first();
+
+        if ($createExperienceCriterion) {
+            $experienceCriterion ??= new Criterion;
+            $experienceCriterion->fill([
+                'NO_CRITERIO_PT' => 'Experiência Profissional',
+                'NO_CRITERIO_EN' => 'Professional Experience',
+                'NU_PESO_CRITERIO' => $experienceWeight,
+            ])->save();
+        } else {
+            $experienceCriterion?->update(['NU_PESO_CRITERIO' => null]);
+        }
         $english = Subcriterion::create([
             'FK_CRITERIOS' => $englishCriterion->PK_CRITERIOS,
             'NO_SUBCRITERIO_PT' => 'Intermediário - Leitura e Escrita',
