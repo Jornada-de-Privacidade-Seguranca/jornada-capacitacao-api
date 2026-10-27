@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\JourneyCourseOptionsController;
 use App\Http\Controllers\Api\JourneyCoursesController;
 use App\Http\Controllers\Api\JourneyFinalizationController;
 use App\Http\Controllers\Api\JourneyProfileController;
+use App\Http\Controllers\Api\JourneyProfileSelectionController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\TemplateExampleController;
@@ -38,6 +39,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
 
     Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
         Route::get('/me', AuthenticatedUserController::class);
+        Route::put('/me/journey-profile', [JourneyProfileSelectionController::class, 'update']);
         Route::get('/dashboard', DashboardController::class);
         Route::apiResource('journey-profiles', JourneyProfileController::class)
             ->only(['index', 'show']);

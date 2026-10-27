@@ -117,6 +117,7 @@ paths:
                   department: Privacidade
                   registration_number: MAT-123
                   profile_type_id: 1
+                  journey_profile_id: 1
       responses:
         "201":
           description: Usuario cadastrado com ativacao pendente
@@ -137,6 +138,7 @@ paths:
                       department: Privacidade
                       registration_number: MAT-123
                       profile_type_id: 1
+                      journey_profile_id: 1
                       active_status: 2
                       account_status: pending_activation
                       created_at: "2026-07-23 16:30:00"
@@ -161,6 +163,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidJourneyProfile:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      journey_profile_id:
+                        - Informe um perfil de jornada valido.
+                    code: VALIDATION_ERROR
         "429":
           description: Muitas tentativas de cadastro
           content:
@@ -359,6 +370,9 @@ paths:
                         user_type_id: 2
                         profile_type_id: 1
                         profile_type_name: Aluno
+                        journey_profile_id: 1
+                        journey_profile_name: Encarregado pelo Tratamento de Dados Pessoais
+                        journey_profile_name_en: Data Protection Officer
                       active_status: 1
         "401":
           description: Usuario nao autenticado
@@ -386,6 +400,86 @@ paths:
                     message: Sua conta ainda nao foi ativada por um administrador do sistema.
                     errors: []
                     code: ACCOUNT_NOT_ACTIVATED
+  /me/journey-profile:
+    put:
+      tags:
+        - Auth
+      summary: Seleciona o perfil de jornada inicial do usuario autenticado
+      description: Persiste o perfil que deve ser usado na primeira jornada. A selecao pode ser atualizada ate o usuario iniciar sua primeira jornada. Requer sessao autenticada e token CSRF.
+      operationId: selectInitialJourneyProfile
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - journey_profile_id
+              properties:
+                journey_profile_id:
+                  type: integer
+                  example: 1
+      responses:
+        "200":
+          description: Perfil de jornada selecionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SelectedJourneyProfileResponse"
+              examples:
+                selected:
+                  value:
+                    success: true
+                    message: Perfil de jornada selecionado com sucesso.
+                    data:
+                      journey_profile_id: 1
+                      journey_profile:
+                        id: 1
+                        name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                        name_en: Data Protection Officer
+                        description_pt: Perfil de privacidade
+                        description_en: Privacy role
+                        type: 1
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Perfil de jornada inexistente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                notFound:
+                  value:
+                    success: false
+                    message: Perfil de jornada nao encontrado.
+                    errors: []
+                    code: JOURNEY_PROFILE_NOT_FOUND
+        "409":
+          description: Selecao bloqueada depois do inicio de uma jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                locked:
+                  value:
+                    success: false
+                    message: O perfil inicial nao pode ser alterado depois de iniciar uma jornada.
+                    errors: []
+                    code: JOURNEY_PROFILE_SELECTION_LOCKED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: Selecao obrigatoria ou invalida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
   /dashboard:
     get:
       tags:
@@ -771,7 +865,7 @@ paths:
       tags:
         - Journeys
       summary: Inicia uma nova jornada para um usuario
-      description: Registra o inicio de uma nova jornada para o usuario informado, apenas com o perfil de jornada escolhido. Usuarios comuns so podem iniciar jornadas para si mesmos; administradores podem iniciar jornadas para qualquer usuario. O usuario nao pode possuir outra jornada em andamento (com DH_FIM nulo). Dados gerais (experiencia profissional, atuacao de perfil, proficiencia em ingles), cursos, certificacoes e competencias sao preenchidos depois, em etapas proprias (ver PATCH /journeys/{journey}/answers, POST /journeys/{journey}/courses, POST /journeys/{journey}/certifications e POST /journeys/{journey}/competencies). Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      description: Registra uma jornada para o usuario informado. A primeira jornada exige o perfil de jornada selecionado na conta; contas com historico de jornadas podem iniciar outros perfis sem selecao previa. O usuario pode ter no maximo uma jornada em andamento, independentemente do perfil. Usuarios comuns so podem iniciar jornadas para si mesmos; administradores podem iniciar jornadas para qualquer usuario. Dados gerais (experiencia profissional, atuacao de perfil, proficiencia em ingles), cursos, certificacoes e competencias sao preenchidos depois, em etapas proprias (ver PATCH /journeys/{journey}/answers, POST /journeys/{journey}/courses, POST /journeys/{journey}/certifications e POST /journeys/{journey}/competencies). Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: createUserJourney
       security:
         - sessionAuth: []
@@ -871,7 +965,7 @@ paths:
         "419":
           $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
-          description: Erro de validacao
+          description: Erro de validacao ou perfil diferente do perfil selecionado para a primeira jornada
           content:
             application/json:
               schema:
@@ -901,6 +995,22 @@ paths:
                       user:
                         - O identificador do usuario deve ser um numero inteiro maior ou igual a 1.
                     code: INVALID_USER_IDENTIFIER
+                journeyProfileSelectionRequired:
+                  value:
+                    success: false
+                    message: Selecione seu perfil de jornada antes de iniciar a primeira jornada.
+                    errors:
+                      journey_profile_id:
+                        - Selecione seu perfil de jornada antes de iniciar a primeira jornada.
+                    code: JOURNEY_PROFILE_SELECTION_REQUIRED
+                journeyProfileMismatch:
+                  value:
+                    success: false
+                    message: A primeira jornada deve usar o perfil de jornada selecionado.
+                    errors:
+                      journey_profile_id:
+                        - A primeira jornada deve usar o perfil de jornada selecionado.
+                    code: JOURNEY_PROFILE_MISMATCH
         "500":
           description: Erro interno do servidor
           content:
@@ -1340,7 +1450,31 @@ paths:
         calcula a pontuacao consolidada, persiste o resultado em
         TB_JORNADA.NU_PONTUACAO_TOTAL e registra a finalizacao em DH_FIM. Cursos e
         certificacoes sao opcionais e contribuem com zero quando ausentes. A
-        pontuacao e interna e nao e retornada por este endpoint. Uma nova chamada
+        pontuacao de Ingles aplica o peso principal configurado ao peso do
+        subcriterio selecionado. Se o peso principal for nulo ou o criterio
+        estiver ausente, a contribuicao de Ingles sera zero; isso e equivalente
+        a um peso explicitamente configurado como zero. Esses pesos permanecem
+        internos e nao sao retornados por este endpoint. A contribuicao do
+        criterio Formacao Academica aplica o peso principal de
+        TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 14,70%) aos pesos dos tipos de
+        curso selecionados, considerando cada tipo uma unica vez. Quando esse
+        peso estiver nulo ou indisponivel, a contribuicao de Formacao Academica
+        sera zero. Todos os tipos selecionados usam o peso do criterio de
+        Formacao Academica obtido pelo primeiro curso com criterio associado.
+        A pontuacao total permanece interna e nao e retornada por este endpoint.
+        A contribuicao de Experiencia Profissional soma as pontuacoes de
+        experiencia profissional e tempo de atuacao no perfil (ate 50 pontos
+        cada) e aplica o peso de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente
+        23,81%). Se esse peso estiver ausente, a contribuicao sera zero. Ingles
+        e calculado separadamente. A contribuicao do criterio Certificacao
+        Profissional preserva 20 pontos por certificacao ate cinco e aplica o
+        peso principal de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 10,72%),
+        com contribuicao maxima limitada ao peso total do criterio. Se o peso
+        estiver ausente, a contribuicao sera zero. A pontuacao de Competencias
+        aplica ao total adquirido o peso de
+        TB_CRITERIOS.NU_PESO_CRITERIO para o criterio Competencias (ou Competencies);
+        quando o criterio ou seu peso nao estiver cadastrado, a contribuicao e zero.
+        A pontuacao e interna e nao e retornada por este endpoint. Uma nova chamada
         quando a jornada mais recente ja esta finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:
@@ -2598,6 +2732,19 @@ paths:
           default: 10
           minimum: 1
           maximum: 100
+      - name: modality
+        in: query
+        description: >-
+          Filtra os perfis por modalidade. Privacidade retorna perfis dos domínios Privacidade e Conjunta (Privacidade/Segurança).
+          Segurança retorna perfis dos domínios Segurança da Informação e Conjunta (Privacidade/Segurança).
+          Privacidade/Segurança retorna todos os perfis, sem filtrar por domínio.
+        required: false
+        schema:
+          type: string
+          enum:
+            - Privacidade
+            - Segurança
+            - Privacidade/Segurança
     get:
       tags:
         - JourneyProfiles
@@ -2632,6 +2779,14 @@ paths:
                     errors:
                       page:
                         - A pagina atual deve ser maior ou igual a 1.
+                    code: VALIDATION_ERROR
+                invalidModality:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      modality:
+                        - A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.
                     code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:
@@ -2924,6 +3079,7 @@ components:
         - department
         - registration_number
         - profile_type_id
+        - journey_profile_id
         - active_status
         - account_status
       properties:
@@ -2948,6 +3104,12 @@ components:
           example: MAT-123
         profile_type_id:
           type: integer
+          example: 1
+        journey_profile_id:
+          type:
+            - integer
+            - "null"
+          description: Perfil de jornada selecionado para iniciar a primeira jornada, se ja escolhido no cadastro.
           example: 1
         active_status:
           type: integer
@@ -3010,6 +3172,10 @@ components:
         profile_type_id:
           type: integer
           description: ID do tipo de perfil fixo migrado em TB_TIPO_PERFIL.
+          example: 1
+        journey_profile_id:
+          type: integer
+          description: Perfil de jornada escolhido opcionalmente durante o cadastro. Se omitido, pode ser selecionado depois em PUT /me/journey-profile.
           example: 1
     LoginResponse:
       type: object
@@ -3081,6 +3247,9 @@ components:
         - user_type_id
         - profile_type_id
         - profile_type_name
+        - journey_profile_id
+        - journey_profile_name
+        - journey_profile_name_en
       properties:
         role:
           type: string
@@ -3110,6 +3279,21 @@ components:
             - string
             - "null"
           example: Aluno
+        journey_profile_id:
+          type:
+            - integer
+            - "null"
+          example: 1
+        journey_profile_name:
+          type:
+            - string
+            - "null"
+          example: Encarregado pelo Tratamento de Dados Pessoais
+        journey_profile_name_en:
+          type:
+            - string
+            - "null"
+          example: Data Protection Officer
     JourneyFinalizationResponse:
       type: object
       required:
@@ -4496,6 +4680,30 @@ components:
           example: Journey profile retrieved successfully.
         data:
           $ref: "#/components/schemas/JourneyProfile"
+    SelectedJourneyProfileResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Perfil de jornada selecionado com sucesso.
+        data:
+          type: object
+          required:
+            - journey_profile_id
+            - journey_profile
+          properties:
+            journey_profile_id:
+              type: integer
+              example: 1
+            journey_profile:
+              $ref: "#/components/schemas/JourneyProfile"
     JourneyProfile:
       type: object
       required:

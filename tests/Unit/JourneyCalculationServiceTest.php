@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\AcquiredKnowledge;
 use App\Models\Competency;
 use App\Models\CompetencyCriterionWeight;
+use App\Models\Criterion;
 use App\Models\Difficulty;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
@@ -12,8 +13,10 @@ use App\Models\ProfessionalCertification;
 use App\Models\ProfessionalExperience;
 use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use App\Services\JourneyCalculationService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -41,6 +44,47 @@ class JourneyCalculationServiceTest extends TestCase
         $service->calculateProfileExperienceScore('Nenhum');
     }
 
+    public function test_it_applies_the_professional_experience_criterion_weight_to_both_experience_answers(): void
+    {
+        $service = $this->service(criterionWeight: 23.81);
+
+        $this->assertEqualsWithDelta(
+            2.381,
+            $service->calculateProfessionalExperienceCriterionScore('Nenhum', 'Menos de 1 ano'),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            23.81,
+            $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            6.945377,
+            $service->calculateProfessionalExperienceCriterionScore('Entre 1 e 3 anos', 'Entre 4 e 6 anos'),
+            0.0001,
+        );
+    }
+
+    public function test_it_uses_the_configured_professional_experience_criterion_weight(): void
+    {
+        $service = $this->service(criterionWeight: 30.0);
+
+        $this->assertSame(30.0, $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'));
+    }
+
+    public function test_it_uses_zero_when_professional_experience_criterion_weight_is_missing(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Professional experience criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_EXPERIENCE_NAME,
+            ]);
+
+        $service = $this->service(criterionWeight: null);
+
+        $this->assertSame(0.0, $service->calculateProfessionalExperienceCriterionScore('Mais de 10 anos', 'Mais de 10 anos'));
+    }
+
     public function test_it_counts_one_course_per_subcriterion_without_affinity(): void
     {
         $service = $this->service();
@@ -65,14 +109,83 @@ class JourneyCalculationServiceTest extends TestCase
         );
     }
 
-    public function test_it_uses_the_persisted_english_subcriterion_weight(): void
+    public function test_it_applies_the_english_main_criterion_weight_to_subcriterion_score(): void
     {
         $service = $this->service();
+        $criterion = new Criterion(['NU_PESO_CRITERIO' => 4.85]);
+        $none = (new Subcriterion(['NU_PESO_SUBCRITERIO' => 0]))->setRelation('criterion', $criterion);
+        $intermediate = (new Subcriterion(['NU_PESO_SUBCRITERIO' => 26.05]))->setRelation('criterion', $criterion);
+        $advanced = (new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335]))->setRelation('criterion', $criterion);
 
-        $this->assertSame(26.05, $service->calculateEnglishProficiencyScore(new Subcriterion([
-            'NU_PESO_SUBCRITERIO' => 26.05,
-        ])));
+        $this->assertSame(0.0, $service->calculateEnglishProficiencyScore($none));
+        $this->assertEqualsWithDelta(1.263425, $service->calculateEnglishProficiencyScore($intermediate), 0.000001);
+        $this->assertEqualsWithDelta(3.0717475, $service->calculateEnglishProficiencyScore($advanced), 0.000001);
         $this->assertSame(0.0, $service->calculateEnglishProficiencyScore(null));
+    }
+
+    public function test_it_applies_the_configured_education_weight_to_selected_course_types(): void
+    {
+        $service = $this->service();
+        $criterion = new Criterion(['NU_PESO_CRITERIO' => 14.7]);
+        $graduation = $this->courseWithEducationWeight(8.829, 1, $criterion);
+        $postgraduate = $this->courseWithEducationWeight(15.751, 2, $criterion);
+
+        $this->assertSame(0.0, $service->calculateEducationCriterionScore([]));
+        $this->assertEqualsWithDelta(
+            1.297863,
+            $service->calculateEducationCriterionScore([$graduation]),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            3.61326,
+            $service->calculateEducationCriterionScore([$graduation, $postgraduate]),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            3.61326,
+            $service->calculateEducationCriterionScore([$graduation, $graduation, $postgraduate]),
+            0.0001,
+        );
+    }
+
+    public function test_it_treats_a_null_education_criterion_weight_as_zero(): void
+    {
+        $service = $this->service();
+        $criterion = new Criterion(['NU_PESO_CRITERIO' => null]);
+        $courseWithNullWeight = $this->courseWithEducationWeight(8.829, 1, $criterion);
+        $courseWithoutCriterion = (new HigherEducationCourse)->setRelation(
+            'subcriterion',
+            new Subcriterion(['NU_PESO_SUBCRITERIO' => 8.829]),
+        );
+
+        Log::shouldReceive('warning')
+            ->twice()
+            ->with('Education criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::EDUCATION_NAME,
+            ]);
+
+        $this->assertSame(0.0, $service->calculateEducationCriterionScore([$courseWithNullWeight]));
+        $this->assertSame(0.0, $service->calculateEducationCriterionScore([$courseWithoutCriterion]));
+    }
+
+    public function test_it_treats_a_missing_english_criterion_or_weight_as_zero(): void
+    {
+        Log::shouldReceive('warning')
+            ->twice()
+            ->with('Peso do critério de Inglês não configurado.', [
+                'criterion' => Criterion::ENGLISH_PROFICIENCY_NAME,
+            ]);
+
+        $service = $this->service();
+        $weightedSubcriterion = new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335]);
+        $criterionWithoutWeight = new Criterion(['NU_PESO_CRITERIO' => null]);
+        $weightedSubcriterion->setRelation('criterion', $criterionWithoutWeight);
+
+        $this->assertSame(0.0, $service->calculateEnglishProficiencyScore($weightedSubcriterion));
+        $this->assertSame(
+            0.0,
+            $service->calculateEnglishProficiencyScore(new Subcriterion(['NU_PESO_SUBCRITERIO' => 63.335])),
+        );
     }
 
     public function test_it_calculates_certification_score_with_maximum_limit(): void
@@ -84,6 +197,48 @@ class JourneyCalculationServiceTest extends TestCase
         $this->assertSame(60.0, $service->calculateCertificationScore(3));
         $this->assertSame(100.0, $service->calculateCertificationScore(5));
         $this->assertSame(100.0, $service->calculateCertificationScore(8));
+    }
+
+    public function test_it_applies_the_certification_criterion_weight_after_limiting_the_count(): void
+    {
+        $service = $this->service();
+
+        $this->assertSame(0.0, $service->calculateProfessionalCertificationCriterionScore(0));
+        $this->assertEqualsWithDelta(
+            2.144,
+            $service->calculateProfessionalCertificationCriterionScore(1),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            10.72,
+            $service->calculateProfessionalCertificationCriterionScore(5),
+            0.0001,
+        );
+        $this->assertEqualsWithDelta(
+            10.72,
+            $service->calculateProfessionalCertificationCriterionScore(8),
+            0.0001,
+        );
+    }
+
+    public function test_it_uses_the_configured_certification_criterion_weight(): void
+    {
+        $service = $this->service(certificationWeight: 12.5);
+
+        $this->assertSame(2.5, $service->calculateProfessionalCertificationCriterionScore(1));
+    }
+
+    public function test_it_logs_and_returns_zero_when_the_certification_criterion_weight_is_missing(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Professional certification criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            ]);
+
+        $service = $this->service(certificationWeight: null);
+
+        $this->assertSame(0.0, $service->calculateProfessionalCertificationCriterionScore(5));
     }
 
     public function test_it_calculates_only_acquired_competencies_with_area_weights(): void
@@ -118,13 +273,16 @@ class JourneyCalculationServiceTest extends TestCase
             ]),
         ];
 
-        $this->assertSame(65.0, $service->calculateCompetencyScore([
+        $knowledge = [
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $advancedCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $specialistCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $missingWeightCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 0]))->setRelation('competency', $advancedCompetency),
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => null]))->setRelation('competency', $specialistCompetency),
-        ], $areaWeights));
+        ];
+
+        $this->assertEqualsWithDelta(65.0, $service->calculateCompetencyScore($knowledge, $areaWeights), 0.0001);
+        $this->assertEqualsWithDelta(29.848, $service->calculateCompetencyCriterionScore($knowledge, $areaWeights), 0.0001);
     }
 
     public function test_it_sums_multiple_weights_for_the_same_knowledge_area(): void
@@ -134,7 +292,7 @@ class JourneyCalculationServiceTest extends TestCase
         $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
         $competency->setRelation('difficulty', $difficulty);
 
-        $this->assertSame(32.0, $service->calculateCompetencyScore([
+        $this->assertEqualsWithDelta(32.0, $service->calculateCompetencyScore([
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ], [
             new CompetencyCriterionWeight([
@@ -145,7 +303,43 @@ class JourneyCalculationServiceTest extends TestCase
                 'FK_AREA_CONHECIMENTO' => 10,
                 'NU_PESO_CRIT_COMPETENCIA' => 15,
             ]),
-        ]));
+        ]), 0.0001);
+    }
+
+    public function test_it_uses_an_alternative_criterion_weight_from_the_repository(): void
+    {
+        $service = $this->service(competencyWeight: 50.0);
+        $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Básico']);
+        $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
+        $competency->setRelation('difficulty', $difficulty);
+
+        $this->assertEqualsWithDelta(10.0, $service->calculateCompetencyCriterionScore([
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
+        ], [new CompetencyCriterionWeight([
+            'FK_AREA_CONHECIMENTO' => 10,
+            'NU_PESO_CRIT_COMPETENCIA' => 50,
+        ])]), 0.0001);
+    }
+
+    public function test_it_treats_a_missing_competency_criterion_weight_as_zero(): void
+    {
+        Log::shouldReceive('warning')
+            ->once()
+            ->with('Competency criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::COMPETENCIES_NAME_EN,
+            ]);
+
+        $service = $this->service(competencyWeight: null);
+        $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Especialista']);
+        $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
+        $competency->setRelation('difficulty', $difficulty);
+
+        $this->assertSame(0.0, $service->calculateCompetencyCriterionScore([
+            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
+        ], [new CompetencyCriterionWeight([
+            'FK_AREA_CONHECIMENTO' => 10,
+            'NU_PESO_CRIT_COMPETENCIA' => 100,
+        ])]));
     }
 
     public function test_it_calculates_journey_total_using_profile_area_weights_from_repository(): void
@@ -157,8 +351,11 @@ class JourneyCalculationServiceTest extends TestCase
         ]);
         $service = $this->service(new Collection([$areaWeight]));
 
-        $graduation = new Subcriterion(['NU_PESO_SUBCRITERIO' => 8.829]);
-        $graduation->PK_SUBCRITERIOS = 1;
+        $graduation = $this->courseWithEducationWeight(
+            8.829,
+            1,
+            new Criterion(['NU_PESO_CRITERIO' => 14.7]),
+        )->subcriterion;
 
         $course = (new HigherEducationCourse)->setRelation('subcriterion', $graduation);
         $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Básico']);
@@ -174,9 +371,10 @@ class JourneyCalculationServiceTest extends TestCase
         $journey->setRelation('profileExperience', new ProfessionalExperience([
             'DS_EXPERIENCIA_ATUACAO_PT' => 'Entre 7 e 10 anos',
         ]));
-        $journey->setRelation('englishSubcriterion', new Subcriterion([
+        $englishCriterion = new Criterion(['NU_PESO_CRITERIO' => 4.85]);
+        $journey->setRelation('englishSubcriterion', (new Subcriterion([
             'NU_PESO_SUBCRITERIO' => 26.05,
-        ]));
+        ]))->setRelation('criterion', $englishCriterion));
         $journey->setRelation('higherEducationCourses', new Collection([$course]));
         $journey->setRelation('professionalCertifications', new Collection([
             new ProfessionalCertification,
@@ -186,11 +384,24 @@ class JourneyCalculationServiceTest extends TestCase
             (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
         ]));
 
-        $this->assertEqualsWithDelta(119.879, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(19.774788, $service->calculateForJourney($journey), 0.0001);
     }
 
-    private function service(?Collection $areaWeights = null): JourneyCalculationService
+    private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse
     {
+        $subcriterion = new Subcriterion(['NU_PESO_SUBCRITERIO' => $weight]);
+        $subcriterion->PK_SUBCRITERIOS = $subcriterionId;
+        $subcriterion->setRelation('criterion', $criterion);
+
+        return (new HigherEducationCourse)->setRelation('subcriterion', $subcriterion);
+    }
+
+    private function service(
+        ?Collection $areaWeights = null,
+        ?float $criterionWeight = 23.81,
+        ?float $certificationWeight = 10.72,
+        ?float $competencyWeight = 45.92,
+    ): JourneyCalculationService {
         $repository = new class($areaWeights ?? new Collection) implements CompetencyCriterionWeightRepositoryInterface
         {
             public function __construct(private readonly Collection $areaWeights) {}
@@ -213,6 +424,40 @@ class JourneyCalculationServiceTest extends TestCase
             }
         };
 
-        return new JourneyCalculationService($repository);
+        $criterionRepository = new class($criterionWeight, $certificationWeight, $competencyWeight) implements CriterionRepositoryInterface
+        {
+            public function __construct(
+                private readonly ?float $professionalExperienceWeight,
+                private readonly ?float $certificationWeight,
+                private readonly ?float $competenciesWeight,
+            ) {}
+
+            public function all(): Collection
+            {
+                return new Collection;
+            }
+
+            public function findOrFail(int $id): Criterion
+            {
+                throw new \LogicException('Not used by JourneyCalculationService tests.');
+            }
+
+            public function findEnglishCriterionId(): ?int
+            {
+                return null;
+            }
+
+            public function findWeightByName(string $name): ?float
+            {
+                return match ($name) {
+                    Criterion::PROFESSIONAL_EXPERIENCE_NAME => $this->professionalExperienceWeight,
+                    Criterion::PROFESSIONAL_CERTIFICATION_NAME => $this->certificationWeight,
+                    Criterion::COMPETENCIES_NAME_PT, Criterion::COMPETENCIES_NAME_EN => $this->competenciesWeight,
+                    default => null,
+                };
+            }
+        };
+
+        return new JourneyCalculationService($repository, $criterionRepository);
     }
 }

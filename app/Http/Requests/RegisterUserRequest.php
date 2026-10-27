@@ -37,6 +37,7 @@ class RegisterUserRequest extends FormRequest
             'department' => ['required', 'string', 'max:100'],
             'registration_number' => ['required', 'string', 'max:50'],
             'profile_type_id' => ['required', 'integer', Rule::exists('TB_TIPO_PERFIL', 'PK_TIPO_PERFIL')],
+            'journey_profile_id' => ['sometimes', 'required', 'integer', Rule::exists('TB_PERFIS_JORNADA', 'PK_PERFIS_JORNADA')],
         ];
     }
 
@@ -67,6 +68,9 @@ class RegisterUserRequest extends FormRequest
             'profile_type_id.required' => 'Informe o tipo de perfil.',
             'profile_type_id.integer' => 'O tipo de perfil deve ser um numero inteiro.',
             'profile_type_id.exists' => 'Informe um tipo de perfil valido.',
+            'journey_profile_id.required' => 'Informe o perfil de jornada escolhido.',
+            'journey_profile_id.integer' => 'O perfil de jornada deve ser um numero inteiro.',
+            'journey_profile_id.exists' => 'Informe um perfil de jornada valido.',
         ];
     }
 

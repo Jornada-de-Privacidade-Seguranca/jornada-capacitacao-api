@@ -19,8 +19,8 @@ class JourneyRepository implements JourneyRepositoryInterface
         'journeyProfile.competencies.difficulty',
         'professionalExperience',
         'profileExperience',
-        'englishSubcriterion',
-        'higherEducationCourses.subcriterion',
+        'englishSubcriterion.criterion',
+        'higherEducationCourses.subcriterion.criterion',
         'acquiredKnowledges.competency.knowledgeDomain',
         'acquiredKnowledges.competency.knowledgeArea',
         'acquiredKnowledges.competency.difficulty',
@@ -181,6 +181,21 @@ class JourneyRepository implements JourneyRepositoryInterface
         return Journey::query()
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
+            ->exists();
+    }
+
+    public function hasAnyJourney(int $userId): bool
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->exists();
+    }
+
+    public function hasJourneyForProfile(int $userId, int $journeyProfileId): bool
+    {
+        return Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->where('FK_PERFIS_JORNADA', $journeyProfileId)
             ->exists();
     }
 

@@ -17,6 +17,7 @@ class Usuario extends JornadaModel implements AuthenticatableContract
 
     protected $fillable = [
         'FK_TIPO_PERFIL',
+        'FK_PERFIL_JORNADA',
         'FK_TIPO_USUARIO',
         'NO_USUARIO',
         'NO_ORGAO_EMPRESA',
@@ -50,6 +51,11 @@ class Usuario extends JornadaModel implements AuthenticatableContract
     public function profileType(): BelongsTo
     {
         return $this->belongsTo(ProfileType::class, 'FK_TIPO_PERFIL', 'PK_TIPO_PERFIL');
+    }
+
+    public function selectedJourneyProfile(): BelongsTo
+    {
+        return $this->belongsTo(JourneyProfile::class, 'FK_PERFIL_JORNADA', 'PK_PERFIS_JORNADA');
     }
 
     public function journeys(): HasMany

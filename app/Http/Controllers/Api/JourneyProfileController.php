@@ -19,6 +19,7 @@ class JourneyProfileController
         $paginator = $this->journeyProfileService->list(
             page: $request->page(),
             perPage: $request->perPage(),
+            modality: $request->modality(),
         );
 
         return ApiResponse::paginated(

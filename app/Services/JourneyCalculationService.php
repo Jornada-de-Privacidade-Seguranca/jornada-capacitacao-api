@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\Criterion;
 use App\Models\Journey;
 use App\Models\ProfessionalExperience;
 use App\Models\Subcriterion;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
+use App\Repositories\Contracts\CriterionRepositoryInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -45,6 +48,7 @@ class JourneyCalculationService
 
     public function __construct(
         private readonly CompetencyCriterionWeightRepositoryInterface $competencyCriterionWeightRepository,
+        private readonly CriterionRepositoryInterface $criterionRepository,
     ) {}
 
     public function calculateForJourney(Journey $journey): float
@@ -53,12 +57,14 @@ class JourneyCalculationService
             ? collect()
             : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
 
-        return $this->calculateProfessionalExperienceScore($journey->professionalExperience)
-            + $this->calculateProfileExperienceScore($journey->profileExperience)
+        return $this->calculateProfessionalExperienceCriterionScore(
+            $journey->professionalExperience,
+            $journey->profileExperience,
+        )
             + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
-            + $this->calculateCourseScore($journey->higherEducationCourses)
-            + $this->calculateCertificationScore($journey->professionalCertifications)
-            + $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights);
+            + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
+            + $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications)
+            + $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights);
     }
 
     public function calculateProfessionalExperienceScore(ProfessionalExperience|string|null $experience): float
@@ -71,9 +77,44 @@ class JourneyCalculationService
         return $this->calculateExperienceScoreRejectingNone($experience);
     }
 
+    public function calculateProfessionalExperienceCriterionScore(
+        ProfessionalExperience|string|null $professionalExperience,
+        ProfessionalExperience|string|null $profileExperience,
+    ): float {
+        $criterionScore = $this->calculateProfessionalExperienceScore($professionalExperience)
+            + $this->calculateProfileExperienceScore($profileExperience);
+
+        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::PROFESSIONAL_EXPERIENCE_NAME);
+
+        if ($criterionWeight === null) {
+            Log::warning('Professional experience criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_EXPERIENCE_NAME,
+            ]);
+
+            return 0.0;
+        }
+
+        return $criterionScore * $criterionWeight / 100.0;
+    }
+
     public function calculateEnglishProficiencyScore(?Subcriterion $subcriterion): float
     {
-        return (float) ($subcriterion?->NU_PESO_SUBCRITERIO ?? 0);
+        if ($subcriterion === null) {
+            return 0.0;
+        }
+
+        // NU_PESO_CRITERIO é nullable no schema legado. Sem critério ou peso,
+        // a contribuição é zero, mas o problema de configuração deve ficar visível.
+        $criterion = $subcriterion->criterion;
+        $mainCriterionWeight = $criterion?->NU_PESO_CRITERIO;
+
+        if ($mainCriterionWeight === null) {
+            Log::warning('Peso do critério de Inglês não configurado.', [
+                'criterion' => Criterion::ENGLISH_PROFICIENCY_NAME,
+            ]);
+        }
+
+        return (float) ($subcriterion->NU_PESO_SUBCRITERIO ?? 0) * ((float) ($mainCriterionWeight ?? 0) / 100.0);
     }
 
     private function calculateExperienceScoreAllowingNone(ProfessionalExperience|string|null $experience): float
@@ -124,6 +165,27 @@ class JourneyCalculationService
             ->sum();
     }
 
+    public function calculateEducationCriterionScore(iterable $courses): float
+    {
+        $courses = collect($courses);
+        // Todos os tipos de curso selecionados pertencem ao criterio de Formacao Academica.
+        $criterionWeight = $courses
+            ->map(fn ($course): mixed => $course->subcriterion?->criterion?->NU_PESO_CRITERIO)
+            ->first(fn ($weight): bool => $weight !== null);
+
+        if ($criterionWeight === null) {
+            if ($courses->isNotEmpty()) {
+                Log::warning('Education criterion weight is not configured; using a zero contribution.', [
+                    'criterion' => Criterion::EDUCATION_NAME,
+                ]);
+            }
+
+            return 0.0;
+        }
+
+        return $this->calculateCourseScore($courses) * (float) $criterionWeight / 100.0;
+    }
+
     public function calculateCertificationScore(iterable|int $certifications): float
     {
         $quantity = is_int($certifications)
@@ -131,6 +193,23 @@ class JourneyCalculationService
             : collect($certifications)->count();
 
         return min(max($quantity, 0) * 100.0 / 5.0, 100.0);
+    }
+
+    public function calculateProfessionalCertificationCriterionScore(iterable|int $certifications): float
+    {
+        $weight = $this->criterionRepository->findWeightByName(Criterion::PROFESSIONAL_CERTIFICATION_NAME);
+
+        if ($weight === null) {
+            Log::warning('Professional certification criterion weight is not configured; using a zero contribution.', [
+                'criterion' => Criterion::PROFESSIONAL_CERTIFICATION_NAME,
+            ]);
+
+            return 0.0;
+        }
+
+        return $this->calculateCertificationScore($certifications)
+            * $weight
+            / 100.0;
     }
 
     public function calculateCompetencyScore(iterable $acquiredKnowledges, iterable $areaWeights): float
@@ -151,6 +230,24 @@ class JourneyCalculationService
 
                 return $areaWeight * ($levelWeight / 5.0);
             });
+    }
+
+    public function calculateCompetencyCriterionScore(iterable $acquiredKnowledges, iterable $areaWeights): float
+    {
+        $criterionScore = $this->calculateCompetencyScore($acquiredKnowledges, $areaWeights);
+        $criterionWeight = $this->criterionRepository->findWeightByName(Criterion::COMPETENCIES_NAME_EN);
+
+        if ($criterionWeight === null) {
+            if ($criterionScore > 0.0) {
+                Log::warning('Competency criterion weight is not configured; using a zero contribution.', [
+                    'criterion' => Criterion::COMPETENCIES_NAME_EN,
+                ]);
+            }
+
+            return 0.0;
+        }
+
+        return $criterionScore * ($criterionWeight / 100.0);
     }
 
     private function areaWeightsByAreaId(iterable $areaWeights): Collection

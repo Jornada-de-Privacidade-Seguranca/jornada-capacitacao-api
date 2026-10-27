@@ -22,7 +22,7 @@ class UserRepository implements UserRepositoryInterface
     public function findByEmail(string $email): ?Usuario
     {
         return Usuario::query()
-            ->with('profileType')
+            ->with(['profileType', 'selectedJourneyProfile'])
             ->whereRaw('LOWER("DS_EMAIL") = ?', [strtolower($email)])
             ->first();
     }
@@ -30,7 +30,7 @@ class UserRepository implements UserRepositoryInterface
     public function findById(int $id): ?Usuario
     {
         return Usuario::query()
-            ->with('profileType')
+            ->with(['profileType', 'selectedJourneyProfile'])
             ->find($id);
     }
 
@@ -44,6 +44,6 @@ class UserRepository implements UserRepositoryInterface
         $user->fill($data);
         $user->save();
 
-        return $user->refresh()->load('profileType');
+        return $user->refresh()->load(['profileType', 'selectedJourneyProfile']);
     }
 }
