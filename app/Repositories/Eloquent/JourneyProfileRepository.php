@@ -6,6 +6,7 @@ use App\Models\JourneyProfile;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class JourneyProfileRepository implements JourneyProfileRepositoryInterface
 {
@@ -122,6 +123,31 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
     {
         return JourneyProfile::query()
             ->whereNotNull('NO_PERFIS_PT')
+            ->findOrFail($id);
+    }
+
+    public function findWithCountsOrFail(int $id): JourneyProfile
+    {
+        $grammar = JourneyProfile::query()->getQuery()->getGrammar();
+        $competencyColumn = $grammar->wrap('RL_PERFIS_COMPETENCIAS.FK_COMPETENCIAS');
+        $knowledgeAreaColumn = $grammar->wrap('TB_COMPETENCIAS.FK_AREA_CONHECIMENTO');
+
+        return JourneyProfile::query()
+            ->whereNotNull('NO_PERFIS_PT')
+            ->select('TB_PERFIS_JORNADA.*')
+            ->selectSub(
+                DB::table('RL_PERFIS_COMPETENCIAS')
+                    ->whereColumn('RL_PERFIS_COMPETENCIAS.FK_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA')
+                    ->selectRaw('COUNT(DISTINCT '.$competencyColumn.')'),
+                'competencies_count',
+            )
+            ->selectSub(
+                DB::table('RL_PERFIS_COMPETENCIAS')
+                    ->join('TB_COMPETENCIAS', 'TB_COMPETENCIAS.PK_COMPETENCIAS', '=', 'RL_PERFIS_COMPETENCIAS.FK_COMPETENCIAS')
+                    ->whereColumn('RL_PERFIS_COMPETENCIAS.FK_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA')
+                    ->selectRaw('COUNT(DISTINCT '.$knowledgeAreaColumn.') + CASE WHEN COUNT(*) > COUNT('.$knowledgeAreaColumn.') THEN 1 ELSE 0 END'),
+                'knowledge_areas_count',
+            )
             ->findOrFail($id);
     }
 }

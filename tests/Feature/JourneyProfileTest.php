@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Competency;
 use App\Models\JourneyProfile;
+use App\Models\KnowledgeArea;
 use App\Models\KnowledgeDomain;
+use App\Models\ProfileCompetency;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -41,7 +44,9 @@ class JourneyProfileTest extends TestCase
                         'type',
                     ],
                 ],
-            ]);
+            ])
+            ->assertJsonMissingPath('data.0.competencies_count')
+            ->assertJsonMissingPath('data.0.knowledge_areas_count');
     }
 
     public function test_it_paginates_journey_profiles(): void
@@ -329,7 +334,49 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('data.name_en', 'Technical role')
             ->assertJsonPath('data.description_pt', 'Perfil técnico')
             ->assertJsonPath('data.description_en', 'Technical profile')
-            ->assertJsonPath('data.type', $knowledgeDomain->PK_DOMINIO_CONHECIMENTO);
+            ->assertJsonPath('data.type', $knowledgeDomain->PK_DOMINIO_CONHECIMENTO)
+            ->assertJsonPath('data.competencies_count', 0)
+            ->assertJsonPath('data.knowledge_areas_count', 0);
+    }
+
+    public function test_it_returns_competency_and_distinct_knowledge_area_counts_for_a_journey_profile(): void
+    {
+        $user = $this->activeUser();
+        $profile = JourneyProfile::factory()->create();
+        $privacyArea = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Gestao de Privacidade']);
+        $securityArea = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Gestao de Seguranca']);
+
+        $competencies = [
+            Competency::create([
+                'FK_AREA_CONHECIMENTO' => $privacyArea->PK_AREA_CONHECIMENTO,
+                'NO_COMPETENCIAS_PT' => 'Competencia de privacidade 1',
+            ]),
+            Competency::create([
+                'FK_AREA_CONHECIMENTO' => $privacyArea->PK_AREA_CONHECIMENTO,
+                'NO_COMPETENCIAS_PT' => 'Competencia de privacidade 2',
+            ]),
+            Competency::create([
+                'FK_AREA_CONHECIMENTO' => $securityArea->PK_AREA_CONHECIMENTO,
+                'NO_COMPETENCIAS_PT' => 'Competencia de seguranca',
+            ]),
+            Competency::create([
+                'FK_AREA_CONHECIMENTO' => null,
+                'NO_COMPETENCIAS_PT' => 'Competencia sem area',
+            ]),
+        ];
+
+        foreach ($competencies as $competency) {
+            ProfileCompetency::create([
+                'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+                'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles/'.$profile->PK_PERFIS_JORNADA)
+            ->assertOk()
+            ->assertJsonPath('data.competencies_count', 4)
+            ->assertJsonPath('data.knowledge_areas_count', 3);
     }
 
     public function test_it_does_not_show_old_mocked_journey_profile_without_real_name(): void

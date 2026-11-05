@@ -20,6 +20,14 @@ class JourneyProfileResource extends JsonResource
             'description_pt' => $this->DS_PERFIS_PT,
             'description_en' => $this->DS_PERFIS_EN,
             'type' => $this->FK_DOMINIO_CONHECIMENTO,
+            'competencies_count' => $this->when(
+                array_key_exists('competencies_count', $this->resource->getAttributes()),
+                (int) $this->resource->getAttribute('competencies_count'),
+            ),
+            'knowledge_areas_count' => $this->when(
+                array_key_exists('knowledge_areas_count', $this->resource->getAttributes()),
+                (int) $this->resource->getAttribute('knowledge_areas_count'),
+            ),
         ];
     }
 }
