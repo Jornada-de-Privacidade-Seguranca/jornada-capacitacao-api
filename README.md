@@ -175,6 +175,27 @@ O check `Quality` executa Laravel Pint, PHPStan/Larastan e PHPMD. O check `Tests
 
 Os checks `Quality` e `Tests` devem estar configurados como obrigatorios para merge na branch `main`.
 
+## Auditoria de dependencias
+
+O GitHub Actions executa o check `Dependency Audit` em Pull Requests para `main`, em pushes para `main`, semanalmente e quando iniciado manualmente pela aba **Actions**. A auditoria usa `composer audit` sobre o `composer.lock`; dependencias de desenvolvimento tambem sao verificadas. Vulnerabilidades conhecidas fazem o check falhar.
+
+Para executar localmente, instale o Composer 2 e PHP 8.3 ou superior e rode:
+
+```bash
+composer audit --locked --no-interaction
+```
+
+Para corrigir uma falha, atualize as dependencias afetadas dentro das restricoes de `composer.json` e atualize o lockfile:
+
+```bash
+composer update nome/do-pacote --with-all-dependencies
+composer audit --locked --no-interaction
+```
+
+Se a atualizacao de um pacote exigir mudancas incompatíveis nas restricoes atuais, avalie a menor versao corrigida compativel antes de alterar o `composer.json`. Nao ignore avisos de seguranca para fazer o check passar. Dependabot verifica alertas e propoe atualizacoes semanais para dependencias Composer e GitHub Actions.
+
+O check `Dependency Audit` deve ser obrigatorio para merge em `main`, junto de `Quality` e `Tests`.
+
 ## Documentacao Swagger
 
 A especificacao OpenAPI fica em `docs/openapi.yaml`.

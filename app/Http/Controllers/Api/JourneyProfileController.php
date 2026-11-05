@@ -20,6 +20,7 @@ class JourneyProfileController
             page: $request->page(),
             perPage: $request->perPage(),
             modality: $request->modality(),
+            search: $request->search(),
         );
 
         return ApiResponse::paginated(
