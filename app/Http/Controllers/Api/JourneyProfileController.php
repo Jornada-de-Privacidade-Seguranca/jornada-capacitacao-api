@@ -34,7 +34,7 @@ class JourneyProfileController
     {
         try {
             return ApiResponse::success(
-                data: (new JourneyProfileResource($this->journeyProfileService->find($id)))->resolve(),
+                data: (new JourneyProfileResource($this->journeyProfileService->findWithCounts($id)))->resolve(),
                 message: 'Journey profile retrieved successfully.',
             );
         } catch (ModelNotFoundException) {

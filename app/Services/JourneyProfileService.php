@@ -19,4 +19,9 @@ class JourneyProfileService
     {
         return $this->journeyProfileRepository->findOrFail($id);
     }
+
+    public function findWithCounts(int $id): JourneyProfile
+    {
+        return $this->journeyProfileRepository->findWithCountsOrFail($id);
+    }
 }

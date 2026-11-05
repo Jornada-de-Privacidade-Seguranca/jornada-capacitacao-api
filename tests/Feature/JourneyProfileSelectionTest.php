@@ -25,7 +25,9 @@ class JourneyProfileSelectionTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Perfil de jornada selecionado com sucesso.')
             ->assertJsonPath('data.journey_profile_id', $profile->PK_PERFIS_JORNADA)
-            ->assertJsonPath('data.journey_profile.id', $profile->PK_PERFIS_JORNADA);
+            ->assertJsonPath('data.journey_profile.id', $profile->PK_PERFIS_JORNADA)
+            ->assertJsonMissingPath('data.journey_profile.competencies_count')
+            ->assertJsonMissingPath('data.journey_profile.knowledge_areas_count');
 
         $this->actingAs($user)->getJson('/api/me')
             ->assertOk()

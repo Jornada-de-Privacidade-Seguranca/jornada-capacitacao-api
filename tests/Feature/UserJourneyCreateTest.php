@@ -30,6 +30,8 @@ class UserJourneyCreateTest extends TestCase
             ->assertJsonPath('message', 'Jornada iniciada com sucesso.')
             ->assertJsonPath('data.user_id', $user->PK_USUARIO)
             ->assertJsonPath('data.journey_profile.id', $profile->PK_PERFIS_JORNADA)
+            ->assertJsonMissingPath('data.journey_profile.competencies_count')
+            ->assertJsonMissingPath('data.journey_profile.knowledge_areas_count')
             ->assertJsonPath('data.finished_at', null)
             ->assertJsonPath('data.status', 'ongoing')
             ->assertJsonPath('data.is_completed', false);

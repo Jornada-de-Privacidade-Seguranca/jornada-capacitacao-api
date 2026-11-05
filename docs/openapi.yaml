@@ -5058,7 +5058,7 @@ components:
               example: 12
             knowledge_areas_count:
               type: integer
-              description: Total de areas de conhecimento distintas entre as competencias do perfil.
+              description: Total de areas de conhecimento distintas entre as competencias do perfil, contando como um grupo as competencias sem area quando houver.
               example: 5
     ValidationError:
       type: object

@@ -359,6 +359,10 @@ class JourneyProfileTest extends TestCase
                 'FK_AREA_CONHECIMENTO' => $securityArea->PK_AREA_CONHECIMENTO,
                 'NO_COMPETENCIAS_PT' => 'Competencia de seguranca',
             ]),
+            Competency::create([
+                'FK_AREA_CONHECIMENTO' => null,
+                'NO_COMPETENCIAS_PT' => 'Competencia sem area',
+            ]),
         ];
 
         foreach ($competencies as $competency) {
@@ -371,8 +375,8 @@ class JourneyProfileTest extends TestCase
         $this->actingAs($user)
             ->getJson('/api/journey-profiles/'.$profile->PK_PERFIS_JORNADA)
             ->assertOk()
-            ->assertJsonPath('data.competencies_count', 3)
-            ->assertJsonPath('data.knowledge_areas_count', 2);
+            ->assertJsonPath('data.competencies_count', 4)
+            ->assertJsonPath('data.knowledge_areas_count', 3);
     }
 
     public function test_it_does_not_show_old_mocked_journey_profile_without_real_name(): void

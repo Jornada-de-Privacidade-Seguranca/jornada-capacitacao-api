@@ -22,11 +22,11 @@ class JourneyProfileResource extends JsonResource
             'type' => $this->FK_DOMINIO_CONHECIMENTO,
             'competencies_count' => $this->when(
                 array_key_exists('competencies_count', $this->resource->getAttributes()),
-                $this->resource->getAttribute('competencies_count'),
+                (int) $this->resource->getAttribute('competencies_count'),
             ),
             'knowledge_areas_count' => $this->when(
                 array_key_exists('knowledge_areas_count', $this->resource->getAttributes()),
-                $this->resource->getAttribute('knowledge_areas_count'),
+                (int) $this->resource->getAttribute('knowledge_areas_count'),
             ),
         ];
     }
