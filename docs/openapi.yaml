@@ -2745,6 +2745,13 @@ paths:
             - Privacidade
             - Segurança
             - Privacidade/Segurança
+      - name: search
+        in: query
+        description: Busca por nome ou descrição em português/inglês, sem diferenciar maiúsculas/minúsculas ou acentos.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
     get:
       tags:
         - JourneyProfiles
@@ -2787,6 +2794,14 @@ paths:
                     errors:
                       modality:
                         - A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.
+                    code: VALIDATION_ERROR
+                invalidSearch:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      search:
+                        - A busca deve ser um texto.
                     code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:

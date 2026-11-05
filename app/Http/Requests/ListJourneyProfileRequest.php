@@ -21,6 +21,7 @@ class ListJourneyProfileRequest extends FormRequest
             'page' => ['sometimes', 'integer', 'min:1'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'modality' => ['sometimes', 'string', 'in:Privacidade,Segurança,Privacidade/Segurança'],
+            'search' => ['sometimes', 'string', 'max:255'],
         ];
     }
 
@@ -34,6 +35,8 @@ class ListJourneyProfileRequest extends FormRequest
             'per_page.max' => 'A quantidade de registros por pagina nao pode ser maior que 100.',
             'modality.string' => 'A modalidade deve ser um texto.',
             'modality.in' => 'A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.',
+            'search.string' => 'A busca deve ser um texto.',
+            'search.max' => 'A busca nao pode ter mais de 255 caracteres.',
         ];
     }
 
@@ -60,5 +63,12 @@ class ListJourneyProfileRequest extends FormRequest
     public function modality(): ?string
     {
         return $this->validated('modality');
+    }
+
+    public function search(): ?string
+    {
+        $search = trim((string) $this->validated('search', ''));
+
+        return $search === '' ? null : $search;
     }
 }
