@@ -8,6 +8,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Resources\AuthenticatedUserResource;
 use App\Services\LoginService;
 use App\Support\ApiResponse;
+use App\Support\SessionMetadata;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -47,6 +48,7 @@ class LoginController
         return ApiResponse::success(
             data: (new AuthenticatedUserResource($user))->resolve(),
             message: 'Login realizado com sucesso.',
+            meta: SessionMetadata::toArray(),
         );
     }
 }

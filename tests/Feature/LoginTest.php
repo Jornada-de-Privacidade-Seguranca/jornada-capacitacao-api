@@ -7,6 +7,7 @@ use App\Models\Usuario;
 use App\Services\LoginService;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Mockery;
 use Tests\TestCase;
@@ -17,6 +18,8 @@ class LoginTest extends TestCase
 
     public function test_it_authenticates_an_active_common_user(): void
     {
+        config(['session.lifetime' => 47]);
+
         $profileType = ProfileType::create(['NO_TIPO_PERFIL' => 'Aluno']);
         Usuario::create([
             'FK_TIPO_PERFIL' => $profileType->PK_TIPO_PERFIL,
@@ -42,6 +45,7 @@ class LoginTest extends TestCase
             ->assertJsonPath('data.profile.user_type_id', 2)
             ->assertJsonPath('data.profile.profile_type_id', $profileType->PK_TIPO_PERFIL)
             ->assertJsonPath('data.profile.profile_type_name', 'Aluno')
+            ->assertJsonPath('meta.session.lifetime_minutes', 47)
             ->assertJsonMissingPath('data.DS_SENHA');
 
         $this->getJson('/api/me')
@@ -49,7 +53,45 @@ class LoginTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Usuario autenticado recuperado com sucesso.')
             ->assertJsonPath('data.email', 'maria.silva@example.com')
-            ->assertJsonPath('data.role', 'common_user');
+            ->assertJsonPath('data.role', 'common_user')
+            ->assertJsonPath('meta.session.lifetime_minutes', 47);
+    }
+
+    public function test_authenticated_requests_refresh_database_session_activity(): void
+    {
+        config(['session.driver' => 'database']);
+
+        $user = Usuario::create([
+            'FK_TIPO_USUARIO' => 2,
+            'NO_USUARIO' => 'Maria Silva',
+            'DS_EMAIL' => 'maria.silva@example.com',
+            'DS_SENHA' => Hash::make('secret123'),
+            'ST_ATIVO' => 1,
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/me')->assertOk();
+
+        $session = DB::table('sessions')->first();
+        $this->assertNotNull($session);
+        $sessionCookie = $response->getCookie(config('session.cookie'), false);
+        $this->assertNotNull($sessionCookie);
+        $this->assertSame($session->id, $sessionCookie->getValue());
+
+        $previousActivity = $session->last_activity - 60;
+        DB::table('sessions')->where('id', $session->id)->update([
+            'last_activity' => $previousActivity,
+        ]);
+
+        $this->withCredentials()
+            ->withUnencryptedCookies([config('session.cookie') => $sessionCookie->getValue()])
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('meta.session.lifetime_minutes', config('session.lifetime'));
+
+        $this->assertGreaterThan(
+            $previousActivity,
+            DB::table('sessions')->where('id', $session->id)->value('last_activity'),
+        );
     }
 
     public function test_it_rejects_session_when_authenticated_user_becomes_inactive(): void
@@ -177,7 +219,8 @@ class LoginTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Usuario e/ou senha invalidos.')
             ->assertJsonPath('code', 'INVALID_CREDENTIALS')
-            ->assertJsonPath('errors', []);
+            ->assertJsonPath('errors', [])
+            ->assertJsonMissingPath('meta');
 
         $this->getJson('/api/me')
             ->assertUnauthorized()
@@ -280,7 +323,8 @@ class LoginTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Sua conta ainda nao foi ativada por um administrador do sistema.')
-            ->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED');
+            ->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED')
+            ->assertJsonMissingPath('meta');
     }
 
     public function test_it_returns_standard_error_for_internal_server_error(): void

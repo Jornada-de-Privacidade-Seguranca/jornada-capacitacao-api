@@ -15,6 +15,16 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
+    private const MAX_EXPERIENCE_SCORE = 50.0;
+
+    private const MAX_ENGLISH_PROFICIENCY_SCORE = 63.335;
+
+    private const MAX_EDUCATION_SCORE = 100.0;
+
+    private const MAX_CERTIFICATION_SCORE = 100.0;
+
+    private const MAX_COMPETENCY_SCORE = 100.0;
+
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -53,18 +63,90 @@ class JourneyCalculationService
 
     public function calculateForJourney(Journey $journey): float
     {
+        return array_sum($this->calculateCriterionContributions($journey));
+    }
+
+    /** @return list<array{category: string, name_pt: string, name_en: string, score: float}> */
+    public function calculateScoreBreakdownForJourney(Journey $journey): array
+    {
         $areaWeights = $journey->FK_PERFIS_JORNADA === null
             ? collect()
             : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
 
-        return $this->calculateProfessionalExperienceCriterionScore(
-            $journey->professionalExperience,
-            $journey->profileExperience,
-        )
-            + $this->calculateEnglishProficiencyScore($journey->englishSubcriterion)
-            + $this->calculateEducationCriterionScore($journey->higherEducationCourses)
-            + $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications)
-            + $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights);
+        return [
+            $this->scoreBreakdownItem(
+                'professional_experience',
+                'Tempo de Experiência Profissional',
+                'Years of Professional Experience',
+                $this->calculateProfessionalExperienceScore($journey->professionalExperience),
+                self::MAX_EXPERIENCE_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'profile_experience',
+                'Tempo de Atuação no Perfil',
+                'Time Spent on Role',
+                $this->calculateProfileExperienceScore($journey->profileExperience),
+                self::MAX_EXPERIENCE_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'english_proficiency',
+                'Nível de Proficiência - Inglês',
+                'Proficiency Level - English',
+                (float) ($journey->englishSubcriterion?->NU_PESO_SUBCRITERIO ?? 0),
+                self::MAX_ENGLISH_PROFICIENCY_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'education',
+                'Formação Acadêmica',
+                'Education',
+                $this->calculateCourseScore($journey->higherEducationCourses),
+                self::MAX_EDUCATION_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'professional_certifications',
+                'Certificação Profissional',
+                'Professional Certifications',
+                $this->calculateCertificationScore($journey->professionalCertifications),
+                self::MAX_CERTIFICATION_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'competencies',
+                'Competências',
+                'Competencies',
+                $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights),
+                self::MAX_COMPETENCY_SCORE,
+            ),
+        ];
+    }
+
+    /** @return array{category: string, name_pt: string, name_en: string, score: float} */
+    private function scoreBreakdownItem(string $category, string $namePt, string $nameEn, float $score, float $maximum): array
+    {
+        return [
+            'category' => $category,
+            'name_pt' => $namePt,
+            'name_en' => $nameEn,
+            'score' => $maximum > 0 ? round(min(max($score, 0.0) / $maximum * 100, 100), 3) : 0.0,
+        ];
+    }
+
+    /** @return array<string, float> */
+    private function calculateCriterionContributions(Journey $journey): array
+    {
+        $areaWeights = $journey->FK_PERFIS_JORNADA === null
+            ? collect()
+            : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
+
+        return [
+            'professional_experience' => $this->calculateProfessionalExperienceCriterionScore(
+                $journey->professionalExperience,
+                $journey->profileExperience,
+            ),
+            'english_proficiency' => $this->calculateEnglishProficiencyScore($journey->englishSubcriterion),
+            'education' => $this->calculateEducationCriterionScore($journey->higherEducationCourses),
+            'professional_certifications' => $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications),
+            'competencies' => $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights),
+        ];
     }
 
     public function calculateProfessionalExperienceScore(ProfessionalExperience|string|null $experience): float

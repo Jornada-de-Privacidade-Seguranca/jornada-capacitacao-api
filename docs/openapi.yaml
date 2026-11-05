@@ -339,7 +339,7 @@ paths:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. A resposta inclui o tempo maximo de inatividade da sessao, em minutos. No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
       parameters:
@@ -379,6 +379,9 @@ paths:
                         profile_type_id: 1
                         profile_type_name: Aluno
                       active_status: 1
+                    meta:
+                      session:
+                        lifetime_minutes: 120
                 administrator:
                   value:
                     success: true
@@ -395,6 +398,9 @@ paths:
                         profile_type_id: null
                         profile_type_name: null
                       active_status: 1
+                    meta:
+                      session:
+                        lifetime_minutes: 120
         "401":
           description: Credenciais invalidas
           content:
@@ -471,7 +477,7 @@ paths:
       tags:
         - Auth
       summary: Recupera o usuario autenticado
-      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
+      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui o tempo maximo de inatividade da sessao, em minutos. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
       operationId: getAuthenticatedUser
       security:
         - sessionAuth: []
@@ -502,6 +508,9 @@ paths:
                         journey_profile_name: Encarregado pelo Tratamento de Dados Pessoais
                         journey_profile_name_en: Data Protection Officer
                       active_status: 1
+                    meta:
+                      session:
+                        lifetime_minutes: 120
         "401":
           description: Usuario nao autenticado
           content:
@@ -1759,6 +1768,7 @@ paths:
                       status: ongoing
                       is_completed: false
                       score: null
+                      score_breakdown: null
                       answers:
                         professional_experience:
                           id: 1
@@ -2873,6 +2883,13 @@ paths:
             - Privacidade
             - Segurança
             - Privacidade/Segurança
+      - name: search
+        in: query
+        description: Busca por nome ou descrição em português/inglês, sem diferenciar maiúsculas/minúsculas ou acentos.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
     get:
       tags:
         - JourneyProfiles
@@ -2915,6 +2932,14 @@ paths:
                     errors:
                       modality:
                         - A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.
+                    code: VALIDATION_ERROR
+                invalidSearch:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      search:
+                        - A busca deve ser um texto.
                     code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:
@@ -3406,6 +3431,7 @@ components:
         - success
         - message
         - data
+        - meta
       properties:
         success:
           type: boolean
@@ -3415,12 +3441,15 @@ components:
           example: Login realizado com sucesso.
         data:
           $ref: "#/components/schemas/AuthenticatedUser"
+        meta:
+          $ref: "#/components/schemas/SessionMetadata"
     AuthenticatedUserResponse:
       type: object
       required:
         - success
         - message
         - data
+        - meta
       properties:
         success:
           type: boolean
@@ -3430,6 +3459,22 @@ components:
           example: Usuario autenticado recuperado com sucesso.
         data:
           $ref: "#/components/schemas/AuthenticatedUser"
+        meta:
+          $ref: "#/components/schemas/SessionMetadata"
+    SessionMetadata:
+      type: object
+      required:
+        - session
+      properties:
+        session:
+          type: object
+          required:
+            - lifetime_minutes
+          properties:
+            lifetime_minutes:
+              type: integer
+              description: Duracao maxima de inatividade, em minutos, antes da sessao expirar.
+              example: 120
     AuthenticatedUser:
       type: object
       required:
@@ -3986,6 +4031,7 @@ components:
         - status
         - is_completed
         - score
+        - score_breakdown
         - answers
         - acquired_knowledges
         - knowledges_by_domain
@@ -4025,6 +4071,34 @@ components:
           format: float
           description: Pontuacao final persistida ao concluir a jornada; permanece nula durante a jornada e nao e recalculada nas consultas.
           example: 126.329
+        score_breakdown:
+          type:
+            - array
+            - "null"
+          description: Aproveitamento de cada categoria de 0 a 100, persistido na finalizacao. O valor e nulo em jornadas em andamento e em jornadas concluidas antes da disponibilidade deste detalhamento.
+          items:
+            type: object
+            required:
+              - category
+              - name_pt
+              - name_en
+              - score
+            properties:
+              category:
+                type: string
+                example: professional_experience
+              name_pt:
+                type: string
+                example: Tempo de Experiência Profissional
+              name_en:
+                type: string
+                example: Years of Professional Experience
+              score:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+                example: 66.667
         answers:
           $ref: "#/components/schemas/UserJourneyAnswers"
         acquired_knowledges:
