@@ -9,6 +9,7 @@ use App\Models\Criterion;
 use App\Models\Difficulty;
 use App\Models\HigherEducationCourse;
 use App\Models\Journey;
+use App\Models\JourneyProfile;
 use App\Models\ProfessionalCertification;
 use App\Models\ProfessionalExperience;
 use App\Models\Subcriterion;
@@ -342,49 +343,114 @@ class JourneyCalculationServiceTest extends TestCase
         ])]));
     }
 
-    public function test_it_calculates_journey_total_using_profile_area_weights_from_repository(): void
+    public function test_it_calculates_journey_total_only_from_competencies_using_profile_area_weights(): void
     {
-        $areaWeight = new CompetencyCriterionWeight([
-            'FK_PERFIS_JORNADA' => 77,
-            'FK_AREA_CONHECIMENTO' => 10,
-            'NU_PESO_CRIT_COMPETENCIA' => 25,
-        ]);
-        $service = $this->service(new Collection([$areaWeight]));
+        $service = $this->service(new Collection([
+            new CompetencyCriterionWeight([
+                'FK_PERFIS_JORNADA' => 77,
+                'FK_AREA_CONHECIMENTO' => 10,
+                'NU_PESO_CRIT_COMPETENCIA' => 25,
+            ]),
+            new CompetencyCriterionWeight([
+                'FK_PERFIS_JORNADA' => 77,
+                'FK_AREA_CONHECIMENTO' => 20,
+                'NU_PESO_CRIT_COMPETENCIA' => 15,
+            ]),
+        ]));
+        // 25 × 2 ÷ 5 = 10 pontos e 15 × 4 ÷ 5 = 12 pontos
+        $basic = $this->profileCompetency(1, 10, 'Básico');
+        $advanced = $this->profileCompetency(2, 20, 'Avançado');
 
-        $graduation = $this->courseWithEducationWeight(
-            8.829,
-            1,
-            new Criterion(['NU_PESO_CRITERIO' => 14.7]),
-        )->subcriterion;
-
-        $course = (new HigherEducationCourse)->setRelation('subcriterion', $graduation);
-        $difficulty = new Difficulty(['NO_DIFICULDADE_PT' => 'Básico']);
-        $competency = new Competency(['FK_AREA_CONHECIMENTO' => 10]);
-        $competency->setRelation('difficulty', $difficulty);
-
-        $journey = new Journey([
-            'FK_PERFIS_JORNADA' => 77,
-        ]);
+        $journey = new Journey(['FK_PERFIS_JORNADA' => 77]);
+        $journey->setRelation('journeyProfile', (new JourneyProfile)->setRelation(
+            'competencies',
+            new Collection([$basic, $advanced]),
+        ));
+        // Respostas do pré-questionário não entram mais na nota
         $journey->setRelation('professionalExperience', new ProfessionalExperience([
-            'DS_EXPERIENCIA_ATUACAO_PT' => 'Menos de 1 ano',
+            'DS_EXPERIENCIA_ATUACAO_PT' => 'Mais de 10 anos',
         ]));
-        $journey->setRelation('profileExperience', new ProfessionalExperience([
-            'DS_EXPERIENCIA_ATUACAO_PT' => 'Entre 7 e 10 anos',
-        ]));
-        $englishCriterion = new Criterion(['NU_PESO_CRITERIO' => 4.85]);
-        $journey->setRelation('englishSubcriterion', (new Subcriterion([
-            'NU_PESO_SUBCRITERIO' => 26.05,
-        ]))->setRelation('criterion', $englishCriterion));
-        $journey->setRelation('higherEducationCourses', new Collection([$course]));
         $journey->setRelation('professionalCertifications', new Collection([
-            new ProfessionalCertification,
             new ProfessionalCertification,
         ]));
         $journey->setRelation('acquiredKnowledges', new Collection([
-            (new AcquiredKnowledge(['TP_ADQUIRIDO' => 1]))->setRelation('competency', $competency),
+            $this->acquiredKnowledge($basic, 1),
+            $this->acquiredKnowledge($advanced, 0),
         ]));
 
-        $this->assertEqualsWithDelta(19.774788, $service->calculateForJourney($journey), 0.0001);
+        $this->assertEqualsWithDelta(45.454545, $service->calculateForJourney($journey), 0.0001);
+    }
+
+    public function test_it_normalizes_the_competency_score_from_zero_to_one_hundred(): void
+    {
+        $service = $this->service();
+        $areaWeights = [new CompetencyCriterionWeight([
+            'FK_AREA_CONHECIMENTO' => 10,
+            'NU_PESO_CRIT_COMPETENCIA' => 40,
+        ])];
+        $first = $this->profileCompetency(1, 10, 'Especialista');
+        $second = $this->profileCompetency(2, 10, 'Iniciante');
+        $profileCompetencies = [$first, $second];
+
+        $this->assertSame(0.0, $service->calculateNormalizedCompetencyScore([
+            $this->acquiredKnowledge($first, 0),
+            $this->acquiredKnowledge($second, 0),
+        ], $profileCompetencies, $areaWeights));
+        // 40 × 5 ÷ 5 = 40 de um total de 40 + 8
+        $this->assertEqualsWithDelta(83.333333, $service->calculateNormalizedCompetencyScore([
+            $this->acquiredKnowledge($first, 1),
+            $this->acquiredKnowledge($second, 0),
+        ], $profileCompetencies, $areaWeights), 0.0001);
+        $this->assertEqualsWithDelta(100.0, $service->calculateNormalizedCompetencyScore([
+            $this->acquiredKnowledge($first, 1),
+            $this->acquiredKnowledge($second, 1),
+        ], $profileCompetencies, $areaWeights), 0.0001);
+    }
+
+    public function test_it_ignores_declared_competencies_outside_the_profile(): void
+    {
+        $service = $this->service();
+        $areaWeights = [new CompetencyCriterionWeight([
+            'FK_AREA_CONHECIMENTO' => 10,
+            'NU_PESO_CRIT_COMPETENCIA' => 50,
+        ])];
+        $profileCompetency = $this->profileCompetency(1, 10, 'Básico');
+        $removedCompetency = $this->profileCompetency(99, 10, 'Especialista');
+
+        $this->assertSame(0.0, $service->calculateNormalizedCompetencyScore([
+            $this->acquiredKnowledge($profileCompetency, 0),
+            $this->acquiredKnowledge($removedCompetency, 1),
+        ], [$profileCompetency], $areaWeights));
+    }
+
+    public function test_it_scores_zero_when_the_profile_has_no_weighted_competency(): void
+    {
+        $service = $this->service();
+        $competency = $this->profileCompetency(1, 10, 'Básico');
+
+        $this->assertSame(0.0, $service->calculateNormalizedCompetencyScore(
+            [$this->acquiredKnowledge($competency, 1)],
+            [$competency],
+            [],
+        ));
+        $this->assertSame(0.0, $service->calculateNormalizedCompetencyScore([], [], []));
+    }
+
+    private function profileCompetency(int $id, int $areaId, string $difficulty): Competency
+    {
+        $competency = new Competency(['FK_AREA_CONHECIMENTO' => $areaId]);
+        $competency->PK_COMPETENCIAS = $id;
+        $competency->setRelation('difficulty', new Difficulty(['NO_DIFICULDADE_PT' => $difficulty]));
+
+        return $competency;
+    }
+
+    private function acquiredKnowledge(Competency $competency, int $acquired): AcquiredKnowledge
+    {
+        $knowledge = new AcquiredKnowledge(['TP_ADQUIRIDO' => $acquired]);
+        $knowledge->FK_COMPETENCIAS = $competency->PK_COMPETENCIAS;
+
+        return $knowledge->setRelation('competency', $competency);
     }
 
     private function courseWithEducationWeight(float $weight, int $subcriterionId, Criterion $criterion): HigherEducationCourse

@@ -61,9 +61,62 @@ class JourneyCalculationService
         private readonly CriterionRepositoryInterface $criterionRepository,
     ) {}
 
+    /**
+     * Nota total da jornada (0 a 100), calculada só pelas competências: as
+     * declaradas sobre o total possível do perfil. Experiência, inglês,
+     * formação e certificações saíram do fluxo e não entram mais na nota.
+     */
     public function calculateForJourney(Journey $journey): float
     {
-        return array_sum($this->calculateCriterionContributions($journey));
+        $areaWeights = $journey->FK_PERFIS_JORNADA === null
+            ? collect()
+            : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
+
+        return $this->calculateNormalizedCompetencyScore(
+            $journey->acquiredKnowledges,
+            $journey->journeyProfile?->competencies ?? collect(),
+            $areaWeights,
+        );
+    }
+
+    /**
+     * Cada competência vale (peso da área × nível ÷ 5). A nota é a soma das
+     * competências do perfil declaradas como possuídas sobre a soma de todas as
+     * competências do perfil, de 0 (nenhuma) a 100 (todas).
+     */
+    public function calculateNormalizedCompetencyScore(
+        iterable $acquiredKnowledges,
+        iterable $profileCompetencies,
+        iterable $areaWeights,
+    ): float {
+        $weightsByArea = $this->areaWeightsByAreaId($areaWeights);
+        $profileCompetencies = collect($profileCompetencies);
+
+        $maximumScore = $profileCompetencies->sum(
+            fn ($competency): float => $this->competencyPoints($competency, $weightsByArea),
+        );
+
+        if ($maximumScore <= 0.0) {
+            return 0.0;
+        }
+
+        $profileCompetencyIds = $profileCompetencies
+            ->map(fn ($competency): int => (int) $competency->PK_COMPETENCIAS)
+            ->all();
+
+        $declaredScore = collect($acquiredKnowledges)
+            ->filter(fn ($acquiredKnowledge): bool => (int) $acquiredKnowledge->TP_ADQUIRIDO === 1)
+            ->filter(fn ($acquiredKnowledge): bool => in_array(
+                (int) $acquiredKnowledge->FK_COMPETENCIAS,
+                $profileCompetencyIds,
+                true,
+            ))
+            ->sum(fn ($acquiredKnowledge): float => $this->competencyPoints(
+                $acquiredKnowledge->competency ?? null,
+                $weightsByArea,
+            ));
+
+        return min($declaredScore / $maximumScore * self::MAX_COMPETENCY_SCORE, self::MAX_COMPETENCY_SCORE);
     }
 
     /** @return list<array{category: string, name_pt: string, name_en: string, score: float}> */
@@ -127,25 +180,6 @@ class JourneyCalculationService
             'name_pt' => $namePt,
             'name_en' => $nameEn,
             'score' => $maximum > 0 ? round(min(max($score, 0.0) / $maximum * 100, 100), 3) : 0.0,
-        ];
-    }
-
-    /** @return array<string, float> */
-    private function calculateCriterionContributions(Journey $journey): array
-    {
-        $areaWeights = $journey->FK_PERFIS_JORNADA === null
-            ? collect()
-            : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
-
-        return [
-            'professional_experience' => $this->calculateProfessionalExperienceCriterionScore(
-                $journey->professionalExperience,
-                $journey->profileExperience,
-            ),
-            'english_proficiency' => $this->calculateEnglishProficiencyScore($journey->englishSubcriterion),
-            'education' => $this->calculateEducationCriterionScore($journey->higherEducationCourses),
-            'professional_certifications' => $this->calculateProfessionalCertificationCriterionScore($journey->professionalCertifications),
-            'competencies' => $this->calculateCompetencyCriterionScore($journey->acquiredKnowledges, $areaWeights),
         ];
     }
 
@@ -300,18 +334,23 @@ class JourneyCalculationService
 
         return collect($acquiredKnowledges)
             ->filter(fn ($acquiredKnowledge): bool => (int) $acquiredKnowledge->TP_ADQUIRIDO === 1)
-            ->sum(function ($acquiredKnowledge) use ($weightsByArea): float {
-                $competency = $acquiredKnowledge->competency ?? null;
+            ->sum(fn ($acquiredKnowledge): float => $this->competencyPoints(
+                $acquiredKnowledge->competency ?? null,
+                $weightsByArea,
+            ));
+    }
 
-                if ($competency === null || $competency->FK_AREA_CONHECIMENTO === null) {
-                    return 0.0;
-                }
+    /** Pontos de uma competência: peso da área × nível ÷ 5. */
+    private function competencyPoints(mixed $competency, Collection $weightsByArea): float
+    {
+        if ($competency === null || $competency->FK_AREA_CONHECIMENTO === null) {
+            return 0.0;
+        }
 
-                $areaWeight = $weightsByArea->get((int) $competency->FK_AREA_CONHECIMENTO, 0.0);
-                $levelWeight = $this->competencyLevelWeight($competency->difficulty ?? null);
+        $areaWeight = $weightsByArea->get((int) $competency->FK_AREA_CONHECIMENTO, 0.0);
+        $levelWeight = $this->competencyLevelWeight($competency->difficulty ?? null);
 
-                return $areaWeight * ($levelWeight / 5.0);
-            });
+        return $areaWeight * ($levelWeight / 5.0);
     }
 
     public function calculateCompetencyCriterionScore(iterable $acquiredKnowledges, iterable $areaWeights): float

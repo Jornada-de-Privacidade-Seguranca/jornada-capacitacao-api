@@ -1281,7 +1281,10 @@ paths:
       tags:
         - Journeys
       summary: Vincula cursos superiores/pos-graduacao a uma jornada em andamento
-      description: Anexa um ou mais cursos superiores (graduacao ou pos-graduacao) a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Anexa um ou mais cursos superiores (graduacao ou pos-graduacao) a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      deprecated: true
       operationId: attachJourneyCourses
       security:
         - sessionAuth: []
@@ -1382,7 +1385,10 @@ paths:
       tags:
         - Journeys
       summary: Vincula certificacoes profissionais a uma jornada em andamento
-      description: Anexa uma ou mais certificacoes profissionais a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Anexa uma ou mais certificacoes profissionais a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      deprecated: true
       operationId: attachJourneyCertifications
       security:
         - sessionAuth: []
@@ -1595,36 +1601,23 @@ paths:
         - Journeys
       summary: Finaliza a jornada atual do usuario autenticado
       description: >-
-        Valida os dados gerais e as respostas de todas as competencias do perfil,
-        calcula a pontuacao consolidada, persiste o resultado em
-        TB_JORNADA.NU_PONTUACAO_TOTAL e registra a finalizacao em DH_FIM. Cursos e
-        certificacoes sao opcionais e contribuem com zero quando ausentes. A
-        pontuacao de Ingles aplica o peso principal configurado ao peso do
-        subcriterio selecionado. Se o peso principal for nulo ou o criterio
-        estiver ausente, a contribuicao de Ingles sera zero; isso e equivalente
-        a um peso explicitamente configurado como zero. Esses pesos permanecem
-        internos e nao sao retornados por este endpoint. A contribuicao do
-        criterio Formacao Academica aplica o peso principal de
-        TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 14,70%) aos pesos dos tipos de
-        curso selecionados, considerando cada tipo uma unica vez. Quando esse
-        peso estiver nulo ou indisponivel, a contribuicao de Formacao Academica
-        sera zero. Todos os tipos selecionados usam o peso do criterio de
-        Formacao Academica obtido pelo primeiro curso com criterio associado.
-        A pontuacao total permanece interna e nao e retornada por este endpoint.
-        A contribuicao de Experiencia Profissional soma as pontuacoes de
-        experiencia profissional e tempo de atuacao no perfil (ate 50 pontos
-        cada) e aplica o peso de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente
-        23,81%). Se esse peso estiver ausente, a contribuicao sera zero. Ingles
-        e calculado separadamente. A contribuicao do criterio Certificacao
-        Profissional preserva 20 pontos por certificacao ate cinco e aplica o
-        peso principal de TB_CRITERIOS.NU_PESO_CRITERIO (atualmente 10,72%),
-        com contribuicao maxima limitada ao peso total do criterio. Se o peso
-        estiver ausente, a contribuicao sera zero. A pontuacao de Competencias
-        aplica ao total adquirido o peso de
-        TB_CRITERIOS.NU_PESO_CRITERIO para o criterio Competencias (ou Competencies);
-        quando o criterio ou seu peso nao estiver cadastrado, a contribuicao e zero.
-        A pontuacao e interna e nao e retornada por este endpoint. Uma nova chamada
-        quando a jornada mais recente ja esta finalizada retorna conflito.
+        Valida o perfil da jornada (com dominio) e as respostas de todas as
+        competencias do perfil, calcula a pontuacao, persiste o resultado em
+        TB_JORNADA.NU_PONTUACAO_TOTAL e registra a finalizacao em DH_FIM. As
+        respostas do pre-questionario (experiencia profissional, tempo de
+        atuacao no perfil, ingles, formacao academica e certificacoes) sairam do
+        fluxo e nao sao mais exigidas nem entram na pontuacao. A pontuacao vai de
+        0 a 100 e considera so as competencias: cada competencia vale
+        (peso da area x nivel / 5), com o peso da area em
+        TB_PESO_CRIT_COMPETENCIA para o perfil, e a pontuacao e a soma das
+        competencias do perfil declaradas como possuidas dividida pela soma de
+        todas as competencias do perfil, vezes 100. Sem pesos configurados para o
+        perfil, a pontuacao e zero. O detalhamento por categoria
+        (score_breakdown) continua sendo persistido, mas esta deprecado. Jornadas
+        finalizadas antes desta regra mantem a pontuacao calculada com a formula
+        anterior, sem recalculo. A pontuacao e interna e nao e retornada por este
+        endpoint. Uma nova chamada quando a jornada mais recente ja esta
+        finalizada retorna conflito.
       operationId: finalizeCurrentJourney
       security:
         - sessionAuth: []
@@ -1689,9 +1682,6 @@ paths:
                     message: Existem etapas obrigatorias pendentes.
                     errors:
                       fields:
-                        - answers.professional_experience
-                        - answers.profile_experience
-                        - answers.english_proficiency
                         - answers.competencies
                     code: INCOMPLETE_JOURNEY
         "500":
@@ -1957,7 +1947,10 @@ paths:
       tags:
         - Journeys
       summary: Lista opcoes dos dados gerais da jornada atual
-      description: Retorna opcoes exibiveis de ingles, experiencia profissional e atuacao no perfil para preencher a etapa de dados gerais da jornada em andamento do usuario autenticado. Pesos, divisores, valores finais e pontuacoes nao sao expostos.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Retorna opcoes exibiveis de ingles, experiencia profissional e atuacao no perfil para preencher a etapa de dados gerais da jornada em andamento do usuario autenticado. Pesos, divisores, valores finais e pontuacoes nao sao expostos.
+      deprecated: true
       operationId: getCurrentJourneyGeneralDataOptions
       security:
         - sessionAuth: []
@@ -2042,7 +2035,10 @@ paths:
       tags:
         - Journeys
       summary: Salva os dados gerais da jornada atual
-      description: Atualiza nivel de ingles, experiencia profissional e/ou tempo de atuacao no perfil na jornada em andamento do usuario autenticado. O salvamento e parcial; somente os campos enviados sao atualizados e os demais sao mantidos. Pelo menos um dos tres campos deve ser enviado, e valores null nao limpam campos ja salvos (retornam 422). A resposta sempre devolve os tres campos e is_complete; a finalizacao da jornada continua exigindo os tres preenchidos. Este endpoint nao calcula nem retorna pontuacao. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token e envie o header X-CSRF-TOKEN.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Atualiza nivel de ingles, experiencia profissional e/ou tempo de atuacao no perfil na jornada em andamento do usuario autenticado. O salvamento e parcial; somente os campos enviados sao atualizados e os demais sao mantidos. Pelo menos um dos tres campos deve ser enviado, e valores null nao limpam campos ja salvos (retornam 422). A resposta sempre devolve os tres campos e is_complete. Este endpoint nao calcula nem retorna pontuacao. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token e envie o header X-CSRF-TOKEN.
+      deprecated: true
       operationId: updateCurrentJourneyGeneralData
       security:
         - sessionAuth: []
@@ -2206,7 +2202,10 @@ paths:
       tags:
         - Journeys
       summary: Lista certificacoes profissionais disponiveis para selecao na jornada em andamento
-      description: Retorna as certificacoes profissionais cadastradas para selecao na jornada em andamento do usuario autenticado.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Retorna as certificacoes profissionais cadastradas para selecao na jornada em andamento do usuario autenticado.
+      deprecated: true
       operationId: listCertificationOptions
       security:
         - sessionAuth: []
@@ -2489,7 +2488,10 @@ paths:
       tags:
         - Journeys
       summary: Consulta certificacoes profissionais selecionadas na jornada em andamento
-      description: Retorna a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Retorna a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado.
+      deprecated: true
       operationId: getCurrentJourneyCertifications
       security:
         - sessionAuth: []
@@ -2569,7 +2571,10 @@ paths:
       tags:
         - Journeys
       summary: Substitui certificacoes profissionais selecionadas na jornada em andamento
-      description: Substitui a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado. A lista vazia e aceita porque esta etapa e opcional.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Substitui a selecao salva de certificacoes profissionais da jornada em andamento do usuario autenticado. A lista vazia e aceita porque esta etapa e opcional.
+      deprecated: true
       operationId: updateCurrentJourneyCertifications
       security:
         - sessionAuth: []
@@ -2673,7 +2678,10 @@ paths:
       tags:
         - Journeys
       summary: Consulta os cursos selecionados na jornada em andamento
-      description: Retorna a lista de cursos superiores selecionados na jornada em andamento do usuario autenticado. Retorna uma lista vazia quando ainda nao houver selecao. A resposta nao inclui afinidade, peso ou pontuacao.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Retorna a lista de cursos superiores selecionados na jornada em andamento do usuario autenticado. Retorna uma lista vazia quando ainda nao houver selecao. A resposta nao inclui afinidade, peso ou pontuacao.
+      deprecated: true
       operationId: getCurrentJourneyCourses
       security:
         - sessionAuth: []
@@ -2715,7 +2723,10 @@ paths:
       tags:
         - Journeys
       summary: Substitui os cursos selecionados na jornada em andamento
-      description: Substitui integralmente a selecao em RL_CURSOS_SUPERIORES_JORNADA. IDs duplicados sao normalizados antes da sincronizacao e uma lista vazia remove todas as selecoes.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Substitui integralmente a selecao em RL_CURSOS_SUPERIORES_JORNADA. IDs duplicados sao normalizados antes da sincronizacao e uma lista vazia remove todas as selecoes.
+      deprecated: true
       operationId: replaceCurrentJourneyCourses
       security:
         - sessionAuth: []
@@ -2769,7 +2780,10 @@ paths:
       tags:
         - Journeys
       summary: Lista cursos academicos disponiveis para a jornada em andamento
-      description: Retorna os cursos superiores cadastrados em TB_CURSO_SUPERIOR disponiveis para selecao na etapa de formacao academica da jornada, usando o relacionamento com TB_SUBCRITERIOS para identificar o tipo do curso quando essa informacao estiver disponivel. Exige que o usuario autenticado possua uma jornada em andamento.
+      description: >-
+        Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
+        Retorna os cursos superiores cadastrados em TB_CURSO_SUPERIOR disponiveis para selecao na etapa de formacao academica da jornada, usando o relacionamento com TB_SUBCRITERIOS para identificar o tipo do curso quando essa informacao estiver disponivel. Exige que o usuario autenticado possua uma jornada em andamento.
+      deprecated: true
       operationId: listJourneyCourseOptions
       security:
         - sessionAuth: []
@@ -3860,8 +3874,12 @@ components:
             - number
             - "null"
           format: float
-          description: Pontuacao final persistida ao concluir a jornada; permanece nula durante a jornada e nao e recalculada nas consultas.
-          example: 126.329
+          description: >-
+            Pontuacao final de 0 a 100 persistida ao concluir a jornada, calculada
+            so pelas competencias do perfil; permanece nula durante a jornada e nao
+            e recalculada nas consultas. Jornadas finalizadas antes da remocao do
+            pre-questionario mantem a pontuacao calculada com a formula anterior.
+          example: 45.455
         summary:
           $ref: "#/components/schemas/UserJourneySummary"
         detail:
@@ -4081,13 +4099,22 @@ components:
             - number
             - "null"
           format: float
-          description: Pontuacao final persistida ao concluir a jornada; permanece nula durante a jornada e nao e recalculada nas consultas.
-          example: 126.329
+          description: >-
+            Pontuacao final de 0 a 100 persistida ao concluir a jornada, calculada
+            so pelas competencias do perfil; permanece nula durante a jornada e nao
+            e recalculada nas consultas. Jornadas finalizadas antes da remocao do
+            pre-questionario mantem a pontuacao calculada com a formula anterior.
+          example: 45.455
         score_breakdown:
           type:
             - array
             - "null"
-          description: Aproveitamento de cada categoria de 0 a 100, persistido na finalizacao. O valor e nulo em jornadas em andamento e em jornadas concluidas antes da disponibilidade deste detalhamento.
+          deprecated: true
+          description: >-
+            Deprecado: o pre-questionario saiu do fluxo e a pontuacao total passou a
+            considerar so as competencias. Aproveitamento de cada categoria de 0 a
+            100, persistido na finalizacao. O valor e nulo em jornadas em andamento e
+            em jornadas concluidas antes da disponibilidade deste detalhamento.
           items:
             type: object
             required:
@@ -4112,7 +4139,10 @@ components:
                 maximum: 100
                 example: 66.667
         answers:
-          $ref: "#/components/schemas/UserJourneyAnswers"
+          deprecated: true
+          description: Deprecado. Respostas do pre-questionario, que saiu do fluxo; podem vir nulas ou vazias.
+          allOf:
+            - $ref: "#/components/schemas/UserJourneyAnswers"
         acquired_knowledges:
           type: array
           items:
@@ -4124,6 +4154,8 @@ components:
             $ref: "#/components/schemas/UserJourneyKnowledgesByDomain"
         professional_certifications:
           type: array
+          deprecated: true
+          description: Deprecado. Certificacoes selecionadas no pre-questionario, que saiu do fluxo.
           items:
             $ref: "#/components/schemas/UserJourneyProfessionalCertification"
         summary:

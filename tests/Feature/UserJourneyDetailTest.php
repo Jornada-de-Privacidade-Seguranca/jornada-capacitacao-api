@@ -243,10 +243,8 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Jornada concluida possui dados obrigatorios incompletos.')
             ->assertJsonPath('code', 'INCOMPLETE_JOURNEY')
-            ->assertJsonPath('errors.fields.0', 'journey_profile')
-            ->assertJsonPath('errors.fields.1', 'answers.professional_experience')
-            ->assertJsonPath('errors.fields.2', 'answers.profile_experience')
-            ->assertJsonPath('errors.fields.3', 'answers.english_proficiency');
+            // As respostas do pré-questionário não são mais exigidas
+            ->assertJsonPath('errors.fields', ['journey_profile']);
     }
 
     public function test_it_rejects_completed_journey_when_journey_profile_knowledge_domain_is_missing(): void
