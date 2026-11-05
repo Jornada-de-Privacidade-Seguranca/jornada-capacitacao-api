@@ -1640,6 +1640,7 @@ paths:
                       status: ongoing
                       is_completed: false
                       score: null
+                      score_breakdown: null
                       answers:
                         professional_experience:
                           id: 1
@@ -3807,6 +3808,7 @@ components:
         - status
         - is_completed
         - score
+        - score_breakdown
         - answers
         - acquired_knowledges
         - knowledges_by_domain
@@ -3846,6 +3848,34 @@ components:
           format: float
           description: Pontuacao final persistida ao concluir a jornada; permanece nula durante a jornada e nao e recalculada nas consultas.
           example: 126.329
+        score_breakdown:
+          type:
+            - array
+            - "null"
+          description: Aproveitamento de cada categoria de 0 a 100, persistido na finalizacao. O valor e nulo em jornadas em andamento e em jornadas concluidas antes da disponibilidade deste detalhamento.
+          items:
+            type: object
+            required:
+              - category
+              - name_pt
+              - name_en
+              - score
+            properties:
+              category:
+                type: string
+                example: professional_experience
+              name_pt:
+                type: string
+                example: Tempo de Experiência Profissional
+              name_en:
+                type: string
+                example: Years of Professional Experience
+              score:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+                example: 66.667
         answers:
           $ref: "#/components/schemas/UserJourneyAnswers"
         acquired_knowledges:

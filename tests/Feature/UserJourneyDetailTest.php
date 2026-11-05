@@ -47,6 +47,7 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('data.status', 'ongoing')
             ->assertJsonPath('data.is_completed', false)
             ->assertJsonPath('data.score', null)
+            ->assertJsonPath('data.score_breakdown', null)
             ->assertJsonPath('data.answers.professional_experience.description_pt', '1 a 3 anos')
             ->assertJsonPath('data.answers.profile_experience.description_pt', 'Mais de 5 anos')
             ->assertJsonPath('data.answers.english_proficiency.name_pt', 'Intermediario')
@@ -220,7 +221,8 @@ class UserJourneyDetailTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.id', $journey->PK_JORNADA)
             ->assertJsonPath('data.status', 'completed')
-            ->assertJsonPath('data.score', 126.329);
+            ->assertJsonPath('data.score', 126.329)
+            ->assertJsonPath('data.score_breakdown', null);
 
         $this->assertSame(126.329, $journey->fresh()->NU_PONTUACAO_TOTAL);
     }

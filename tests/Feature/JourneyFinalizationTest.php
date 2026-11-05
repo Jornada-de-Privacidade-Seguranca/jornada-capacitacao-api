@@ -45,10 +45,23 @@ class JourneyFinalizationTest extends TestCase
             ->assertJsonPath('data.finished_at', '2026-09-28 14:30:00')
             ->assertJsonMissingPath('data.total_score');
 
-        $this->actingAs($user)
+        $detail = $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 14.189);
+            ->assertJsonPath('data.score', 14.189)
+            ->assertJsonPath('data.score_breakdown.0.category', 'professional_experience')
+            ->assertJsonPath('data.score_breakdown.0.name_pt', 'Tempo de Experiência Profissional')
+            ->assertJsonPath('data.score_breakdown.0.score', 20)
+            ->assertJsonPath('data.score_breakdown.1.category', 'profile_experience')
+            ->assertJsonPath('data.score_breakdown.1.score', 50)
+            ->assertJsonPath('data.score_breakdown.2.category', 'english_proficiency')
+            ->assertJsonPath('data.score_breakdown.2.score', 41.131)
+            ->assertJsonPath('data.score_breakdown.3.score', 0)
+            ->assertJsonPath('data.score_breakdown.4.score', 0)
+            ->assertJsonPath('data.score_breakdown.5.category', 'competencies')
+            ->assertJsonPath('data.score_breakdown.5.score', 10);
+
+        $this->assertEquals($journey->fresh()->JS_SCORE_BREAKDOWN, $detail->json('data.score_breakdown'));
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
@@ -57,6 +70,46 @@ class JourneyFinalizationTest extends TestCase
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
         $this->assertDatabaseCount('RL_CERTIFICACAO_JORNADA', 0);
+    }
+
+    public function test_it_persists_normalized_scores_for_each_result_category(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture();
+        $journey->higherEducationCourses()->attach($this->educationCourse(8.829)->PK_CURSO_SUPERIOR);
+        $journey->professionalCertifications()->attach(
+            $this->certification('Certificacao Teste')->PK_CERTIFICACAO_PROFISSIONAL,
+        );
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk();
+
+        $detail = $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonPath('data.score', 17.631)
+            ->assertJsonPath('data.score_breakdown.0.score', 20)
+            ->assertJsonPath('data.score_breakdown.1.score', 50)
+            ->assertJsonPath('data.score_breakdown.2.score', 41.131)
+            ->assertJsonPath('data.score_breakdown.3.score', 8.829)
+            ->assertJsonPath('data.score_breakdown.4.score', 20)
+            ->assertJsonPath('data.score_breakdown.5.score', 10);
+
+        $storedBreakdown = $journey->fresh()->JS_SCORE_BREAKDOWN;
+        $this->assertEquals($storedBreakdown, $detail->json('data.score_breakdown'));
+
+        Criterion::query()
+            ->where('NO_CRITERIO_EN', Criterion::PROFESSIONAL_EXPERIENCE_NAME)
+            ->update(['NU_PESO_CRITERIO' => 99]);
+        Subcriterion::query()
+            ->where('PK_SUBCRITERIOS', $journey->FK_SUBCRITERIOS_INGLES)
+            ->update(['NU_PESO_SUBCRITERIO' => 99]);
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonPath('data.score', 17.631)
+            ->assertJsonPath('data.score_breakdown', $storedBreakdown);
     }
 
     public function test_it_includes_the_weighted_contribution_of_one_selected_education_course(): void

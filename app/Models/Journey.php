@@ -19,12 +19,14 @@ class Journey extends JornadaModel
         'FK_ATUACAO_PERFIL',
         'FK_SUBCRITERIOS_INGLES',
         'NU_PONTUACAO_TOTAL',
+        'JS_SCORE_BREAKDOWN',
         'DH_CRIADO_EM',
         'DH_FIM',
     ];
 
     protected $casts = [
         'NU_PONTUACAO_TOTAL' => 'float',
+        'JS_SCORE_BREAKDOWN' => 'array',
         'DH_CRIADO_EM' => 'datetime',
         'DH_FIM' => 'datetime',
     ];
