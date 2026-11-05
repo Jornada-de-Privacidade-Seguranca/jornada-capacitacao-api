@@ -15,6 +15,16 @@ use InvalidArgumentException;
 
 class JourneyCalculationService
 {
+    private const MAX_EXPERIENCE_SCORE = 50.0;
+
+    private const MAX_ENGLISH_PROFICIENCY_SCORE = 63.335;
+
+    private const MAX_EDUCATION_SCORE = 100.0;
+
+    private const MAX_CERTIFICATION_SCORE = 100.0;
+
+    private const MAX_COMPETENCY_SCORE = 100.0;
+
     private const EXPERIENCE_SCORES = [
         'menos de 1 ano' => 10.0,
         'less than 1 year' => 10.0,
@@ -56,28 +66,68 @@ class JourneyCalculationService
         return array_sum($this->calculateCriterionContributions($journey));
     }
 
-    /** @return array<string, float> */
-    public function calculateCriterionScoresForJourney(Journey $journey): array
+    /** @return list<array{category: string, name_pt: string, name_en: string, score: float}> */
+    public function calculateScoreBreakdownForJourney(Journey $journey): array
     {
-        $contributions = $this->calculateCriterionContributions($journey);
-        $targetMilliPoints = (int) round(array_sum($contributions) * 1000);
-        $roundedMilliPoints = [];
-        $remainders = [];
+        $areaWeights = $journey->FK_PERFIS_JORNADA === null
+            ? collect()
+            : $this->competencyCriterionWeightRepository->findByJourneyProfileId((int) $journey->FK_PERFIS_JORNADA);
 
-        foreach ($contributions as $criterion => $contribution) {
-            $scaled = max(0.0, $contribution) * 1000;
-            $roundedMilliPoints[$criterion] = (int) floor($scaled);
-            $remainders[$criterion] = $scaled - $roundedMilliPoints[$criterion];
-        }
+        return [
+            $this->scoreBreakdownItem(
+                'professional_experience',
+                'Tempo de Experiência Profissional',
+                'Years of Professional Experience',
+                $this->calculateProfessionalExperienceScore($journey->professionalExperience),
+                self::MAX_EXPERIENCE_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'profile_experience',
+                'Tempo de Atuação no Perfil',
+                'Time Spent on Role',
+                $this->calculateProfileExperienceScore($journey->profileExperience),
+                self::MAX_EXPERIENCE_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'english_proficiency',
+                'Nível de Proficiência - Inglês',
+                'Proficiency Level - English',
+                (float) ($journey->englishSubcriterion?->NU_PESO_SUBCRITERIO ?? 0),
+                self::MAX_ENGLISH_PROFICIENCY_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'education',
+                'Formação Acadêmica',
+                'Education',
+                $this->calculateCourseScore($journey->higherEducationCourses),
+                self::MAX_EDUCATION_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'professional_certifications',
+                'Certificação Profissional',
+                'Professional Certifications',
+                $this->calculateCertificationScore($journey->professionalCertifications),
+                self::MAX_CERTIFICATION_SCORE,
+            ),
+            $this->scoreBreakdownItem(
+                'competencies',
+                'Competências',
+                'Competencies',
+                $this->calculateCompetencyScore($journey->acquiredKnowledges, $areaWeights),
+                self::MAX_COMPETENCY_SCORE,
+            ),
+        ];
+    }
 
-        $remainingMilliPoints = $targetMilliPoints - array_sum($roundedMilliPoints);
-        uksort($remainders, fn (string $left, string $right): int => $remainders[$right] <=> $remainders[$left]);
-
-        foreach (array_slice(array_keys($remainders), 0, $remainingMilliPoints) as $criterion) {
-            $roundedMilliPoints[$criterion]++;
-        }
-
-        return array_map(fn (int $score): float => $score / 1000, $roundedMilliPoints);
+    /** @return array{category: string, name_pt: string, name_en: string, score: float} */
+    private function scoreBreakdownItem(string $category, string $namePt, string $nameEn, float $score, float $maximum): array
+    {
+        return [
+            'category' => $category,
+            'name_pt' => $namePt,
+            'name_en' => $nameEn,
+            'score' => $maximum > 0 ? round(min(max($score, 0.0) / $maximum * 100, 100), 3) : 0.0,
+        ];
     }
 
     /** @return array<string, float> */

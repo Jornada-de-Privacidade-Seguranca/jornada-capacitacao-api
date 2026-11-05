@@ -24,7 +24,7 @@ class JourneyDetailResource extends JsonResource
             'status' => $isCompleted ? 'completed' : 'ongoing',
             'is_completed' => $isCompleted,
             'score' => $this->NU_PONTUACAO_TOTAL,
-            'criterion_scores' => $isCompleted ? $this->resource->getAttribute('criterion_scores') : null,
+            'score_breakdown' => $isCompleted ? $this->JS_SCORE_BREAKDOWN : null,
             'answers' => [
                 'professional_experience' => $this->professionalExperience(),
                 'profile_experience' => $this->profileExperience(),

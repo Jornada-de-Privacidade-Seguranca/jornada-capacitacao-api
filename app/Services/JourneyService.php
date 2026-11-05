@@ -198,13 +198,6 @@ class JourneyService
 
         $this->ensureCompletedJourneyHasRequiredData($journey);
 
-        if ($journey->DH_FIM !== null) {
-            $journey->setAttribute(
-                'criterion_scores',
-                $this->journeyCalculationService->calculateCriterionScoresForJourney($journey),
-            );
-        }
-
         return $journey;
     }
 
@@ -231,12 +224,14 @@ class JourneyService
 
             try {
                 $totalScore = $this->journeyCalculationService->calculateForJourney($journey);
+                $scoreBreakdown = $this->journeyCalculationService->calculateScoreBreakdownForJourney($journey);
             } catch (InvalidArgumentException) {
                 throw new IncompleteJourneyException(['answers.profile_experience']);
             }
 
             $this->journeyRepository->update($journey, [
                 'NU_PONTUACAO_TOTAL' => round($totalScore, 3),
+                'JS_SCORE_BREAKDOWN' => $scoreBreakdown,
                 'DH_FIM' => now(),
             ]);
 
