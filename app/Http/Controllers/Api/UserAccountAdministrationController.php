@@ -44,10 +44,16 @@ class UserAccountAdministrationController
         );
     }
 
-    public function activate(Request $request, int $user): JsonResponse
+    public function activate(Request $request, string $user): JsonResponse
     {
+        $userId = $this->parseUserId($user);
+
+        if ($userId === null) {
+            return $this->invalidUserIdentifierResponse();
+        }
+
         try {
-            $account = $this->service->activate($request->user(), $user);
+            $account = $this->service->activate($request->user(), $userId);
         } catch (AccessDeniedHttpException) {
             return $this->forbiddenResponse();
         } catch (ModelNotFoundException) {
@@ -68,10 +74,16 @@ class UserAccountAdministrationController
         );
     }
 
-    public function deactivate(Request $request, int $user): JsonResponse
+    public function deactivate(Request $request, string $user): JsonResponse
     {
+        $userId = $this->parseUserId($user);
+
+        if ($userId === null) {
+            return $this->invalidUserIdentifierResponse();
+        }
+
         try {
-            $account = $this->service->deactivate($request->user(), $user);
+            $account = $this->service->deactivate($request->user(), $userId);
         } catch (AccessDeniedHttpException) {
             return $this->forbiddenResponse();
         } catch (ModelNotFoundException) {
@@ -116,6 +128,37 @@ class UserAccountAdministrationController
             message: 'A conta nao esta em um estado que permita esta operacao.',
             status: Response::HTTP_CONFLICT,
             code: 'INVALID_USER_ACCOUNT_STATE',
+        );
+    }
+
+    private function parseUserId(string $user): ?int
+    {
+        if (! ctype_digit($user)) {
+            return null;
+        }
+
+        $normalized = ltrim($user, '0');
+
+        if ($normalized === '' || strlen($normalized) > strlen((string) PHP_INT_MAX)) {
+            return null;
+        }
+
+        if (strlen($normalized) === strlen((string) PHP_INT_MAX) && strcmp($normalized, (string) PHP_INT_MAX) > 0) {
+            return null;
+        }
+
+        return (int) $normalized;
+    }
+
+    private function invalidUserIdentifierResponse(): JsonResponse
+    {
+        return ApiResponse::error(
+            message: 'Identificador do usuario invalido.',
+            status: Response::HTTP_UNPROCESSABLE_ENTITY,
+            code: 'INVALID_USER_IDENTIFIER',
+            errors: [
+                'user' => ['O identificador do usuario deve ser um numero inteiro maior ou igual a 1.'],
+            ],
         );
     }
 }

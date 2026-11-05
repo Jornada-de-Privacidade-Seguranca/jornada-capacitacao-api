@@ -252,6 +252,12 @@ paths:
                 $ref: "#/components/schemas/AdministeredUserResponse"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "422":
+          description: Identificador do usuario invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
         "403":
           description: Usuario autenticado sem permissao de administrador
           content:
@@ -293,6 +299,12 @@ paths:
                 $ref: "#/components/schemas/AdministeredUserResponse"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+        "422":
+          description: Identificador do usuario invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
         "403":
           description: Usuario autenticado sem permissao de administrador
           content:

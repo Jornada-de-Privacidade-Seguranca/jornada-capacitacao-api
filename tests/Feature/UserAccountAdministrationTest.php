@@ -166,6 +166,40 @@ class UserAccountAdministrationTest extends TestCase
         ]);
     }
 
+    public function test_invalid_account_identifiers_are_rejected_without_changing_accounts(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+        $pending = $this->user('Pending User', 2, null);
+        $activeCommon = $this->user('Active Common', 1, 2);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf('/api/admin/users/abc/activate')
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'INVALID_USER_IDENTIFIER')
+            ->assertJsonPath('errors.user.0', 'O identificador do usuario deve ser um numero inteiro maior ou igual a 1.');
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$activeCommon->PK_USUARIO}.5/deactivate")
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'INVALID_USER_IDENTIFIER');
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf('/api/admin/users/999999999999999999999999999999999999/activate')
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'INVALID_USER_IDENTIFIER');
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $pending->PK_USUARIO,
+            'ST_ATIVO' => 2,
+            'FK_TIPO_USUARIO' => null,
+        ]);
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $activeCommon->PK_USUARIO,
+            'ST_ATIVO' => 1,
+            'FK_TIPO_USUARIO' => 2,
+        ]);
+    }
+
     private function user(string $name, int $status, ?int $userType): Usuario
     {
         return Usuario::query()->create([
