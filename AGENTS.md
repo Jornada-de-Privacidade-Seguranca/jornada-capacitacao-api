@@ -33,6 +33,8 @@ Taiga é a referência externa; specs e tickets locais ficam em `.scratch/`. Nã
 
 Trabalhar em branch de tarefa. Push é permitido em branches de tarefa, mas nunca em `main`, `master` ou `develop`. Veja `docs/agents/git-workflow.md`.
 
+- Após confirmar que uma branch foi integrada por merge em `main`, remover a branch local e a worktree/pasta local correspondente. Antes da remoção, verificar e preservar qualquer alteração não commitada ou arquivo não rastreado; nunca apagar conteúdo local sem backup ou confirmação.
+
 ### Triage labels
 
 Use `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human` e `wontfix`. Veja `docs/agents/triage-labels.md`.
