@@ -211,7 +211,7 @@ paths:
       tags:
         - Auth
       summary: Autentica um usuario
-      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. A resposta inclui meta.session.lifetime_minutes conforme config('session.lifetime'). No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
+      description: Valida e-mail e senha, bloqueia contas inativas, cria sessao de autenticacao controlada pelo backend e retorna o perfil do usuario autenticado para redirecionamento no front-end. A resposta inclui o tempo maximo de inatividade da sessao, em minutos. No Swagger local, execute antes GET /auth/csrf-token, copie data.csrf_token para o header X-CSRF-TOKEN desta chamada e nao use o botao Authorize para colar cookies manualmente; o navegador enviara o cookie HttpOnly automaticamente depois do login.
       operationId: loginUser
       x-rate-limit: 5 requisicoes por minuto por combinacao de IP e e-mail normalizado.
       parameters:
@@ -349,7 +349,7 @@ paths:
       tags:
         - Auth
       summary: Recupera o usuario autenticado
-      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui meta.session.lifetime_minutes conforme config('session.lifetime'). Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
+      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui o tempo maximo de inatividade da sessao, em minutos. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
       operationId: getAuthenticatedUser
       security:
         - sessionAuth: []
@@ -3249,7 +3249,7 @@ components:
           properties:
             lifetime_minutes:
               type: integer
-              description: Duracao da sessao em minutos conforme SESSION_LIFETIME.
+              description: Duracao maxima de inatividade, em minutos, antes da sessao expirar.
               example: 120
     AuthenticatedUser:
       type: object

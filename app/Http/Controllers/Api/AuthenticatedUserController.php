@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Resources\AuthenticatedUserResource;
 use App\Support\ApiResponse;
+use App\Support\SessionMetadata;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,11 +15,7 @@ class AuthenticatedUserController
         return ApiResponse::success(
             data: (new AuthenticatedUserResource($request->user()))->resolve(),
             message: 'Usuario autenticado recuperado com sucesso.',
-            meta: [
-                'session' => [
-                    'lifetime_minutes' => config('session.lifetime'),
-                ],
-            ],
+            meta: SessionMetadata::toArray(),
         );
     }
 }

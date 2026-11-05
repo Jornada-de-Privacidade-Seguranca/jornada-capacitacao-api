@@ -219,7 +219,8 @@ class LoginTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Usuario e/ou senha invalidos.')
             ->assertJsonPath('code', 'INVALID_CREDENTIALS')
-            ->assertJsonPath('errors', []);
+            ->assertJsonPath('errors', [])
+            ->assertJsonMissingPath('meta');
 
         $this->getJson('/api/me')
             ->assertUnauthorized()
@@ -322,7 +323,8 @@ class LoginTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Sua conta ainda nao foi ativada por um administrador do sistema.')
-            ->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED');
+            ->assertJsonPath('code', 'ACCOUNT_NOT_ACTIVATED')
+            ->assertJsonMissingPath('meta');
     }
 
     public function test_it_returns_standard_error_for_internal_server_error(): void
