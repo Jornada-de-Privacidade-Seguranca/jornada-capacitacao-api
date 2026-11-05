@@ -6,7 +6,6 @@ use App\Models\JourneyProfile;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 
 class JourneyProfileRepository implements JourneyProfileRepositoryInterface
 {
@@ -34,15 +33,16 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
 
     private function applySearch(Builder $query, string $search): void
     {
-        $searchTerm = mb_strtolower(Str::ascii(trim($search)));
-        $pattern = '%'.$searchTerm.'%';
+        $searchTerm = $this->normalizeSearchTerm($search);
+        $escapedSearchTerm = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm);
+        $pattern = '%'.$escapedSearchTerm.'%';
         $columns = ['NO_PERFIS_PT', 'NO_PERFIS_EN', 'DS_PERFIS_PT', 'DS_PERFIS_EN'];
 
         $query->where(function (Builder $query) use ($columns, $pattern): void {
             foreach ($columns as $column) {
                 $wrappedColumn = $query->getQuery()->getGrammar()->wrap($column);
                 $normalizedColumn = $this->normalizedSearchExpression($wrappedColumn);
-                $query->orWhereRaw("{$normalizedColumn} LIKE ?", [$pattern]);
+                $query->orWhereRaw("{$normalizedColumn} LIKE ? ESCAPE '\\'", [$pattern]);
             }
         });
     }
@@ -52,37 +52,48 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
         return match (JourneyProfile::query()->getConnection()->getDriverName()) {
             'pgsql' => $this->postgresqlNormalizedExpression($column),
             'sqlite' => $this->sqliteNormalizedExpression($column),
-            'mysql', 'mariadb' => "lower({$column}) collate utf8mb4_unicode_ci",
             default => "lower({$column})",
         };
     }
 
+    private function normalizeSearchTerm(string $search): string
+    {
+        $searchTerm = mb_strtolower(trim($search));
+
+        return strtr($searchTerm, $this->accentMap());
+    }
+
     private function postgresqlNormalizedExpression(string $column): string
     {
-        $source = '';
-        $target = '';
-
-        foreach ($this->accentGroups() as $replacement => $characters) {
-            foreach (mb_str_split($characters) as $character) {
-                $source .= $character;
-                $target .= $replacement;
-            }
-        }
+        $accentMap = $this->accentMap();
+        $source = implode('', array_keys($accentMap));
+        $target = implode('', array_values($accentMap));
 
         return "translate(lower({$column}), '{$source}', '{$target}')";
     }
 
     private function sqliteNormalizedExpression(string $column): string
     {
-        foreach ($this->accentGroups() as $replacement => $characters) {
-            foreach (mb_str_split($characters) as $character) {
-                foreach ([$character, mb_strtoupper($character)] as $variant) {
-                    $column = "replace({$column}, '{$variant}', '{$replacement}')";
-                }
+        foreach ($this->accentMap() as $character => $replacement) {
+            foreach ([$character, mb_strtoupper($character)] as $variant) {
+                $column = "replace({$column}, '{$variant}', '{$replacement}')";
             }
         }
 
         return "lower({$column})";
+    }
+
+    private function accentMap(): array
+    {
+        $accentMap = [];
+
+        foreach ($this->accentGroups() as $replacement => $characters) {
+            foreach (mb_str_split($characters) as $character) {
+                $accentMap[$character] = $replacement;
+            }
+        }
+
+        return $accentMap;
     }
 
     private function accentGroups(): array

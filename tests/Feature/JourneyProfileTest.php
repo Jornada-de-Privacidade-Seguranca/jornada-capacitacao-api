@@ -104,6 +104,20 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('data.0.id', $profile->PK_PERFIS_JORNADA);
     }
 
+    public function test_it_uses_the_same_accent_normalization_for_search_terms_and_profile_text(): void
+    {
+        $user = $this->activeUser();
+        $profile = JourneyProfile::factory()->create([
+            'NO_PERFIS_PT' => 'Especialista em Straße e governança',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query(['search' => 'STRAßE']))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $profile->PK_PERFIS_JORNADA);
+    }
+
     public function test_it_returns_no_journey_profiles_when_search_has_no_matches(): void
     {
         $this->actingAs($this->activeUser())
@@ -114,6 +128,47 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('meta.pagination.total', 0)
             ->assertJsonPath('meta.pagination.last_page', 1)
             ->assertJsonPath('meta.pagination.has_next_page', false);
+    }
+
+    public function test_it_treats_like_wildcards_as_literal_search_characters(): void
+    {
+        $user = $this->activeUser();
+        $literalPercent = JourneyProfile::factory()->create(['NO_PERFIS_PT' => 'Perfil Codex 100% literal']);
+        JourneyProfile::factory()->create(['NO_PERFIS_PT' => 'Perfil Codex 1000 literal']);
+        $literalUnderscore = JourneyProfile::factory()->create(['NO_PERFIS_PT' => 'Perfil Codex A_B literal']);
+        JourneyProfile::factory()->create(['NO_PERFIS_PT' => 'Perfil Codex A-B literal']);
+        $literalBackslash = JourneyProfile::factory()->create(['NO_PERFIS_PT' => 'Perfil Codex back\\slash literal']);
+        JourneyProfile::factory()->create(['NO_PERFIS_PT' => 'Perfil Codex backslash literal']);
+
+        foreach ([
+            ['search' => '%', 'id' => $literalPercent->PK_PERFIS_JORNADA],
+            ['search' => '_', 'id' => $literalUnderscore->PK_PERFIS_JORNADA],
+            ['search' => '\\', 'id' => $literalBackslash->PK_PERFIS_JORNADA],
+        ] as $case) {
+            $this->actingAs($user)
+                ->getJson('/api/journey-profiles?'.http_build_query(['search' => $case['search']]))
+                ->assertOk()
+                ->assertJsonPath('meta.pagination.total', 1)
+                ->assertJsonPath('data.0.id', $case['id']);
+        }
+    }
+
+    public function test_it_combines_search_with_modality_filter(): void
+    {
+        $user = $this->activeUser();
+        $privacy = $this->profileInDomain('Privacidade', 'Codex123XYZ privacy profile');
+        $security = $this->profileInDomain('Segurança da Informação', 'Codex123XYZ security profile');
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'search' => 'Codex123XYZ',
+                'modality' => 'Privacidade',
+                'per_page' => 100,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $privacy->PK_PERFIS_JORNADA)
+            ->assertJsonMissing(['id' => $security->PK_PERFIS_JORNADA]);
     }
 
     public function test_it_paginates_only_journey_profiles_matching_search(): void
