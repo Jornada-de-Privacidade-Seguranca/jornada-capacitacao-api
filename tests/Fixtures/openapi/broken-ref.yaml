@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: Exemplo com referencia quebrada
+  version: 0.1.0
+paths:
+  /exemplo:
+    get:
+      responses:
+        "200":
+          $ref: "#/components/responses/Inexistente"
+components:
+  responses:
+    Existente:
+      description: Resposta definida.
