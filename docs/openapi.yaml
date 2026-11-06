@@ -189,7 +189,7 @@ paths:
       tags:
         - Auth
       summary: Lista contas pendentes de ativacao
-      description: Lista contas com ST_ATIVO igual a 2 e FK_TIPO_USUARIO nulo. Somente administradores ativos podem consultar. A listagem e paginada.
+      description: Lista contas pendentes com ST_ATIVO igual a 2. Exige a permissao users.view. A listagem e paginada; contas inativas usam ST_ATIVO igual a 0.
       operationId: listPendingUserActivations
       security:
         - sessionAuth: []
@@ -219,7 +219,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: Usuario autenticado sem permissao de administrador
+          description: Usuario autenticado sem a permissao users.view (code PERMISSION_DENIED)
           content:
             application/json:
               schema:
@@ -235,7 +235,7 @@ paths:
       tags:
         - Auth
       summary: Ativa uma conta pendente como usuario comum
-      description: Somente um administrador autenticado pode ativar uma conta com ST_ATIVO igual a 2 e FK_TIPO_USUARIO nulo. A rota exige CSRF.
+      description: Exige a permissao users.deactivate e CSRF. A conta deve ter ST_ATIVO igual a 2; a ativacao define ST_ATIVO igual a 1 e FK_TIPO_USUARIO igual a 2.
       operationId: activatePendingUser
       security:
         - sessionAuth: []
@@ -258,7 +258,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
         "403":
-          description: Usuario autenticado sem permissao de administrador
+          description: Usuario autenticado sem a permissao users.deactivate (code PERMISSION_DENIED)
           content:
             application/json:
               schema:
@@ -282,7 +282,7 @@ paths:
       tags:
         - Auth
       summary: Desativa um usuario comum ativo
-      description: Somente um administrador autenticado pode desativar conta ativa de usuario comum. A rota exige CSRF e preserva o tipo de usuario comum.
+      description: Exige users.deactivate e CSRF. A conta deve estar ativa e ser usuario comum; a desativacao define ST_ATIVO igual a 0 sem alterar FK_TIPO_USUARIO.
       operationId: deactivateCommonUser
       security:
         - sessionAuth: []
@@ -305,7 +305,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
         "403":
-          description: Usuario autenticado sem permissao de administrador
+          description: Usuario autenticado sem a permissao users.deactivate (code PERMISSION_DENIED)
           content:
             application/json:
               schema:
@@ -390,9 +390,13 @@ paths:
                       profile:
                         role: common_user
                         label: Usuario comum
-                        user_type_id: 2
-                        profile_type_id: 1
-                        profile_type_name: Aluno
+                        id: 3
+                        name: Usuário
+                        permissions:
+                          - journeys.take
+                          - results.view_own
+                        profile_type_id: 3
+                        profile_type_name: Usuário
                       active_status: 1
                     meta:
                       session:
@@ -413,9 +417,21 @@ paths:
                       profile:
                         role: administrator
                         label: Administrador
-                        user_type_id: 1
-                        profile_type_id: null
-                        profile_type_name: null
+                        id: 1
+                        name: Administrador
+                        permissions:
+                          - journeys.take
+                          - journeys.assign
+                          - results.view_own
+                          - results.view_all
+                          - users.view
+                          - users.register
+                          - users.deactivate
+                          - users.manage
+                          - users.change_profile
+                          - catalog.manage
+                        profile_type_id: 1
+                        profile_type_name: Administrador
                       active_status: 1
                     meta:
                       session:
@@ -496,7 +512,8 @@ paths:
       tags:
         - Auth
       summary: Recupera o usuario autenticado
-      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui o tempo maximo de inatividade da sessao, em minutos. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
+      description: >-
+        Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui o perfil de acesso (id, nome e permissoes) e o tempo maximo de inatividade em minutos. O campo role e derivado do perfil de acesso e nunca de FK_TIPO_USUARIO.
       operationId: getAuthenticatedUser
       security:
         - sessionAuth: []
@@ -524,9 +541,13 @@ paths:
                       profile:
                         role: common_user
                         label: Usuario comum
-                        user_type_id: 2
-                        profile_type_id: 1
-                        profile_type_name: Aluno
+                        id: 3
+                        name: Usuário
+                        permissions:
+                          - journeys.take
+                          - results.view_own
+                        profile_type_id: 3
+                        profile_type_name: Usuário
                         journey_profile_id: 1
                         journey_profile_name: Encarregado pelo Tratamento de Dados Pessoais
                         journey_profile_name_en: Data Protection Officer
@@ -612,7 +633,11 @@ paths:
                       profile:
                         role: common_user
                         label: Usuario comum
-                        user_type_id: 2
+                        id: 3
+                        name: Usuário
+                        permissions:
+                          - journeys.take
+                          - results.view_own
                         profile_type_id: 3
                         profile_type_name: Usuário
                         journey_profile_id: 1
@@ -805,7 +830,11 @@ paths:
                         profile:
                           role: common_user
                           label: Usuario comum
-                          user_type_id: 2
+                          id: 3
+                          name: Usuário
+                          permissions:
+                            - journeys.take
+                            - results.view_own
                           profile_type_id: 1
                           profile_type_name: Aluno
                         active_status: 1
@@ -960,7 +989,7 @@ paths:
       tags:
         - Journeys
       summary: Lista jornadas paginadas de um usuario
-      description: Retorna as jornadas do usuario informado, da mais recente para a mais antiga. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      description: Retorna as jornadas do usuario informado, da mais recente para a mais antiga. O proprio usuario exige results.view_own; consultar outra conta exige results.view_all. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: listUserJourneys
       security:
         - sessionAuth: []
@@ -1322,7 +1351,7 @@ paths:
       tags:
         - Journeys
       summary: Atualiza os dados gerais de uma jornada em andamento
-      description: Atualiza as respostas de contexto de uma jornada (experiencia profissional, atuacao no perfil e proficiencia em ingles). Cada campo e opcional e so e alterado quando enviado. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      description: Atualiza as respostas de contexto de uma jornada (experiencia profissional, atuacao no perfil e proficiencia em ingles). Exige journeys.take para a propria jornada ou journeys.assign para jornada de outra pessoa. Cada campo e opcional e so e alterado quando enviado. A jornada precisa estar em andamento (DH_FIM nulo).
       operationId: updateJourneyAnswers
       security:
         - sessionAuth: []
@@ -1632,7 +1661,7 @@ paths:
       tags:
         - Journeys
       summary: Registra competencias adquiridas em uma jornada em andamento
-      description: Registra, para cada competencia informada, se ela foi adquirida (is_acquired) na jornada. Reenviar a mesma competencia atualiza o valor anterior (upsert). Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      description: Registra, para cada competencia informada, se ela foi adquirida (is_acquired) na jornada. Reenviar a mesma competencia atualiza o valor anterior (upsert). Exige journeys.take para a propria jornada ou journeys.assign para jornada de outra pessoa. A jornada precisa estar em andamento (DH_FIM nulo).
       operationId: recordJourneyCompetencies
       security:
         - sessionAuth: []
@@ -1846,7 +1875,7 @@ paths:
       tags:
         - Journeys
       summary: Busca o detalhe de uma jornada por ID
-      description: Retorna o detalhe completo de uma jornada, incluindo respostas do questionario, conhecimentos adquiridos e nao adquiridos agrupados por dominio e certificacoes profissionais. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      description: Retorna o detalhe completo de uma jornada, incluindo respostas do questionario, conhecimentos adquiridos e nao adquiridos agrupados por dominio e certificacoes profissionais. O proprio usuario exige results.view_own; consultar outra conta exige results.view_all. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: getJourneyDetail
       security:
         - sessionAuth: []
@@ -3475,7 +3504,7 @@ components:
               format: email
             active_status:
               type: integer
-              enum: [1, 2]
+              enum: [0, 1, 2]
             user_type_id:
               type: integer
               enum: [2]
@@ -3723,6 +3752,7 @@ components:
           type: string
           enum:
             - common_user
+            - manager
             - administrator
           example: common_user
         profile:
@@ -3736,7 +3766,9 @@ components:
       required:
         - role
         - label
-        - user_type_id
+        - id
+        - name
+        - permissions
         - profile_type_id
         - profile_type_name
         - journey_profile_id
@@ -3747,20 +3779,36 @@ components:
           type: string
           enum:
             - common_user
+            - manager
             - administrator
           example: common_user
         label:
           type: string
           enum:
             - Usuario comum
+            - Gestor
             - Administrador
           example: Usuario comum
-        user_type_id:
+        id:
           type:
             - integer
             - "null"
-          description: 1 representa administrador; outros valores ou nulo representam usuario comum.
-          example: 2
+          description: Identificador do perfil de acesso definido em TB_TIPO_PERFIL.
+          example: 3
+        name:
+          type:
+            - string
+            - "null"
+          description: Nome do perfil de acesso.
+          example: Usuário
+        permissions:
+          type: array
+          description: Codigos de permissao concedidos ao perfil do usuario.
+          items:
+            type: string
+          example:
+            - journeys.take
+            - results.view_own
         profile_type_id:
           type:
             - integer

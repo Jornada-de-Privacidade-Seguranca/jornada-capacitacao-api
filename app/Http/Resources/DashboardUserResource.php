@@ -11,11 +11,22 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class DashboardUserResource extends JsonResource
 {
-    private const ADMIN_USER_TYPE = 1;
+    private const ADMIN_PROFILE_TYPE = 1;
+
+    private const MANAGER_PROFILE_TYPE = 2;
 
     public function toArray(Request $request): array
     {
-        $role = (int) $this->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE ? 'administrator' : 'common_user';
+        $role = match ((int) $this->FK_TIPO_PERFIL) {
+            self::ADMIN_PROFILE_TYPE => 'administrator',
+            self::MANAGER_PROFILE_TYPE => 'manager',
+            default => 'common_user',
+        };
+        $label = match ($role) {
+            'administrator' => 'Administrador',
+            'manager' => 'Gestor',
+            default => 'Usuario comum',
+        };
 
         return [
             'id' => $this->PK_USUARIO,
@@ -27,8 +38,10 @@ class DashboardUserResource extends JsonResource
             'registration_number' => $this->NU_MATRICULA,
             'profile' => [
                 'role' => $role,
-                'label' => $role === 'administrator' ? 'Administrador' : 'Usuario comum',
-                'user_type_id' => $this->FK_TIPO_USUARIO,
+                'label' => $label,
+                'id' => $this->FK_TIPO_PERFIL,
+                'name' => $this->profileType?->NO_TIPO_PERFIL,
+                'permissions' => $this->permissionCodes()->all(),
                 'profile_type_id' => $this->FK_TIPO_PERFIL,
                 'profile_type_name' => $this->profileType?->NO_TIPO_PERFIL,
             ],

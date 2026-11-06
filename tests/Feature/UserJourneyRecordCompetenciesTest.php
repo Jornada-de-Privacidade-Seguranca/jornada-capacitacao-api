@@ -84,7 +84,7 @@ class UserJourneyRecordCompetenciesTest extends TestCase
                 'competencies' => [['competency_id' => $competency->PK_COMPETENCIAS, 'is_acquired' => true]],
             ])
             ->assertForbidden()
-            ->assertJsonPath('code', 'JOURNEY_FORBIDDEN');
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
     }
 
     public function test_it_returns_not_found_for_unknown_journey(): void

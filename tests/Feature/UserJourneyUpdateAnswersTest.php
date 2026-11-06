@@ -69,7 +69,7 @@ class UserJourneyUpdateAnswersTest extends TestCase
                 'professional_experience_id' => $this->professionalExperience()->PK_EXPERIENCIA_ATUACAO,
             ])
             ->assertForbidden()
-            ->assertJsonPath('code', 'JOURNEY_FORBIDDEN');
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
     }
 
     public function test_it_returns_not_found_for_unknown_journey(): void

@@ -29,7 +29,20 @@ class DefaultUsersTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.email', 'admin@jornada.local')
             ->assertJsonPath('data.role', 'administrator')
-            ->assertJsonPath('data.profile.user_type_id', 1);
+            ->assertJsonPath('data.profile.id', 1)
+            ->assertJsonPath('data.profile.name', 'Administrador')
+            ->assertJsonPath('data.profile.permissions', [
+                'catalog.manage',
+                'journeys.assign',
+                'journeys.take',
+                'results.view_all',
+                'results.view_own',
+                'users.change_profile',
+                'users.deactivate',
+                'users.manage',
+                'users.register',
+                'users.view',
+            ]);
     }
 
     public function test_migration_creates_default_common_user(): void
@@ -50,7 +63,9 @@ class DefaultUsersTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.email', 'user@jornada.local')
             ->assertJsonPath('data.role', 'common_user')
-            ->assertJsonPath('data.profile.user_type_id', 2);
+            ->assertJsonPath('data.profile.id', 3)
+            ->assertJsonPath('data.profile.name', 'Usuário')
+            ->assertJsonPath('data.profile.permissions', ['journeys.take', 'results.view_own']);
     }
 
     public function test_user_activation_route_is_no_longer_registered(): void
