@@ -243,6 +243,9 @@ class JourneyDetailResource extends JsonResource
             'id' => $knowledgeArea->PK_AREA_CONHECIMENTO,
             'name_pt' => $knowledgeArea->NO_AREA_CONHECIMENTO_PT,
             'name_en' => $knowledgeArea->NO_AREA_CONHECIMENTO_EN,
+            // Area sem descricao vem nula, para o front mostrar o texto provisorio
+            'description_pt' => $knowledgeArea->DS_AREA_CONHECIMENTO_PT ?: null,
+            'description_en' => $knowledgeArea->DS_AREA_CONHECIMENTO_EN ?: null,
         ];
     }
 

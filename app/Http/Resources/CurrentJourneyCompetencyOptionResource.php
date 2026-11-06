@@ -50,6 +50,9 @@ class CurrentJourneyCompetencyOptionResource extends JsonResource
             'id' => $this->knowledgeArea->PK_AREA_CONHECIMENTO,
             'name_pt' => $this->knowledgeArea->NO_AREA_CONHECIMENTO_PT,
             'name_en' => $this->knowledgeArea->NO_AREA_CONHECIMENTO_EN,
+            // Area sem descricao vem nula, para o front mostrar o texto provisorio
+            'description_pt' => $this->knowledgeArea->DS_AREA_CONHECIMENTO_PT ?: null,
+            'description_en' => $this->knowledgeArea->DS_AREA_CONHECIMENTO_EN ?: null,
         ];
     }
 

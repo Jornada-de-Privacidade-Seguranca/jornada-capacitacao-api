@@ -672,6 +672,53 @@ class CurrentJourneyCompetenciesTest extends TestCase
         ]);
     }
 
+    public function test_it_returns_knowledge_area_descriptions_in_competency_options(): void
+    {
+        $user = $this->activeUser();
+        $profile = $this->createJourneyProfile();
+        $this->createJourney($user, $profile, finishedAt: null);
+
+        $describedArea = KnowledgeArea::create([
+            'NO_AREA_CONHECIMENTO_PT' => 'Governanca',
+            'NO_AREA_CONHECIMENTO_EN' => 'Governance',
+            'DS_AREA_CONHECIMENTO_PT' => 'Conhecimentos de governanca de dados.',
+            'DS_AREA_CONHECIMENTO_EN' => 'Data governance knowledge.',
+        ]);
+        $areaWithoutDescription = KnowledgeArea::create([
+            'NO_AREA_CONHECIMENTO_PT' => 'Sem descricao',
+            'NO_AREA_CONHECIMENTO_EN' => 'No description',
+        ]);
+        $areaWithEmptyDescription = KnowledgeArea::create([
+            'NO_AREA_CONHECIMENTO_PT' => 'Descricao vazia',
+            'NO_AREA_CONHECIMENTO_EN' => 'Empty description',
+            'DS_AREA_CONHECIMENTO_PT' => '',
+            'DS_AREA_CONHECIMENTO_EN' => '',
+        ]);
+
+        foreach ([$describedArea, $areaWithoutDescription, $areaWithEmptyDescription] as $area) {
+            $this->attachCompetencyToProfile($profile, $this->createCompetency([
+                'FK_AREA_CONHECIMENTO' => $area->PK_AREA_CONHECIMENTO,
+                'NO_COMPETENCIAS_PT' => 'Competencia de '.$area->NO_AREA_CONHECIMENTO_PT,
+            ]));
+        }
+
+        $areas = collect(
+            $this->actingAs($user)
+                ->getJson('/api/journeys/current/competencies/options')
+                ->assertOk()
+                ->json('data')
+        )->pluck('knowledge_area')->keyBy('id');
+
+        $this->assertSame('Conhecimentos de governanca de dados.', $areas[$describedArea->PK_AREA_CONHECIMENTO]['description_pt']);
+        $this->assertSame('Data governance knowledge.', $areas[$describedArea->PK_AREA_CONHECIMENTO]['description_en']);
+
+        foreach ([$areaWithoutDescription, $areaWithEmptyDescription] as $area) {
+            $this->assertArrayHasKey('description_pt', $areas[$area->PK_AREA_CONHECIMENTO]);
+            $this->assertNull($areas[$area->PK_AREA_CONHECIMENTO]['description_pt']);
+            $this->assertNull($areas[$area->PK_AREA_CONHECIMENTO]['description_en']);
+        }
+    }
+
     private function activeUser(): Usuario
     {
         return Usuario::create([
