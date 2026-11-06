@@ -40,6 +40,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
 
     Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
         Route::get('/me', AuthenticatedUserController::class);
+        Route::patch('/me', [AuthenticatedUserController::class, 'update']);
         Route::get('/admin/users/pending-activation', [UserAccountAdministrationController::class, 'pending']);
         Route::post('/admin/users/{user}/activate', [UserAccountAdministrationController::class, 'activate']);
         Route::post('/admin/users/{user}/deactivate', [UserAccountAdministrationController::class, 'deactivate']);

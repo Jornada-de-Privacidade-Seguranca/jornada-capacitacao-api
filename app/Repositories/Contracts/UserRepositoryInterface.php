@@ -11,6 +11,8 @@ interface UserRepositoryInterface
 
     public function existsByEmail(string $email): bool;
 
+    public function existsByEmailExcept(string $email, int $exceptUserId): bool;
+
     public function findByEmail(string $email): ?Usuario;
 
     public function findById(int $id): ?Usuario;
