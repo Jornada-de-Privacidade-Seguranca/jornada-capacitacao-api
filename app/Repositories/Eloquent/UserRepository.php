@@ -20,6 +20,14 @@ class UserRepository implements UserRepositoryInterface
             ->exists();
     }
 
+    public function existsByEmailExcept(string $email, int $exceptUserId): bool
+    {
+        return Usuario::query()
+            ->whereRaw('LOWER("DS_EMAIL") = ?', [strtolower($email)])
+            ->whereKeyNot($exceptUserId)
+            ->exists();
+    }
+
     public function findByEmail(string $email): ?Usuario
     {
         return Usuario::query()

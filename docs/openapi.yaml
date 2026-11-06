@@ -382,6 +382,10 @@ paths:
                       id: 1
                       name: Maria Silva
                       email: maria.silva@example.com
+                      organization: Secretaria de Governo
+                      department: Privacidade
+                      registration_number: MAT-123
+                      created_at: "2026-07-23 16:30:00"
                       role: common_user
                       profile:
                         role: common_user
@@ -401,6 +405,10 @@ paths:
                       id: 2
                       name: Admin Sistema
                       email: admin@example.com
+                      organization: Secretaria de Governo
+                      department: Privacidade
+                      registration_number: MAT-123
+                      created_at: "2026-07-23 16:30:00"
                       role: administrator
                       profile:
                         role: administrator
@@ -508,6 +516,10 @@ paths:
                       id: 1
                       name: Maria Silva
                       email: maria.silva@example.com
+                      organization: Secretaria de Governo
+                      department: Privacidade
+                      registration_number: MAT-123
+                      created_at: "2026-07-23 16:30:00"
                       role: common_user
                       profile:
                         role: common_user
@@ -548,6 +560,138 @@ paths:
                     message: Sua conta ainda nao foi ativada por um administrador do sistema.
                     errors: []
                     code: ACCOUNT_NOT_ACTIVATED
+    patch:
+      tags:
+        - Auth
+      summary: Atualiza os dados do usuario autenticado
+      description: Altera nome, e-mail, orgao/empresa e setor do usuario da sessao, com as mesmas validacoes do cadastro. Apenas os campos enviados sao alterados; pelo menos um e obrigatorio. O e-mail continua unico, sem diferenciar maiusculas e minusculas. O codigo de funcionario (`registration_number`) nao e editavel e, se enviado, e ignorado. Requer sessao autenticada e token CSRF.
+      operationId: updateAuthenticatedUser
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOwnProfilePayload"
+            examples:
+              allFields:
+                summary: Todos os campos editaveis
+                value:
+                  name: Maria Souza
+                  email: maria.souza@example.com
+                  organization: Secretaria de Governo
+                  department: Seguranca da Informacao
+              singleField:
+                summary: Apenas o setor
+                value:
+                  department: Seguranca da Informacao
+      responses:
+        "200":
+          description: Dados do usuario atualizados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthenticatedUserResponse"
+              examples:
+                updated:
+                  value:
+                    success: true
+                    message: Dados do usuario atualizados com sucesso.
+                    data:
+                      id: 1
+                      name: Maria Souza
+                      email: maria.souza@example.com
+                      organization: Secretaria de Governo
+                      department: Seguranca da Informacao
+                      registration_number: MAT-123
+                      created_at: "2026-07-23 16:30:00"
+                      role: common_user
+                      profile:
+                        role: common_user
+                        label: Usuario comum
+                        user_type_id: 2
+                        profile_type_id: 3
+                        profile_type_name: Usuário
+                        journey_profile_id: 1
+                        journey_profile_name: Encarregado pelo Tratamento de Dados Pessoais
+                        journey_profile_name_en: Data Protection Officer
+                      active_status: 1
+                    meta:
+                      session:
+                        lifetime_minutes: 120
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "409":
+          description: E-mail ja usado por outra conta, inclusive quando difere apenas por maiusculas/minusculas
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                emailInUse:
+                  value:
+                    success: false
+                    message: Ja existe uma conta cadastrada com este e-mail.
+                    errors:
+                      email:
+                        - Informe outro e-mail.
+                    code: EMAIL_ALREADY_IN_USE
+        "419":
+          description: Token CSRF ausente ou invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                csrfMismatch:
+                  value:
+                    success: false
+                    message: Token CSRF invalido.
+                    errors: []
+                    code: CSRF_TOKEN_MISMATCH
+        "422":
+          description: Dados invalidos ou nenhum campo editavel enviado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                noFields:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      name:
+                        - "Informe ao menos um dos dados: nome, e-mail, orgao/empresa ou setor."
+                      email:
+                        - "Informe ao menos um dos dados: nome, e-mail, orgao/empresa ou setor."
+                      organization:
+                        - "Informe ao menos um dos dados: nome, e-mail, orgao/empresa ou setor."
+                      department:
+                        - "Informe ao menos um dos dados: nome, e-mail, orgao/empresa ou setor."
+                    code: VALIDATION_ERROR
+                invalidName:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      name:
+                        - Informe nome e sobrenome.
+                    code: VALIDATION_ERROR
   /me/journey-profile:
     put:
       tags:
@@ -3407,6 +3551,29 @@ components:
             - string
             - "null"
           example: "2026-07-23 16:30:00"
+    UpdateOwnProfilePayload:
+      type: object
+      minProperties: 1
+      description: Pelo menos um dos campos editaveis. Campos fora desta lista, como registration_number, sao ignorados.
+      properties:
+        name:
+          type: string
+          maxLength: 50
+          description: Nome completo, com pelo menos nome e sobrenome.
+          example: Maria Souza
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: maria.souza@example.com
+        organization:
+          type: string
+          maxLength: 100
+          example: Secretaria de Governo
+        department:
+          type: string
+          maxLength: 100
+          example: Seguranca da Informacao
     UserRegistrationPayload:
       type: object
       required:
@@ -3510,6 +3677,10 @@ components:
         - id
         - name
         - email
+        - organization
+        - department
+        - registration_number
+        - created_at
         - role
         - profile
         - active_status
@@ -3524,6 +3695,30 @@ components:
           type: string
           format: email
           example: maria.silva@example.com
+        organization:
+          type:
+            - string
+            - "null"
+          description: Orgao ou empresa do usuario.
+          example: Secretaria de Governo
+        department:
+          type:
+            - string
+            - "null"
+          description: Setor do usuario.
+          example: Privacidade
+        registration_number:
+          type:
+            - string
+            - "null"
+          description: Codigo de funcionario (matricula). Nao pode ser alterado pelo proprio usuario.
+          example: MAT-123
+        created_at:
+          type:
+            - string
+            - "null"
+          description: Data de cadastro da conta.
+          example: "2026-07-23 16:30:00"
         role:
           type: string
           enum:

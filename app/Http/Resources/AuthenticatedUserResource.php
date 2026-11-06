@@ -21,6 +21,10 @@ class AuthenticatedUserResource extends JsonResource
             'id' => $this->PK_USUARIO,
             'name' => $this->NO_USUARIO,
             'email' => $this->DS_EMAIL,
+            'organization' => $this->NO_ORGAO_EMPRESA,
+            'department' => $this->NO_SETOR,
+            'registration_number' => $this->NU_MATRICULA,
+            'created_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),
             'role' => $role,
             'profile' => [
                 'role' => $role,
