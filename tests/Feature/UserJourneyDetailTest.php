@@ -352,6 +352,43 @@ class UserJourneyDetailTest extends TestCase
             ->assertJsonPath('errors', []);
     }
 
+    public function test_it_returns_knowledge_area_descriptions_in_journey_detail(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $journey = $this->completeJourneyFor($user, '2026-07-23 16:30:00');
+        $profile = JourneyProfile::query()->findOrFail($journey->FK_PERFIS_JORNADA);
+        $domain = KnowledgeDomain::query()->findOrFail($profile->FK_DOMINIO_CONHECIMENTO);
+        $describedArea = KnowledgeArea::create([
+            'NO_AREA_CONHECIMENTO_PT' => 'Area descrita',
+            'NO_AREA_CONHECIMENTO_EN' => 'Described area',
+            'DS_AREA_CONHECIMENTO_PT' => 'Conhecimentos de governanca de dados.',
+            'DS_AREA_CONHECIMENTO_EN' => 'Data governance knowledge.',
+        ]);
+        $describedCompetency = $this->competencyForDomain($domain, $describedArea, Difficulty::query()->firstOrFail(), 'Com descricao');
+        $profile->competencies()->attach($describedCompetency->PK_COMPETENCIAS);
+        AcquiredKnowledge::create([
+            'FK_JORNADA' => $journey->PK_JORNADA,
+            'FK_COMPETENCIAS' => $describedCompetency->PK_COMPETENCIAS,
+            'TP_ADQUIRIDO' => 1,
+        ]);
+
+        $data = $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->json('data');
+
+        $profileAreas = collect($data['journey_profile']['competencies'])->pluck('knowledge_area', 'name_pt');
+        $this->assertSame('Conhecimentos de governanca de dados.', $profileAreas['Com descricao']['description_pt']);
+        $this->assertSame('Data governance knowledge.', $profileAreas['Com descricao']['description_en']);
+        $this->assertArrayHasKey('description_pt', $profileAreas['LGPD']);
+        $this->assertNull($profileAreas['LGPD']['description_pt']);
+        $this->assertNull($profileAreas['LGPD']['description_en']);
+
+        $answeredArea = collect($data['acquired_knowledges'])
+            ->firstWhere('competency.name_pt', 'Com descricao')['competency']['knowledge_area'];
+        $this->assertSame('Conhecimentos de governanca de dados.', $answeredArea['description_pt']);
+    }
+
     private function activeUser(string $name, int $userType): Usuario
     {
         return Usuario::create([

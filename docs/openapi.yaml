@@ -1771,6 +1771,8 @@ paths:
                               id: 1
                               name_pt: Governanca
                               name_en: Governance
+                              description_pt: Conhecimentos relacionados a governanca de dados.
+                              description_en: Knowledge related to data governance.
                             difficulty:
                               id: 1
                               name_pt: Basico
@@ -1829,6 +1831,8 @@ paths:
                               id: 1
                               name_pt: Governanca
                               name_en: Governance
+                              description_pt: Conhecimentos relacionados a governanca de dados.
+                              description_en: Knowledge related to data governance.
                             difficulty:
                               id: 1
                               name_pt: Basico
@@ -1854,6 +1858,8 @@ paths:
                                   id: 1
                                   name_pt: Governanca
                                   name_en: Governance
+                                  description_pt: Conhecimentos relacionados a governanca de dados.
+                                  description_en: Knowledge related to data governance.
                                 difficulty:
                                   id: 1
                                   name_pt: Basico
@@ -2318,6 +2324,8 @@ paths:
                           id: 2
                           name_pt: Governanca
                           name_en: Governance
+                          description_pt: Conhecimentos relacionados a governanca de dados.
+                          description_en: Knowledge related to data governance.
                         difficulty:
                           id: 1
                           name_pt: Basico
@@ -4366,6 +4374,18 @@ components:
             - string
             - "null"
           example: Governance
+        description_pt:
+          type:
+            - string
+            - "null"
+          description: Descricao da area em portugues (DS_AREA_CONHECIMENTO_PT). Nula quando a area ainda nao tem descricao.
+          example: Conhecimentos relacionados a governanca de dados.
+        description_en:
+          type:
+            - string
+            - "null"
+          description: Descricao da area em ingles (DS_AREA_CONHECIMENTO_EN). Nula quando a area ainda nao tem descricao.
+          example: Knowledge related to data governance.
     UserJourneySimpleOption:
       type: object
       properties:
