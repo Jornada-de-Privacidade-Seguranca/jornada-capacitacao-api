@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Competency;
+use App\Models\Journey;
 use App\Models\JourneyProfile;
 use App\Models\KnowledgeArea;
 use App\Models\KnowledgeDomain;
@@ -42,10 +43,16 @@ class JourneyProfileTest extends TestCase
                         'description_pt',
                         'description_en',
                         'type',
+                        'knowledge_domain' => ['id', 'name_pt', 'name_en'],
+                        'user_status',
+                        'last_score',
+                        'competencies_count',
                     ],
                 ],
             ])
-            ->assertJsonMissingPath('data.0.competencies_count')
+            ->assertJsonPath('data.0.user_status', 'not_done')
+            ->assertJsonPath('data.0.last_score', null)
+            ->assertJsonPath('data.0.competencies_count', 0)
             ->assertJsonMissingPath('data.0.knowledge_areas_count');
     }
 
@@ -309,6 +316,128 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('errors.modality.0', 'A modalidade deve ser um texto.');
     }
 
+    public function test_it_filters_profiles_by_multiple_domains_and_user_statuses_with_search_and_pagination(): void
+    {
+        $user = $this->activeUser();
+        $privacy = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Privacy',
+        ]);
+        $security = KnowledgeDomain::create([
+            'NO_DOMINIO_CONHECIMENTO_PT' => 'Seguranca',
+            'NO_DOMINIO_CONHECIMENTO_EN' => 'Security',
+        ]);
+        $completed = JourneyProfile::factory()->create([
+            'FK_DOMINIO_CONHECIMENTO' => $privacy->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'Catalog Codex Analyst',
+        ]);
+        $pending = JourneyProfile::factory()->create([
+            'FK_DOMINIO_CONHECIMENTO' => $security->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'Catalog Codex Engineer',
+        ]);
+        $notDone = JourneyProfile::factory()->create([
+            'FK_DOMINIO_CONHECIMENTO' => $privacy->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'Catalog Codex Owner',
+        ]);
+        $area = KnowledgeArea::create(['NO_AREA_CONHECIMENTO_PT' => 'Catalog area']);
+        $competency = Competency::create([
+            'FK_AREA_CONHECIMENTO' => $area->PK_AREA_CONHECIMENTO,
+            'NO_COMPETENCIAS_PT' => 'Catalog competency',
+        ]);
+        ProfileCompetency::create([
+            'FK_PERFIS_JORNADA' => $completed->PK_PERFIS_JORNADA,
+            'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
+        ]);
+
+        $this->journey($user, $completed, '2026-01-01 10:00:00', '2026-01-01 10:30:00', 45.5);
+        $this->journey($user, $completed, '2026-02-01 10:00:00', '2026-02-01 10:30:00', 82.25);
+        $this->journey($user, $pending, '2026-03-01 10:00:00');
+        $this->journey($this->activeUser(), $notDone, '2026-03-02 10:00:00', '2026-03-02 10:30:00', 99);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'search' => 'Catalog Codex',
+                'domains' => [$privacy->PK_DOMINIO_CONHECIMENTO, $security->PK_DOMINIO_CONHECIMENTO],
+                'user_status' => ['completed', 'pending'],
+                'page' => 2,
+                'per_page' => 1,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 2)
+            ->assertJsonPath('meta.pagination.current_page', 2)
+            ->assertJsonPath('data.0.id', $pending->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.0.user_status', 'pending')
+            ->assertJsonPath('data.0.last_score', null)
+            ->assertJsonPath('data.0.knowledge_domain.id', $security->PK_DOMINIO_CONHECIMENTO)
+            ->assertJsonPath('data.0.knowledge_domain.name_pt', 'Seguranca');
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'domains' => [$privacy->PK_DOMINIO_CONHECIMENTO],
+                'user_status' => ['completed'],
+                'search' => 'Catalog Codex Analyst',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $completed->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.0.user_status', 'completed')
+            ->assertJsonPath('data.0.last_score', 82.25)
+            ->assertJsonPath('data.0.competencies_count', 1)
+            ->assertJsonPath('data.0.knowledge_domain.name_en', 'Privacy')
+            ->assertJsonPath('data.0.type', $privacy->PK_DOMINIO_CONHECIMENTO);
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'user_status' => ['not_done'],
+                'search' => 'Catalog Codex Owner',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $notDone->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.0.user_status', 'not_done');
+
+    }
+
+    public function test_it_rejects_invalid_domain_and_user_status_filters(): void
+    {
+        $this->actingAs($this->activeUser())
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'domains' => [999999],
+                'user_status' => ['finished'],
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonFragment([
+                'domains.0' => ['Um ou mais dominios informados nao existem.'],
+                'user_status.0' => ['A situacao deve ser completed, pending ou not_done.'],
+            ]);
+    }
+
+    public function test_pending_journey_status_takes_precedence_while_last_score_uses_latest_completed_journey(): void
+    {
+        $user = $this->activeUser();
+        $profile = JourneyProfile::factory()->create([
+            'NO_PERFIS_PT' => 'Mixed journey status profile',
+        ]);
+
+        $this->journey($user, $profile, '2026-01-01 10:00:00', '2026-01-01 10:30:00', 75.25);
+        $this->journey($user, $profile, '2026-02-01 10:00:00');
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'user_status' => ['pending'],
+                'search' => 'Mixed journey status profile',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $profile->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.0.user_status', 'pending')
+            ->assertJsonPath('data.0.last_score', 75.25);
+
+        $this->assertIsFloat($response->json('data.0.last_score'));
+    }
+
     public function test_it_shows_a_journey_profile(): void
     {
         $user = $this->activeUser();
@@ -451,6 +580,17 @@ class JourneyProfileTest extends TestCase
             'NO_USUARIO' => 'Maria Silva',
             'DS_EMAIL' => fake()->unique()->safeEmail(),
             'ST_ATIVO' => 1,
+        ]);
+    }
+
+    private function journey(Usuario $user, JourneyProfile $profile, string $startedAt, ?string $finishedAt = null, ?float $score = null): Journey
+    {
+        return Journey::create([
+            'FK_USUARIO' => $user->PK_USUARIO,
+            'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'NU_PONTUACAO_TOTAL' => $score,
+            'DH_CRIADO_EM' => $startedAt,
+            'DH_FIM' => $finishedAt,
         ]);
     }
 

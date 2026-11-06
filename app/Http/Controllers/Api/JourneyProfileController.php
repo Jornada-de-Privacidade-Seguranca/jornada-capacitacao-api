@@ -21,6 +21,9 @@ class JourneyProfileController
             perPage: $request->perPage(),
             modality: $request->modality(),
             search: $request->search(),
+            domainIds: $request->domains(),
+            userStatuses: $request->userStatuses(),
+            userId: (int) $request->user()->getAuthIdentifier(),
         );
 
         return ApiResponse::paginated(
