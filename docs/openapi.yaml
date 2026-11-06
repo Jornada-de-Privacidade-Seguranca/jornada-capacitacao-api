@@ -97,7 +97,7 @@ paths:
       tags:
         - Auth
       summary: Cadastra um usuario pendente de ativacao
-      description: Cria uma conta de usuario com status pendente de ativacao por administrador.
+      description: Cria uma conta de usuario com status pendente de ativacao por administrador. A conta recebe sempre o perfil de acesso "Usuario" (id 3); um `profile_type_id` enviado na requisicao e ignorado.
       x-rate-limit: 3 requisicoes por minuto por IP.
       operationId: registerUser
       requestBody:
@@ -116,7 +116,6 @@ paths:
                   organization: Secretaria de Governo
                   department: Privacidade
                   registration_number: MAT-123
-                  profile_type_id: 1
                   journey_profile_id: 1
       responses:
         "201":
@@ -137,7 +136,7 @@ paths:
                       organization_company: Secretaria de Governo
                       department: Privacidade
                       registration_number: MAT-123
-                      profile_type_id: 1
+                      profile_type_id: 3
                       journey_profile_id: 1
                       active_status: 2
                       account_status: pending_activation
@@ -3364,7 +3363,8 @@ components:
           example: MAT-123
         profile_type_id:
           type: integer
-          example: 1
+          description: Perfil de acesso da conta. No cadastro publico e sempre 3 (Usuario).
+          example: 3
         journey_profile_id:
           type:
             - integer
@@ -3395,7 +3395,6 @@ components:
         - organization
         - department
         - registration_number
-        - profile_type_id
       properties:
         name:
           type: string
@@ -3429,10 +3428,6 @@ components:
           type: string
           maxLength: 50
           example: MAT-123
-        profile_type_id:
-          type: integer
-          description: ID do tipo de perfil fixo migrado em TB_TIPO_PERFIL.
-          example: 1
         journey_profile_id:
           type: integer
           description: Perfil de jornada escolhido opcionalmente durante o cadastro. Se omitido, pode ser selecionado depois em PUT /me/journey-profile.

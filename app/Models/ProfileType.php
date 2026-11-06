@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProfileType extends JornadaModel
 {
+    /**
+     * Perfil "Usuario", atribuido a toda conta criada pelo cadastro publico.
+     */
+    public const USER_ID = 3;
+
     protected $table = 'TB_TIPO_PERFIL';
 
     protected $primaryKey = 'PK_TIPO_PERFIL';

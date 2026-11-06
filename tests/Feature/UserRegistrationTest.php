@@ -19,6 +19,7 @@ class UserRegistrationTest extends TestCase
     public function test_it_registers_a_user_pending_admin_activation(): void
     {
         $profileType = ProfileType::query()->where('NO_TIPO_PERFIL', 'Usuário')->firstOrFail();
+        $this->assertSame(ProfileType::USER_ID, (int) $profileType->PK_TIPO_PERFIL);
         $journeyProfile = JourneyProfile::query()->firstOrFail();
 
         $response = $this->postJson('/api/auth/register', [
@@ -29,7 +30,6 @@ class UserRegistrationTest extends TestCase
             'organization' => ' Secretaria de Governo ',
             'department' => ' Privacidade ',
             'registration_number' => ' MAT-123 ',
-            'profile_type_id' => $profileType->PK_TIPO_PERFIL,
             'journey_profile_id' => $journeyProfile->PK_PERFIS_JORNADA,
         ]);
 
@@ -64,22 +64,6 @@ class UserRegistrationTest extends TestCase
         $this->assertTrue(Hash::check('SenhaSegura123', $user->DS_SENHA));
     }
 
-    public function test_it_rejects_missing_profile_type(): void
-    {
-        $payload = $this->validPayload();
-        unset($payload['profile_type_id']);
-
-        $this->postJson('/api/auth/register', $payload)
-            ->assertUnprocessable()
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('code', 'VALIDATION_ERROR')
-            ->assertJsonPath('errors.profile_type_id.0', 'Informe o tipo de perfil.');
-
-        $this->assertDatabaseMissing('TB_USUARIO', [
-            'DS_EMAIL' => 'maria.silva@example.com',
-        ]);
-    }
-
     public function test_it_accepts_maximum_length_email_and_persists_password_hash(): void
     {
         $email = str_repeat('a', 64).'@'.str_repeat('b', 32).'.io';
@@ -106,21 +90,6 @@ class UserRegistrationTest extends TestCase
             ->assertJsonPath('message', 'Validation error.')
             ->assertJsonPath('code', 'VALIDATION_ERROR')
             ->assertJsonPath('errors.name.0', 'Informe nome e sobrenome.');
-    }
-
-    public function test_it_rejects_invalid_profile_type(): void
-    {
-        $this->postJson('/api/auth/register', $this->validPayload([
-            'profile_type_id' => 999,
-        ]))
-            ->assertUnprocessable()
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('code', 'VALIDATION_ERROR')
-            ->assertJsonPath('errors.profile_type_id.0', 'Informe um tipo de perfil valido.');
-
-        $this->assertDatabaseMissing('TB_USUARIO', [
-            'DS_EMAIL' => 'maria.silva@example.com',
-        ]);
     }
 
     public function test_it_rejects_an_unknown_selected_journey_profile(): void
@@ -152,9 +121,31 @@ class UserRegistrationTest extends TestCase
                     'organization',
                     'department',
                     'registration_number',
-                    'profile_type_id',
                 ],
+            ])
+            ->assertJsonMissingPath('errors.profile_type_id');
+    }
+
+    public function test_it_ignores_profile_type_sent_in_the_request(): void
+    {
+        $cases = ['administrator' => 1, 'manager' => 2, 'unknown' => 999, 'text' => 'admin'];
+
+        foreach (array_keys($cases) as $index => $case) {
+            $email = "maria.{$case}@example.com";
+
+            // Um IP por caso, por causa do limite de 3 cadastros por minuto
+            $this->fromIp('198.51.100.'.($index + 1))->postJson('/api/auth/register', $this->validPayload([
+                'email' => $email,
+                'profile_type_id' => $cases[$case],
+            ]))
+                ->assertCreated()
+                ->assertJsonPath('data.profile_type_id', ProfileType::USER_ID);
+
+            $this->assertDatabaseHas('TB_USUARIO', [
+                'DS_EMAIL' => $email,
+                'FK_TIPO_PERFIL' => ProfileType::USER_ID,
             ]);
+        }
     }
 
     public function test_it_rejects_invalid_payload(): void
@@ -265,7 +256,6 @@ class UserRegistrationTest extends TestCase
             'organization' => 'Secretaria de Governo',
             'department' => 'Privacidade',
             'registration_number' => 'MAT-123',
-            'profile_type_id' => 3,
         ], $overrides);
     }
 
