@@ -505,3 +505,24 @@ INSERT INTO "TB_EXPERIENCIA_ATUACAO"("DS_EXPERIENCIA_ATUACAO_PT", "DS_EXPERIENCI
 INSERT INTO "TB_TIPO_PERFIL"("NO_TIPO_PERFIL") VALUES ('Administrador');
 INSERT INTO "TB_TIPO_PERFIL"("NO_TIPO_PERFIL") VALUES ('Gestor');
 INSERT INTO "TB_TIPO_PERFIL"("NO_TIPO_PERFIL") VALUES ('Usuário');
+
+-- Insert TB_PERMISSOES
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('journeys.take', 'Realizar jornadas', 'Take journeys');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('journeys.assign', 'Atribuir jornadas a outras pessoas', 'Assign journeys to other people');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('results.view_own', 'Ver os próprios resultados', 'View own results');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('results.view_all', 'Ver os resultados de todos os usuários', 'View all users'' results');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('users.view', 'Ver usuários', 'View users');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('users.register', 'Cadastrar usuários', 'Register users');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('users.deactivate', 'Ativar e desativar usuários', 'Activate and deactivate users');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('users.manage', 'Editar e excluir usuários', 'Edit and delete users');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('users.change_profile', 'Alterar o perfil de acesso de usuários', 'Change users'' access profile');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('catalog.manage', 'Gerenciar o catálogo', 'Manage the catalog');
+
+-- Insert RL_PERMISSOES_PERFIS
+-- Administrador (1): todas as permissões
+INSERT INTO "RL_PERMISSOES_PERFIS"("FK_TIPO_PERFIL", "FK_PERMISSOES") SELECT 1, "PK_PERMISSOES" FROM "TB_PERMISSOES" ORDER BY "PK_PERMISSOES";
+-- Gestor (2)
+INSERT INTO "RL_PERMISSOES_PERFIS"("FK_TIPO_PERFIL", "FK_PERMISSOES") SELECT 2, "PK_PERMISSOES" FROM "TB_PERMISSOES" WHERE "NO_PERMISSOES" IN ('journeys.take', 'journeys.assign', 'results.view_own', 'results.view_all', 'users.view') ORDER BY "PK_PERMISSOES";
+-- Usuário (3)
+INSERT INTO "RL_PERMISSOES_PERFIS"("FK_TIPO_PERFIL", "FK_PERMISSOES") SELECT 3, "PK_PERMISSOES" FROM "TB_PERMISSOES" WHERE "NO_PERMISSOES" IN ('journeys.take', 'results.view_own') ORDER BY "PK_PERMISSOES";
+-- Fim RL_PERMISSOES_PERFIS

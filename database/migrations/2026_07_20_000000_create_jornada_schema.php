@@ -145,7 +145,10 @@ return new class extends Migration
             $table->foreign('FK_TIPO_PERFIL')->references('PK_TIPO_PERFIL')->on('TB_TIPO_PERFIL');
         });
 
-        DB::unprepared(file_get_contents(database_path('sql/jornada_fixed_data.sql')));
+        // As permissoes dependem de tabelas criadas em migration posterior, que insere esse trecho
+        $fixedData = file_get_contents(database_path('sql/jornada_fixed_data.sql'));
+        $permissionsStart = strpos($fixedData, '-- Insert TB_PERMISSOES');
+        DB::unprepared($permissionsStart === false ? $fixedData : substr($fixedData, 0, $permissionsStart));
 
         $driver = DB::connection()->getDriverName();
 

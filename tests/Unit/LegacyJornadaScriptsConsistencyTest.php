@@ -54,6 +54,56 @@ class LegacyJornadaScriptsConsistencyTest extends TestCase
         }
     }
 
+    public function test_legacy_insert_script_matches_fixed_data_permissions(): void
+    {
+        $repositoryRoot = dirname(__DIR__, 2);
+        $fixedData = file_get_contents($repositoryRoot.'/database/sql/jornada_fixed_data.sql');
+        $legacyScript = file_get_contents($repositoryRoot.'/scripts/Script_Insert_Jornada.sql');
+
+        $fixedPermissions = $this->extractPermissions($fixedData);
+
+        $this->assertCount(10, $fixedPermissions, 'Nao foi possivel extrair as permissoes de database/sql/jornada_fixed_data.sql.');
+        $this->assertSame($fixedPermissions, $this->extractPermissions($legacyScript));
+
+        $fixedProfilePermissions = $this->extractProfilePermissions($fixedData);
+
+        $this->assertSame([1, 2, 3], array_keys($fixedProfilePermissions));
+        $this->assertSame($fixedProfilePermissions, $this->extractProfilePermissions($legacyScript));
+    }
+
+    /**
+     * @return array<int, array{string|null, string|null, string|null}> codigo e descricoes, na ordem de insercao.
+     */
+    private function extractPermissions(string $sqlContent): array
+    {
+        return array_map(
+            fn (array $row) => [
+                $this->unquote($this->columnValue($row, 'no_permissoes')),
+                $this->unquote($this->columnValue($row, 'ds_permissoes_pt')),
+                $this->unquote($this->columnValue($row, 'ds_permissoes_en')),
+            ],
+            $this->extractInsertRows($sqlContent, 'TB_PERMISSOES'),
+        );
+    }
+
+    /**
+     * @return array<int, array<int, string>|string> id do perfil => codigos ligados, ou "all" sem filtro.
+     */
+    private function extractProfilePermissions(string $sqlContent): array
+    {
+        $pattern = '/insert\s+into\s+(?:public\.)?"?RL_PERMISSOES_PERFIS"?\s*\([^)]*\)\s*select\s+(\d+)\s*,[^;]*?(?:in\s*\(([^)]*)\))?[^;]*;/i';
+        preg_match_all($pattern, $sqlContent, $matches, PREG_SET_ORDER);
+
+        $profiles = [];
+        foreach ($matches as $match) {
+            $profiles[(int) $match[1]] = ($match[2] ?? '') === ''
+                ? 'all'
+                : array_map(fn (string $code) => (string) $this->unquote($code), $this->splitTopLevelCommas($match[2]));
+        }
+
+        return $profiles;
+    }
+
     /**
      * @return array<int, string> nomes de NO_CRITERIO_PT, na ordem de insercao (indice 0 = PK 1).
      */
