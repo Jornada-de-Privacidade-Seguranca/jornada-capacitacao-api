@@ -30,7 +30,7 @@ class JourneyFinalizationTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_it_finalizes_the_current_journey_and_persists_its_score(): void
+    public function test_it_finalizes_the_current_journey_with_legacy_answers_and_keeps_the_breakdown(): void
     {
         Carbon::setTestNow('2026-09-28 14:30:00');
         [$user, $journey] = $this->completedAnswersFixture();
@@ -48,7 +48,8 @@ class JourneyFinalizationTest extends TestCase
         $detail = $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 14.189)
+            // A nota total vem só das competências: a única do perfil foi declarada
+            ->assertJsonPath('data.score', 100)
             ->assertJsonPath('data.score_breakdown.0.category', 'professional_experience')
             ->assertJsonPath('data.score_breakdown.0.name_pt', 'Tempo de Experiência Profissional')
             ->assertJsonPath('data.score_breakdown.0.score', 20)
@@ -65,7 +66,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 14.189,
+            'NU_PONTUACAO_TOTAL' => 100,
             'DH_FIM' => '2026-09-28 14:30:00',
         ]);
         $this->assertDatabaseCount('RL_CURSOS_SUPERIORES_JORNADA', 0);
@@ -87,7 +88,7 @@ class JourneyFinalizationTest extends TestCase
         $detail = $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 17.631)
+            ->assertJsonPath('data.score', 100)
             ->assertJsonPath('data.score_breakdown.0.score', 20)
             ->assertJsonPath('data.score_breakdown.1.score', 50)
             ->assertJsonPath('data.score_breakdown.2.score', 41.131)
@@ -108,14 +109,45 @@ class JourneyFinalizationTest extends TestCase
         $this->actingAs($user)
             ->getJson("/api/journeys/{$journey->PK_JORNADA}")
             ->assertOk()
-            ->assertJsonPath('data.score', 17.631)
+            ->assertJsonPath('data.score', 100)
             ->assertJsonPath('data.score_breakdown', $storedBreakdown);
     }
 
-    public function test_it_includes_the_weighted_contribution_of_one_selected_education_course(): void
+    public function test_it_finalizes_a_journey_answered_only_with_competencies(): void
     {
-        [$user, $journey] = $this->completedAnswersFixture();
-        $journey->higherEducationCourses()->attach($this->educationCourse(8.829)->PK_CURSO_SUPERIOR);
+        Carbon::setTestNow('2026-09-28 14:30:00');
+        [$user, $journey] = $this->completedAnswersFixture(withPreQuestionnaireAnswers: false);
+
+        $this->actingAs($user)->withCsrfToken()
+            ->postJson('/api/journeys/current/finalize')
+            ->assertOk()
+            ->assertJsonPath('data.journey_id', $journey->PK_JORNADA)
+            ->assertJsonPath('data.status', 'completed');
+
+        $this->assertDatabaseHas('TB_JORNADA', [
+            'PK_JORNADA' => $journey->PK_JORNADA,
+            'FK_EXPERIENCIA_PROFISSIONAL' => null,
+            'FK_ATUACAO_PERFIL' => null,
+            'FK_SUBCRITERIOS_INGLES' => null,
+            'NU_PONTUACAO_TOTAL' => 100,
+            'DH_FIM' => '2026-09-28 14:30:00',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson("/api/journeys/{$journey->PK_JORNADA}")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'completed')
+            ->assertJsonPath('data.score', 100);
+    }
+
+    public function test_it_scores_zero_when_no_competency_is_declared(): void
+    {
+        [$user, $journey] = $this->completedAnswersFixture(
+            withPreQuestionnaireAnswers: false,
+            includeSecondCompetency: true,
+            firstAcquired: false,
+            secondAcquired: false,
+        );
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson('/api/journeys/current/finalize')
@@ -123,46 +155,36 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 15.487,
+            'NU_PONTUACAO_TOTAL' => 0,
         ]);
     }
 
-    public function test_it_sums_the_weighted_contributions_of_multiple_selected_education_types(): void
+    public function test_it_scores_the_declared_competencies_over_the_profile_total(): void
     {
-        [$user, $journey] = $this->completedAnswersFixture();
-        $graduation = $this->educationCourse(8.829, 'Graduacao');
-        $postgraduate = $this->educationCourse(15.751, 'Pos-graduacao');
-        $journey->higherEducationCourses()->attach([
-            $graduation->PK_CURSO_SUPERIOR,
-            $postgraduate->PK_CURSO_SUPERIOR,
-        ]);
-        $this->actingAs($user)->withCsrfToken()
-            ->postJson('/api/journeys/current/finalize')
-            ->assertOk();
-
-        $this->assertDatabaseHas('TB_JORNADA', [
-            'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 17.802,
-        ]);
-    }
-
-    public function test_it_uses_the_configured_professional_experience_criterion_weight(): void
-    {
-        [$user, $journey] = $this->completedAnswersFixture(30.0);
+        // Governanca (peso 25, Basico = 2) vale 10; Risco (peso 15, Avancado = 4) vale 12
+        [$user, $journey] = $this->completedAnswersFixture(
+            withPreQuestionnaireAnswers: false,
+            includeSecondCompetency: true,
+            secondAcquired: false,
+        );
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson('/api/journeys/current/finalize')
             ->assertOk();
 
+        // 10 / (10 + 12) × 100
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 16.355,
+            'NU_PONTUACAO_TOTAL' => 45.455,
         ]);
     }
 
-    public function test_it_uses_zero_when_professional_experience_criterion_weight_is_missing(): void
+    public function test_it_scores_one_hundred_when_every_competency_is_declared(): void
     {
-        [$user, $journey] = $this->completedAnswersFixture(null, false);
+        [$user, $journey] = $this->completedAnswersFixture(
+            withPreQuestionnaireAnswers: false,
+            includeSecondCompetency: true,
+        );
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson('/api/journeys/current/finalize')
@@ -170,14 +192,22 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 5.855,
+            'NU_PONTUACAO_TOTAL' => 100,
         ]);
     }
 
-    public function test_it_applies_the_weighted_contribution_of_one_certification(): void
+    public function test_it_ignores_legacy_answers_and_criterion_weights_in_the_total_score(): void
     {
-        [$user, $journey] = $this->completedAnswersFixture();
-        $journey->professionalCertifications()->attach($this->certification('Certificacao 1')->PK_CERTIFICACAO_PROFISSIONAL);
+        [$user, $journey] = $this->completedAnswersFixture(
+            experienceWeight: 99.0,
+            competencyWeight: 10.0,
+            includeSecondCompetency: true,
+            secondAcquired: false,
+        );
+        $journey->higherEducationCourses()->attach($this->educationCourse(15.751)->PK_CURSO_SUPERIOR);
+        $journey->professionalCertifications()->attach(
+            $this->certification('Certificacao Teste')->PK_CERTIFICACAO_PROFISSIONAL,
+        );
 
         $this->actingAs($user)->withCsrfToken()
             ->postJson('/api/journeys/current/finalize')
@@ -185,28 +215,7 @@ class JourneyFinalizationTest extends TestCase
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 16.333,
-        ]);
-    }
-
-    public function test_it_caps_the_weighted_contribution_at_five_certifications(): void
-    {
-        [$user, $journey] = $this->completedAnswersFixture();
-        $certificationIds = [];
-
-        for ($count = 1; $count <= 6; $count++) {
-            $certificationIds[] = $this->certification('Certificacao '.$count)->PK_CERTIFICACAO_PROFISSIONAL;
-        }
-
-        $journey->professionalCertifications()->attach($certificationIds);
-
-        $this->actingAs($user)->withCsrfToken()
-            ->postJson('/api/journeys/current/finalize')
-            ->assertOk();
-
-        $this->assertDatabaseHas('TB_JORNADA', [
-            'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 24.909,
+            'NU_PONTUACAO_TOTAL' => 45.455,
         ]);
     }
 
@@ -222,10 +231,8 @@ class JourneyFinalizationTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Existem etapas obrigatorias pendentes.')
             ->assertJsonPath('code', 'INCOMPLETE_JOURNEY')
+            // O pré-questionário saiu do fluxo: só as competências são exigidas
             ->assertJsonPath('errors.fields', [
-                'answers.professional_experience',
-                'answers.profile_experience',
-                'answers.english_proficiency',
                 'answers.competencies',
             ]);
 
@@ -287,54 +294,15 @@ class JourneyFinalizationTest extends TestCase
             ->assertJsonPath('code', 'CSRF_TOKEN_MISMATCH');
     }
 
-    public function test_it_applies_the_competency_weight_to_multiple_acquired_competencies(): void
-    {
-        [$user, $journey] = $this->completedAnswersFixture(includeSecondCompetency: true);
-
-        $this->actingAs($user)->withCsrfToken()
-            ->postJson('/api/journeys/current/finalize')
-            ->assertOk();
-
-        $this->assertDatabaseHas('TB_JORNADA', [
-            'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 19.699,
-        ]);
-    }
-
-    public function test_it_uses_the_competency_criterion_weight_from_the_database(): void
-    {
-        [$user, $journey] = $this->completedAnswersFixture(competencyWeight: 50.0);
-
-        $this->actingAs($user)->withCsrfToken()
-            ->postJson('/api/journeys/current/finalize')
-            ->assertOk();
-
-        $this->assertDatabaseHas('TB_JORNADA', [
-            'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 14.597,
-        ]);
-    }
-
-    public function test_it_counts_a_missing_competency_criterion_weight_as_zero(): void
-    {
-        [$user, $journey] = $this->completedAnswersFixture(includeCompetencyCriterion: false);
-
-        $this->actingAs($user)->withCsrfToken()
-            ->postJson('/api/journeys/current/finalize')
-            ->assertOk();
-
-        $this->assertDatabaseHas('TB_JORNADA', [
-            'PK_JORNADA' => $journey->PK_JORNADA,
-            'NU_PONTUACAO_TOTAL' => 9.597,
-        ]);
-    }
-
     private function completedAnswersFixture(
         ?float $experienceWeight = 23.81,
         bool $createExperienceCriterion = true,
         float $competencyWeight = 45.92,
         bool $includeCompetencyCriterion = true,
         bool $includeSecondCompetency = false,
+        bool $withPreQuestionnaireAnswers = true,
+        bool $firstAcquired = true,
+        bool $secondAcquired = true,
     ): array {
         $user = $this->activeUser('Maria Silva', 2);
         $profile = $this->journeyProfile('Privacidade');
@@ -406,15 +374,15 @@ class JourneyFinalizationTest extends TestCase
         $journey = Journey::create([
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
-            'FK_EXPERIENCIA_PROFISSIONAL' => $professionalExperience->PK_EXPERIENCIA_ATUACAO,
-            'FK_ATUACAO_PERFIL' => $profileExperience->PK_EXPERIENCIA_ATUACAO,
-            'FK_SUBCRITERIOS_INGLES' => $english->PK_SUBCRITERIOS,
+            'FK_EXPERIENCIA_PROFISSIONAL' => $withPreQuestionnaireAnswers ? $professionalExperience->PK_EXPERIENCIA_ATUACAO : null,
+            'FK_ATUACAO_PERFIL' => $withPreQuestionnaireAnswers ? $profileExperience->PK_EXPERIENCIA_ATUACAO : null,
+            'FK_SUBCRITERIOS_INGLES' => $withPreQuestionnaireAnswers ? $english->PK_SUBCRITERIOS : null,
             'DH_CRIADO_EM' => '2026-09-28 10:00:00',
         ]);
         AcquiredKnowledge::create([
             'FK_JORNADA' => $journey->PK_JORNADA,
             'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
-            'TP_ADQUIRIDO' => 1,
+            'TP_ADQUIRIDO' => $firstAcquired ? 1 : 0,
         ]);
 
         if ($includeSecondCompetency) {
@@ -437,7 +405,7 @@ class JourneyFinalizationTest extends TestCase
             AcquiredKnowledge::create([
                 'FK_JORNADA' => $journey->PK_JORNADA,
                 'FK_COMPETENCIAS' => $secondCompetency->PK_COMPETENCIAS,
-                'TP_ADQUIRIDO' => 1,
+                'TP_ADQUIRIDO' => $secondAcquired ? 1 : 0,
             ]);
         }
 

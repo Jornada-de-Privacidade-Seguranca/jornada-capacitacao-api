@@ -360,7 +360,7 @@ class CurrentJourneyGeneralDataUpdateTest extends TestCase
         ]);
     }
 
-    public function test_finalization_still_requires_general_data_saved_partially(): void
+    public function test_finalization_no_longer_requires_general_data(): void
     {
         $user = $this->activeUser();
         $journey = $this->currentJourneyFor($user);
@@ -379,9 +379,11 @@ class CurrentJourneyGeneralDataUpdateTest extends TestCase
             ->assertJsonPath('code', 'INCOMPLETE_JOURNEY')
             ->json('errors.fields');
 
-        $this->assertContains('answers.professional_experience', $missingFields);
-        $this->assertContains('answers.profile_experience', $missingFields);
+        // O pré-questionário saiu do fluxo: a finalização só aponta o que ainda é exigido
+        $this->assertNotContains('answers.professional_experience', $missingFields);
+        $this->assertNotContains('answers.profile_experience', $missingFields);
         $this->assertNotContains('answers.english_proficiency', $missingFields);
+        $this->assertContains('answers.competencies', $missingFields);
 
         $this->assertDatabaseHas('TB_JORNADA', [
             'PK_JORNADA' => $journey->PK_JORNADA,

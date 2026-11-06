@@ -394,12 +394,11 @@ class JourneyService
      */
     private function requiredCompletedJourneyRelations(): array
     {
+        // As respostas do pré-questionário (experiência, inglês, formação e
+        // certificações) saíram do fluxo e não são mais exigidas
         return [
             'usuario' => 'user',
             'journeyProfile' => 'journey_profile',
-            'professionalExperience' => 'answers.professional_experience',
-            'profileExperience' => 'answers.profile_experience',
-            'englishSubcriterion' => 'answers.english_proficiency',
         ];
     }
 }
