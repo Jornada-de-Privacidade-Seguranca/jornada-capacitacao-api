@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProfileType extends JornadaModel
@@ -22,5 +23,17 @@ class ProfileType extends JornadaModel
     public function users(): HasMany
     {
         return $this->hasMany(Usuario::class, 'FK_TIPO_PERFIL', 'PK_TIPO_PERFIL');
+    }
+
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Permission::class,
+            'RL_PERMISSOES_PERFIS',
+            'FK_TIPO_PERFIL',
+            'FK_PERMISSOES',
+            'PK_TIPO_PERFIL',
+            'PK_PERMISSOES',
+        );
     }
 }

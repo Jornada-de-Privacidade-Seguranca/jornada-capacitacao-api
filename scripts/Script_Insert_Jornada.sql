@@ -513,3 +513,24 @@ insert into public.tb_experiencia_atuacao(ds_experiencia_atuacao_pt, ds_experien
 insert into public.tb_tipo_perfil(no_tipo_perfil) values ('Administrador');
 insert into public.tb_tipo_perfil(no_tipo_perfil) values ('Gestor');
 insert into public.tb_tipo_perfil(no_tipo_perfil) values ('Usuário');
+
+--Insert TB_PERMISSOES
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('journeys.take', 'Realizar jornadas', 'Take journeys');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('journeys.assign', 'Atribuir jornadas a outras pessoas', 'Assign journeys to other people');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('results.view_own', 'Ver os próprios resultados', 'View own results');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('results.view_all', 'Ver os resultados de todos os usuários', 'View all users'' results');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('users.view', 'Ver usuários', 'View users');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('users.register', 'Cadastrar usuários', 'Register users');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('users.deactivate', 'Ativar e desativar usuários', 'Activate and deactivate users');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('users.manage', 'Editar e excluir usuários', 'Edit and delete users');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('users.change_profile', 'Alterar o perfil de acesso de usuários', 'Change users'' access profile');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('catalog.manage', 'Gerenciar o catálogo', 'Manage the catalog');
+
+--Insert RL_PERMISSOES_PERFIS
+-- Administrador (1): todas as permissões
+insert into public.rl_permissoes_perfis(fk_tipo_perfil, fk_permissoes) select 1, pk_permissoes from public.tb_permissoes order by pk_permissoes;
+-- Gestor (2)
+insert into public.rl_permissoes_perfis(fk_tipo_perfil, fk_permissoes) select 2, pk_permissoes from public.tb_permissoes where no_permissoes in ('journeys.take', 'journeys.assign', 'results.view_own', 'results.view_all', 'users.view') order by pk_permissoes;
+-- Usuário (3)
+insert into public.rl_permissoes_perfis(fk_tipo_perfil, fk_permissoes) select 3, pk_permissoes from public.tb_permissoes where no_permissoes in ('journeys.take', 'results.view_own') order by pk_permissoes;
+insert into public.tb_tipo_perfil(no_tipo_perfil) values ('Usuário');

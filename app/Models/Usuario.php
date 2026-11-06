@@ -62,4 +62,9 @@ class Usuario extends JornadaModel implements AuthenticatableContract
     {
         return $this->hasMany(Journey::class, 'FK_USUARIO', 'PK_USUARIO');
     }
+
+    public function profileTypeChanges(): HasMany
+    {
+        return $this->hasMany(ProfileTypeChange::class, 'FK_USUARIO_ALTERADO', 'PK_USUARIO');
+    }
 }
