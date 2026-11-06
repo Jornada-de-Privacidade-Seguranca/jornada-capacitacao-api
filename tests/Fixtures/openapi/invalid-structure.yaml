@@ -1,0 +1,9 @@
+openapi: 3.1.0
+info:
+  title: Exemplo sem campos obrigatorios
+paths:
+  /exemplo:
+    get:
+      responses:
+        "200":
+          descripton: Campo obrigatorio escrito errado.

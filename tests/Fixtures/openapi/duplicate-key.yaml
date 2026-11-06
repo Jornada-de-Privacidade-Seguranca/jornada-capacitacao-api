@@ -1,0 +1,12 @@
+openapi: 3.1.0
+info:
+  title: Exemplo com chave duplicada
+  version: 0.1.0
+paths:
+  /exemplo:
+    get:
+      responses:
+        "200":
+          description: Primeira definicao.
+        "200":
+          description: Segunda definicao com a mesma chave.
