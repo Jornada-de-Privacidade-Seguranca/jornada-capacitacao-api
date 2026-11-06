@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\AccountAlreadyExistsException;
+use App\Models\ProfileType;
 use App\Models\Usuario;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Database\QueryException;
@@ -26,7 +27,8 @@ class UserRegistrationService
 
         try {
             return $this->userRepository->create([
-                'FK_TIPO_PERFIL' => $data['profile_type_id'] ?? null,
+                // O perfil nao vem da requisicao: so o admin altera o perfil de um usuario
+                'FK_TIPO_PERFIL' => ProfileType::USER_ID,
                 'FK_PERFIL_JORNADA' => $data['journey_profile_id'] ?? null,
                 'FK_TIPO_USUARIO' => null,
                 'NO_USUARIO' => trim($data['name']),
