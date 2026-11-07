@@ -15,6 +15,8 @@ tags:
     description: Consulta de tipos de jornada usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
+  - name: System
+    description: Endpoints de status e resumo do sistema
   # - name: Users
   #   description: Endpoints de cadastro e gestao de usuarios
   - name: Journeys
@@ -91,6 +93,65 @@ paths:
                     errors:
                       include_steps:
                         - The include steps field must be true or false.
+                    code: VALIDATION_ERROR
+  /system-summary:
+    get:
+      tags:
+        - System
+      summary: Retorna estatisticas e resumo do sistema
+      description: Endpoint auxiliar de consulta que demonstra o uso de MVC, Service, Repository, Resource e ApiResponse integrado ao banco.
+      operationId: getSystemSummary
+      parameters:
+        - name: include_database_status
+          in: query
+          required: false
+          description: Quando true, retorna status de conexao e driver do banco de dados.
+          schema:
+            type: boolean
+            default: true
+          example: true
+        - name: tag
+          in: query
+          required: false
+          description: Tag ou identificador opcional para rastreamento ou filtragem.
+          schema:
+            type: string
+            maxLength: 50
+          example: monitoring
+      responses:
+        "200":
+          description: Resumo do sistema retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSummarySuccessResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: System summary retrieved successfully.
+                    data:
+                      app_name: Jornada de Capacitacao API
+                      environment: local
+                      tag: monitoring
+                      database:
+                        competencies_count: 5
+                        connected: true
+                        driver: pgsql
+        "422":
+          description: Erro de validacao no contrato padrao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidBoolean:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      include_database_status:
+                        - The include database status field must be true or false.
                     code: VALIDATION_ERROR
   /auth/register:
     post:
@@ -3273,6 +3334,55 @@ components:
         put_here:
           type: string
           example: Fluxos, validacoes de dominio, decisoes e chamadas para repositories.
+    SystemSummarySuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: System summary retrieved successfully.
+        data:
+          $ref: "#/components/schemas/SystemSummary"
+    SystemSummary:
+      type: object
+      required:
+        - app_name
+        - environment
+        - database
+      properties:
+        app_name:
+          type: string
+          example: Jornada de Capacitacao API
+        environment:
+          type: string
+          example: local
+        tag:
+          type:
+            - string
+            - "null"
+          example: monitoring
+        database:
+          $ref: "#/components/schemas/SystemSummaryDatabase"
+    SystemSummaryDatabase:
+      type: object
+      required:
+        - competencies_count
+      properties:
+        competencies_count:
+          type: integer
+          example: 5
+        connected:
+          type: boolean
+          example: true
+        driver:
+          type: string
+          example: pgsql
     PaginationMeta:
       type: object
       required:
