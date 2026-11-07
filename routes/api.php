@@ -49,6 +49,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
         Route::apiResource('journey-profiles', JourneyProfileController::class)
             ->only(['index', 'show']);
         Route::get('/users/{user}/journeys', [UserJourneyController::class, 'index']);
+        Route::get('/users/{user}/journeys/metrics', [UserJourneyController::class, 'metrics']);
         Route::get('/journeys/current/certifications/options', CertificationOptionController::class);
         Route::get('/journeys/current/competencies/options', [CurrentJourneyCompetencyController::class, 'options']);
         Route::get('/journeys/current/competencies', [CurrentJourneyCompetencyController::class, 'show']);

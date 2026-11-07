@@ -1035,6 +1035,31 @@ paths:
             type: string
             format: date
           example: "2026-07-31"
+        - name: search
+          in: query
+          required: false
+          description: Termo de busca textual por nome ou descricao do perfil de jornada ou ID da jornada.
+          schema:
+            type: string
+            maxLength: 255
+          example: Privacidade
+        - name: knowledge_domain_id
+          in: query
+          required: false
+          description: Filtra pelo identificador de dominio de conhecimento do perfil da jornada.
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: domains
+          in: query
+          required: false
+          description: Filtra por um ou mais identificadores de dominio de conhecimento.
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1, 2]
       responses:
         "200":
           description: Jornadas retornadas com sucesso
@@ -1076,6 +1101,26 @@ paths:
                         total: 1
                         last_page: 1
                         has_next_page: false
+                      metrics_summary:
+                        total_journeys: 1
+                        completed_journeys: 0
+                        ongoing_journeys: 1
+                        average_score: null
+                        highest_score: null
+                        latest_score: null
+                      domain_metrics:
+                        - domain_id: 1
+                          domain_name_pt: Privacidade
+                          domain_name_en: Privacy
+                          total_journeys: 1
+                          completed_journeys: 0
+                          ongoing_journeys: 1
+                          average_score: null
+                          highest_score: null
+                          latest_score: null
+                          acquired_competencies_count: 8
+                          total_competencies_evaluated: 10
+                          competency_acquisition_rate: 80.0
         "401":
           description: Usuario nao autenticado
           content:
@@ -1316,6 +1361,104 @@ paths:
                     message: Nao foi possivel iniciar a jornada no momento.
                     errors: []
                     code: JOURNEY_CREATION_FAILED
+
+  /users/{user}/journeys/metrics:
+    get:
+      tags:
+        - Journeys
+      summary: Retorna metricas agregadas por dominio de conhecimento do usuario
+      description: Retorna estatisticas de desempenho, pontuacoes e taxas de aquisicao de competencias divididas por dominio de conhecimento para o usuario avaliado.
+      operationId: getUserJourneyMetrics
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Metricas por dominio retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDomainMetricsResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Metricas por dominio recuperadas com sucesso.
+                    data:
+                      user_id: 2
+                      summary:
+                        total_journeys: 2
+                        completed_journeys: 1
+                        ongoing_journeys: 1
+                        average_score: 85.0
+                        highest_score: 85.0
+                        latest_score: 85.0
+                      domains:
+                        - domain_id: 1
+                          domain_name_pt: Privacidade
+                          domain_name_en: Privacy
+                          total_journeys: 1
+                          completed_journeys: 1
+                          ongoing_journeys: 0
+                          average_score: 85.0
+                          highest_score: 85.0
+                          latest_score: 85.0
+                          acquired_competencies_count: 1
+                          total_competencies_evaluated: 2
+                          competency_acquisition_rate: 50.0
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Usuario sem permissao para visualizar metricas do usuario informado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar as metricas deste usuario.
+                    errors: []
+                    code: USER_JOURNEYS_FORBIDDEN
+        "404":
+          description: Usuario informado nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                userNotFound:
+                  value:
+                    success: false
+                    message: Usuario nao encontrado.
+                    errors: []
+                    code: USER_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as metricas no momento.
+                    errors: []
+                    code: METRICS_SEARCH_FAILED
 
   /journeys/{journey}/answers:
     patch:
@@ -4020,6 +4163,140 @@ components:
           properties:
             pagination:
               $ref: "#/components/schemas/PaginationMeta"
+            metrics_summary:
+              $ref: "#/components/schemas/UserJourneyMetricsSummary"
+            domain_metrics:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserKnowledgeDomainMetric"
+    UserJourneyMetricsSummary:
+      type: object
+      required:
+        - total_journeys
+        - completed_journeys
+        - ongoing_journeys
+      properties:
+        total_journeys:
+          type: integer
+          example: 2
+        completed_journeys:
+          type: integer
+          example: 1
+        ongoing_journeys:
+          type: integer
+          example: 1
+        average_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        highest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        latest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+    UserKnowledgeDomainMetric:
+      type: object
+      required:
+        - domain_id
+        - domain_name_pt
+        - total_journeys
+        - completed_journeys
+        - ongoing_journeys
+        - acquired_competencies_count
+        - total_competencies_evaluated
+      properties:
+        domain_id:
+          type: integer
+          example: 1
+        domain_name_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade
+        domain_name_en:
+          type:
+            - string
+            - "null"
+          example: Privacy
+        total_journeys:
+          type: integer
+          example: 1
+        completed_journeys:
+          type: integer
+          example: 1
+        ongoing_journeys:
+          type: integer
+          example: 0
+        average_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        highest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        latest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        acquired_competencies_count:
+          type: integer
+          example: 8
+        total_competencies_evaluated:
+          type: integer
+          example: 10
+        competency_acquisition_rate:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 80.0
+    UserDomainMetricsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Metricas por dominio recuperadas com sucesso.
+        data:
+          $ref: "#/components/schemas/UserDomainMetricsData"
+    UserDomainMetricsData:
+      type: object
+      required:
+        - user_id
+        - summary
+        - domains
+      properties:
+        user_id:
+          type: integer
+          example: 2
+        summary:
+          $ref: "#/components/schemas/UserJourneyMetricsSummary"
+        domains:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserKnowledgeDomainMetric"
     UserJourneyListItem:
       type: object
       required:

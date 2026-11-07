@@ -9,6 +9,11 @@ interface JourneyRepositoryInterface
 {
     public function paginatedByUser(int $userId, array $filters, int $page, int $perPage): LengthAwarePaginator;
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDomainMetricsForUser(int $userId): array;
+
     public function hasOngoingJourney(int $userId): bool;
 
     public function hasAnyJourney(int $userId): bool;

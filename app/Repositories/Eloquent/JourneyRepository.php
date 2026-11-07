@@ -4,13 +4,17 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\AcquiredKnowledge;
 use App\Models\Journey;
+use App\Models\KnowledgeDomain;
 use App\Models\ProfileCompetency;
 use App\Repositories\Contracts\JourneyRepositoryInterface;
+use App\Repositories\Eloquent\Concerns\AppliesNormalizedSearch;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
+    use AppliesNormalizedSearch;
+
     private const DETAILED_RELATIONS = [
         'usuario.profileType',
         'journeyProfile.knowledgeDomain',
@@ -127,6 +131,8 @@ class JourneyRepository implements JourneyRepositoryInterface
         if (isset($filters['journey_profile_id'])) {
             $query->where('FK_PERFIS_JORNADA', $filters['journey_profile_id']);
         }
+
+        $this->applySearchFilters($query, $filters);
 
         if (isset($filters['started_from'])) {
             $query->whereDate('DH_CRIADO_EM', '>=', $filters['started_from']);
@@ -252,5 +258,151 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->count('FK_COMPETENCIAS');
 
         return $matchingCount === count($distinctCompetencyIds);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDomainMetricsForUser(int $userId): array
+    {
+        $domains = KnowledgeDomain::query()
+            ->orderBy('PK_DOMINIO_CONHECIMENTO')
+            ->get();
+
+        $journeys = Journey::query()
+            ->with([
+                'journeyProfile.knowledgeDomain',
+                'acquiredKnowledges',
+            ])
+            ->where('FK_USUARIO', $userId)
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA')
+            ->get();
+
+        $completedJourneys = $journeys->whereNotNull('DH_FIM');
+        $completedScores = $completedJourneys
+            ->pluck('NU_PONTUACAO_TOTAL')
+            ->filter(fn ($score) => $score !== null)
+            ->map(fn ($score) => (float) $score);
+
+        $summary = [
+            'total_journeys' => $journeys->count(),
+            'completed_journeys' => $completedJourneys->count(),
+            'ongoing_journeys' => $journeys->whereNull('DH_FIM')->count(),
+            'average_score' => $completedScores->isNotEmpty() ? round($completedScores->avg(), 2) : null,
+            'highest_score' => $completedScores->isNotEmpty() ? round($completedScores->max(), 2) : null,
+            'latest_score' => $completedJourneys->first()?->NU_PONTUACAO_TOTAL !== null
+                ? (float) $completedJourneys->first()->NU_PONTUACAO_TOTAL
+                : null,
+        ];
+
+        $domainMetrics = [];
+
+        foreach ($domains as $domain) {
+            $domainId = (int) $domain->PK_DOMINIO_CONHECIMENTO;
+            $domainJourneys = $journeys->filter(function (Journey $journey) use ($domainId): bool {
+                return (int) ($journey->journeyProfile?->FK_DOMINIO_CONHECIMENTO ?? 0) === $domainId;
+            });
+
+            $domainCompleted = $domainJourneys->whereNotNull('DH_FIM');
+            $domainScores = $domainCompleted
+                ->pluck('NU_PONTUACAO_TOTAL')
+                ->filter(fn ($score) => $score !== null)
+                ->map(fn ($score) => (float) $score);
+
+            $allDomainAcquiredKnowledges = $domainJourneys->flatMap(
+                fn (Journey $journey) => $journey->acquiredKnowledges
+            );
+
+            $evaluatedCompetencies = $allDomainAcquiredKnowledges
+                ->pluck('FK_COMPETENCIAS')
+                ->filter()
+                ->unique()
+                ->count();
+
+            $acquiredCompetencies = $allDomainAcquiredKnowledges
+                ->filter(fn ($knowledge) => (int) $knowledge->TP_ADQUIRIDO === 1)
+                ->pluck('FK_COMPETENCIAS')
+                ->filter()
+                ->unique()
+                ->count();
+
+            $acquisitionRate = $evaluatedCompetencies > 0
+                ? round(($acquiredCompetencies / $evaluatedCompetencies) * 100, 2)
+                : null;
+
+            $domainMetrics[] = [
+                'domain_id' => $domainId,
+                'domain_name_pt' => $domain->NO_DOMINIO_CONHECIMENTO_PT,
+                'domain_name_en' => $domain->NO_DOMINIO_CONHECIMENTO_EN,
+                'total_journeys' => $domainJourneys->count(),
+                'completed_journeys' => $domainCompleted->count(),
+                'ongoing_journeys' => $domainJourneys->whereNull('DH_FIM')->count(),
+                'average_score' => $domainScores->isNotEmpty() ? round($domainScores->avg(), 2) : null,
+                'highest_score' => $domainScores->isNotEmpty() ? round($domainScores->max(), 2) : null,
+                'latest_score' => $domainCompleted->first()?->NU_PONTUACAO_TOTAL !== null
+                    ? (float) $domainCompleted->first()->NU_PONTUACAO_TOTAL
+                    : null,
+                'acquired_competencies_count' => $acquiredCompetencies,
+                'total_competencies_evaluated' => $evaluatedCompetencies,
+                'competency_acquisition_rate' => $acquisitionRate,
+            ];
+        }
+
+        return [
+            'user_id' => $userId,
+            'summary' => $summary,
+            'domains' => $domainMetrics,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function applySearchFilters(Builder $query, array $filters): void
+    {
+        if (isset($filters['knowledge_domain_id'])) {
+            $domainId = (int) $filters['knowledge_domain_id'];
+            $query->whereHas('journeyProfile', function (Builder $profileQuery) use ($domainId): void {
+                $profileQuery->where('FK_DOMINIO_CONHECIMENTO', $domainId);
+            });
+        }
+
+        if (isset($filters['domains']) && is_array($filters['domains']) && ! empty($filters['domains'])) {
+            $domainIds = array_map('intval', $filters['domains']);
+            $query->whereHas('journeyProfile', function (Builder $profileQuery) use ($domainIds): void {
+                $profileQuery->whereIn('FK_DOMINIO_CONHECIMENTO', $domainIds);
+            });
+        }
+
+        if (! empty($filters['search'])) {
+            $search = trim((string) $filters['search']);
+            $this->applyJourneySearch($query, $search);
+        }
+    }
+
+    private function applyJourneySearch(Builder $query, string $search): void
+    {
+        $isNumeric = is_numeric($search);
+        $escapedSearchTerm = $this->escapeSearchWildcards($this->normalizeSearchTerm($search));
+        $pattern = '%'.$escapedSearchTerm.'%';
+        $columns = ['NO_PERFIS_PT', 'NO_PERFIS_EN', 'DS_PERFIS_PT', 'DS_PERFIS_EN'];
+
+        $query->where(function (Builder $sub) use ($isNumeric, $search, $columns, $pattern): void {
+            if ($isNumeric) {
+                $sub->orWhere('TB_JORNADA.PK_JORNADA', (int) $search);
+            }
+
+            $sub->orWhereHas('journeyProfile', function (Builder $profileQuery) use ($columns, $pattern): void {
+                $profileQuery->where(function (Builder $profileSubQuery) use ($columns, $pattern): void {
+                    $connection = $profileSubQuery->getConnection();
+                    foreach ($columns as $column) {
+                        $wrappedColumn = $profileSubQuery->getQuery()->getGrammar()->wrap($column);
+                        $normalizedColumn = $this->normalizedSearchExpression($connection, $wrappedColumn);
+                        $profileSubQuery->orWhereRaw("{$normalizedColumn} LIKE ? ESCAPE '\\'", [$pattern]);
+                    }
+                });
+            });
+        });
     }
 }

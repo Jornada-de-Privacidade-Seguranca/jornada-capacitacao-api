@@ -35,6 +35,10 @@ class ListUserJourneysRequest extends FormRequest
             'started_to' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:started_from'],
             'ended_from' => ['sometimes', 'date_format:Y-m-d'],
             'ended_to' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:ended_from'],
+            'search' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'knowledge_domain_id' => ['sometimes', 'nullable', 'integer', 'exists:TB_DOMINIO_CONHECIMENTO,PK_DOMINIO_CONHECIMENTO'],
+            'domains' => ['sometimes', 'nullable', 'array'],
+            'domains.*' => ['integer', 'distinct', 'exists:TB_DOMINIO_CONHECIMENTO,PK_DOMINIO_CONHECIMENTO'],
         ];
     }
 
@@ -55,7 +59,42 @@ class ListUserJourneysRequest extends FormRequest
             'ended_from.date_format' => 'A data de finalizacao minima deve estar no formato Y-m-d.',
             'ended_to.date_format' => 'A data de finalizacao maxima deve estar no formato Y-m-d.',
             'ended_to.after_or_equal' => 'A data de finalizacao maxima deve ser maior ou igual a data de finalizacao minima.',
+            'search.string' => 'A busca deve ser um texto.',
+            'search.max' => 'A busca nao pode ter mais de 255 caracteres.',
+            'knowledge_domain_id.integer' => 'O dominio deve ser um numero inteiro.',
+            'knowledge_domain_id.exists' => 'O dominio de conhecimento informado nao existe.',
+            'domains.array' => 'Os dominios devem ser enviados como uma lista de ids.',
+            'domains.*.integer' => 'Cada dominio deve ser informado pelo id numerico.',
+            'domains.*.distinct' => 'Os dominios nao podem se repetir.',
+            'domains.*.exists' => 'Um ou mais dominios informados nao existem.',
         ];
+    }
+
+    public function search(): ?string
+    {
+        $search = trim((string) $this->validated('search', ''));
+
+        return $search === '' ? null : $search;
+    }
+
+    /**
+     * @return list<int>|null
+     */
+    public function domains(): ?array
+    {
+        /** @var list<int>|null $domains */
+        $domains = $this->validated('domains');
+        $domainId = $this->validated('knowledge_domain_id');
+
+        if ($domainId !== null) {
+            $domains = array_merge($domains ?? [], [(int) $domainId]);
+        }
+
+        if ($domains === null) {
+            return null;
+        }
+
+        return array_values(array_unique(array_map('intval', $domains)));
     }
 
     protected function failedValidation(Validator $validator): void

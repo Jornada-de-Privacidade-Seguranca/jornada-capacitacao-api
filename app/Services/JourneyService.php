@@ -59,6 +59,24 @@ class JourneyService
         );
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDomainMetricsForUser(Usuario $authenticatedUser, int $userId): array
+    {
+        $requestedUser = $this->userRepository->findById($userId);
+
+        if ($requestedUser === null) {
+            throw new ModelNotFoundException;
+        }
+
+        if (! $this->canViewUserJourneys($authenticatedUser, $requestedUser)) {
+            throw new AccessDeniedHttpException;
+        }
+
+        return $this->journeyRepository->getDomainMetricsForUser((int) $requestedUser->PK_USUARIO);
+    }
+
     public function startForUser(Usuario $authenticatedUser, int $userId, array $data): Journey
     {
         $requestedUser = $this->userRepository->findById($userId);
