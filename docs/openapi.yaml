@@ -2091,6 +2091,138 @@ paths:
                     message: Nao foi possivel buscar os dados da jornada no momento.
                     errors: []
                     code: JOURNEY_SEARCH_FAILED
+  /journeys/{journey}/pdf:
+    get:
+      tags:
+        - Journeys
+      summary: Baixa o resultado de uma jornada concluida em PDF
+      description: >-
+        Gera o PDF do resultado de uma jornada concluida, com o mesmo conteudo da
+        tela de resultado: nome do perfil de jornada, nome do usuario, data de
+        conclusao, nota geral de 0 a 100 com a faixa (A desenvolver abaixo de 60,
+        Medio de 60 a 74 e Forte a partir de 75), conhecimento adquirido por area
+        com o minimo recomendado de 60% (separado por dominio nas jornadas
+        conjuntas) e competencias declaradas e nao declaradas agrupadas por area,
+        com o nivel e o dominio. A nota e a salva em NU_PONTUACAO_TOTAL,
+        arredondada para inteiro. Nao inclui a pontuacao por criterio, os dados do
+        pre-questionario nem pesos internos. O acesso segue o detalhe da jornada:
+        usuarios comuns so baixam as proprias jornadas; administradores, as de
+        qualquer usuario. O nome do arquivo vem no cabecalho Content-Disposition,
+        exposto no CORS, no formato resultado-jornada-{id}-{data de conclusao}.pdf.
+      operationId: downloadJourneyResultPdf
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - name: locale
+          in: query
+          required: false
+          description: Idioma do PDF. Sem o parametro, o PDF sai em portugues.
+          schema:
+            type: string
+            enum:
+              - pt
+              - en
+            default: pt
+      responses:
+        "200":
+          description: PDF do resultado da jornada
+          headers:
+            Content-Disposition:
+              description: Anexo com o nome do arquivo.
+              schema:
+                type: string
+                example: attachment; filename="resultado-jornada-10-2026-07-24.pdf"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao para visualizar a jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "404":
+          description: Jornada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada ainda em andamento ou concluida com dados obrigatorios incompletos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                notCompleted:
+                  value:
+                    success: false
+                    message: A jornada ainda nao foi finalizada.
+                    errors: []
+                    code: JOURNEY_NOT_COMPLETED
+                incompleteJourney:
+                  value:
+                    success: false
+                    message: Jornada concluida possui dados obrigatorios incompletos.
+                    errors:
+                      fields:
+                        - journey_profile
+                    code: INCOMPLETE_JOURNEY
+        "422":
+          description: Identificador de jornada ou idioma invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidIdentifier:
+                  value:
+                    success: false
+                    message: Identificador da jornada invalido.
+                    errors:
+                      journey:
+                        - O identificador da jornada deve ser um numero inteiro maior ou igual a 1.
+                    code: INVALID_JOURNEY_IDENTIFIER
+                invalidLocale:
+                  value:
+                    success: false
+                    message: Idioma do PDF invalido.
+                    errors:
+                      locale:
+                        - O idioma deve ser pt ou en.
+                    code: INVALID_LOCALE
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel gerar o PDF da jornada no momento.
+                    errors: []
+                    code: JOURNEY_PDF_FAILED
   /journeys/current/general-data/options:
     get:
       tags:

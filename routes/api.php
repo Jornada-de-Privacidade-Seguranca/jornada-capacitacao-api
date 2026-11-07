@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\JourneyCoursesController;
 use App\Http\Controllers\Api\JourneyFinalizationController;
 use App\Http\Controllers\Api\JourneyProfileController;
 use App\Http\Controllers\Api\JourneyProfileSelectionController;
+use App\Http\Controllers\Api\JourneyResultPdfController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\TemplateExampleController;
@@ -61,6 +62,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
         Route::get('/journeys/current/general-data/options', [CurrentJourneyGeneralDataController::class, 'options']);
         Route::put('/journeys/current/general-data', [CurrentJourneyGeneralDataController::class, 'update']);
         Route::get('/journeys/{journey}', [UserJourneyController::class, 'show']);
+        Route::get('/journeys/{journey}/pdf', JourneyResultPdfController::class);
         Route::post('/users/{user}/journeys', [UserJourneyController::class, 'store']);
         Route::patch('/journeys/{journey}/answers', JourneyAnswersController::class);
         Route::post('/journeys/{journey}/courses', JourneyCoursesController::class);
