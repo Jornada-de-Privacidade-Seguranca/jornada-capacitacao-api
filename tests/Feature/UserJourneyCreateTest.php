@@ -102,7 +102,7 @@ class UserJourneyCreateTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Voce nao possui permissao para iniciar uma jornada para este usuario.')
-            ->assertJsonPath('code', 'USER_JOURNEYS_FORBIDDEN')
+            ->assertJsonPath('code', 'PERMISSION_DENIED')
             ->assertJsonPath('errors', []);
     }
 

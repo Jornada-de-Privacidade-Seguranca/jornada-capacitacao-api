@@ -42,7 +42,7 @@ class LoginTest extends TestCase
             ->assertJsonPath('data.role', 'common_user')
             ->assertJsonPath('data.profile.role', 'common_user')
             ->assertJsonPath('data.profile.label', 'Usuario comum')
-            ->assertJsonPath('data.profile.user_type_id', 2)
+            ->assertJsonPath('data.profile.id', $profileType->PK_TIPO_PERFIL)
             ->assertJsonPath('data.profile.profile_type_id', $profileType->PK_TIPO_PERFIL)
             ->assertJsonPath('data.profile.profile_type_name', 'Aluno')
             ->assertJsonPath('meta.session.lifetime_minutes', 47)
@@ -184,6 +184,7 @@ class LoginTest extends TestCase
     public function test_it_returns_administrator_profile_for_admin_user(): void
     {
         Usuario::create([
+            'FK_TIPO_PERFIL' => 1,
             'FK_TIPO_USUARIO' => 1,
             'NO_USUARIO' => 'Admin Sistema',
             'DS_EMAIL' => 'admin@example.com',
@@ -199,7 +200,43 @@ class LoginTest extends TestCase
             ->assertJsonPath('data.role', 'administrator')
             ->assertJsonPath('data.profile.role', 'administrator')
             ->assertJsonPath('data.profile.label', 'Administrador')
-            ->assertJsonPath('data.profile.user_type_id', 1);
+            ->assertJsonPath('data.profile.id', 1)
+            ->assertJsonPath('data.profile.name', 'Administrador')
+            ->assertJsonPath('data.profile.permissions.0', 'catalog.manage');
+
+        $this->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.role', 'administrator')
+            ->assertJsonPath('data.profile.role', 'administrator')
+            ->assertJsonPath('data.profile.label', 'Administrador');
+    }
+
+    public function test_it_returns_manager_profile_for_manager_user(): void
+    {
+        Usuario::create([
+            'FK_TIPO_PERFIL' => 2,
+            'FK_TIPO_USUARIO' => 2,
+            'NO_USUARIO' => 'Gestor Sistema',
+            'DS_EMAIL' => 'manager@example.com',
+            'DS_SENHA' => Hash::make('secret123'),
+            'ST_ATIVO' => 1,
+        ]);
+
+        $this->actingAs(Usuario::query()->where('DS_EMAIL', 'manager@example.com')->firstOrFail())
+            ->getJson('/api/me')
+            ->assertOk()
+            ->assertJsonPath('data.role', 'manager')
+            ->assertJsonPath('data.profile.role', 'manager')
+            ->assertJsonPath('data.profile.label', 'Gestor')
+            ->assertJsonPath('data.profile.id', 2)
+            ->assertJsonPath('data.profile.name', 'Gestor')
+            ->assertJsonPath('data.profile.permissions', [
+                'journeys.assign',
+                'journeys.take',
+                'results.view_all',
+                'results.view_own',
+                'users.view',
+            ]);
     }
 
     public function test_it_rejects_invalid_credentials_with_generic_message(): void

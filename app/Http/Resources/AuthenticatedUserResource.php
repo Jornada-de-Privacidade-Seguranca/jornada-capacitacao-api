@@ -11,11 +11,18 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class AuthenticatedUserResource extends JsonResource
 {
-    private const ADMIN_USER_TYPE = 1;
+    private const ADMIN_PROFILE_TYPE = 1;
+
+    private const MANAGER_PROFILE_TYPE = 2;
 
     public function toArray(Request $request): array
     {
-        $role = (int) $this->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE ? 'administrator' : 'common_user';
+        $role = $this->roleForProfile();
+        $label = match ($role) {
+            'administrator' => 'Administrador',
+            'manager' => 'Gestor',
+            default => 'Usuario comum',
+        };
 
         return [
             'id' => $this->PK_USUARIO,
@@ -28,8 +35,10 @@ class AuthenticatedUserResource extends JsonResource
             'role' => $role,
             'profile' => [
                 'role' => $role,
-                'label' => $role === 'administrator' ? 'Administrador' : 'Usuario comum',
-                'user_type_id' => $this->FK_TIPO_USUARIO,
+                'label' => $label,
+                'id' => $this->FK_TIPO_PERFIL,
+                'name' => $this->profileType?->NO_TIPO_PERFIL,
+                'permissions' => $this->permissionCodes()->all(),
                 'profile_type_id' => $this->FK_TIPO_PERFIL,
                 'profile_type_name' => $this->profileType?->NO_TIPO_PERFIL,
                 'journey_profile_id' => $this->FK_PERFIL_JORNADA,
@@ -38,5 +47,14 @@ class AuthenticatedUserResource extends JsonResource
             ],
             'active_status' => $this->ST_ATIVO,
         ];
+    }
+
+    private function roleForProfile(): string
+    {
+        return match ((int) $this->FK_TIPO_PERFIL) {
+            self::ADMIN_PROFILE_TYPE => 'administrator',
+            self::MANAGER_PROFILE_TYPE => 'manager',
+            default => 'common_user',
+        };
     }
 }

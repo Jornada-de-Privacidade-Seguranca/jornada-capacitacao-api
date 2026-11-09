@@ -36,7 +36,7 @@ class JourneyCompetenciesController
             return ApiResponse::error(
                 message: 'Voce nao possui permissao para atualizar esta jornada.',
                 status: Response::HTTP_FORBIDDEN,
-                code: 'JOURNEY_FORBIDDEN',
+                code: 'PERMISSION_DENIED',
             );
         } catch (JourneyAlreadyFinishedException) {
             return ApiResponse::error(

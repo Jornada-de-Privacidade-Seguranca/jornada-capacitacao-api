@@ -27,8 +27,6 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class JourneyService
 {
-    private const ADMIN_USER_TYPE = 1;
-
     public function __construct(
         private readonly JourneyRepositoryInterface $journeyRepository,
         private readonly CriterionRepositoryInterface $criterionRepository,
@@ -67,7 +65,10 @@ class JourneyService
             throw new ModelNotFoundException;
         }
 
-        if (! $this->canViewUserJourneys($authenticatedUser, $requestedUser)) {
+        $isOwnJourney = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO;
+        $requiredPermission = $isOwnJourney ? 'journeys.take' : 'journeys.assign';
+
+        if (! $authenticatedUser->hasPermission($requiredPermission)) {
             throw new AccessDeniedHttpException;
         }
 
@@ -293,20 +294,16 @@ class JourneyService
 
     private function canViewUserJourneys(Usuario $authenticatedUser, Usuario $requestedUser): bool
     {
-        if ((int) $authenticatedUser->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE) {
-            return true;
-        }
+        $isOwnUser = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO;
 
-        return (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO;
+        return $authenticatedUser->hasPermission($isOwnUser ? 'results.view_own' : 'results.view_all');
     }
 
     private function canViewJourney(Usuario $authenticatedUser, Journey $journey): bool
     {
-        if ((int) $authenticatedUser->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE) {
-            return true;
-        }
+        $isOwnJourney = (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
 
-        return (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
+        return $authenticatedUser->hasPermission($isOwnJourney ? 'results.view_own' : 'results.view_all');
     }
 
     private function resolveJourneyForManagement(
@@ -319,7 +316,9 @@ class JourneyService
             throw new ModelNotFoundException;
         }
 
-        if (! $this->canViewJourney($authenticatedUser, $journey)) {
+        $isOwnJourney = (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
+        if (! $authenticatedUser->hasPermission('journeys.take')
+            || (! $isOwnJourney && ! $authenticatedUser->hasPermission('users.manage'))) {
             throw new AccessDeniedHttpException;
         }
 

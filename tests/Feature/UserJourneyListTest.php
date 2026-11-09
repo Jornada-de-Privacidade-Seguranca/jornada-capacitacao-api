@@ -80,6 +80,33 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('meta.pagination.has_next_page', false);
     }
 
+    public function test_manager_can_list_another_users_journeys_with_results_view_all(): void
+    {
+        $manager = $this->activeUser('Manager', 2);
+        $manager->update(['FK_TIPO_PERFIL' => 2]);
+        $owner = $this->activeUser('Journey Owner', 2);
+        $profile = $this->journeyProfile('Profile');
+        $this->journey($owner, $profile, '2026-07-23 08:00:00');
+
+        $this->actingAs($manager)
+            ->getJson("/api/users/{$owner->PK_USUARIO}/journeys")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_legacy_administrator_user_type_does_not_grant_results_view_all(): void
+    {
+        $user = $this->activeUser('Legacy Admin', 1);
+        $user->update(['FK_TIPO_PERFIL' => 3]);
+        $other = $this->activeUser('Journey Owner', 2);
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$other->PK_USUARIO}/journeys")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+    }
+
     public function test_it_returns_stored_score_for_completed_journey_list_items(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -112,7 +139,7 @@ class UserJourneyListTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Voce nao possui permissao para visualizar as jornadas deste usuario.')
-            ->assertJsonPath('code', 'USER_JOURNEYS_FORBIDDEN')
+            ->assertJsonPath('code', 'PERMISSION_DENIED')
             ->assertJsonPath('errors', []);
     }
 
@@ -310,6 +337,7 @@ class UserJourneyListTest extends TestCase
     private function activeUser(string $name, int $userType): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => $userType === 1 ? 1 : 3,
             'FK_TIPO_USUARIO' => $userType,
             'NO_USUARIO' => $name,
             'DS_EMAIL' => strtolower(str_replace(' ', '.', $name)).'@example.com',

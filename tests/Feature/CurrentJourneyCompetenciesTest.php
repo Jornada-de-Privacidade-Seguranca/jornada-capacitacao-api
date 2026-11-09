@@ -9,7 +9,9 @@ use App\Models\Journey;
 use App\Models\JourneyProfile;
 use App\Models\KnowledgeArea;
 use App\Models\KnowledgeDomain;
+use App\Models\Permission;
 use App\Models\ProfileCompetency;
+use App\Models\ProfileType;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -83,6 +85,19 @@ class CurrentJourneyCompetenciesTest extends TestCase
             ->assertJsonPath('data.1.knowledge_domain', null)
             ->assertJsonPath('data.1.knowledge_area', null)
             ->assertJsonPath('data.1.difficulty', null);
+    }
+
+    public function test_current_journey_routes_require_journeys_take_permission(): void
+    {
+        $user = $this->activeUser();
+        $permissionId = Permission::query()->where('NO_PERMISSOES', 'journeys.take')->value('PK_PERMISSOES');
+        ProfileType::query()->findOrFail(3)->permissions()->detach($permissionId);
+
+        $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options')
+            ->assertForbidden()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
     }
 
     public function test_it_filters_current_journey_competency_options_by_modality(): void
@@ -722,6 +737,7 @@ class CurrentJourneyCompetenciesTest extends TestCase
     private function activeUser(): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => 3,
             'FK_TIPO_USUARIO' => 2,
             'NO_USUARIO' => 'Maria Silva',
             'DS_EMAIL' => fake()->unique()->safeEmail(),
