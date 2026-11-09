@@ -36,6 +36,14 @@ class UserRepository implements UserRepositoryInterface
             ->first();
     }
 
+    public function findByEmailForUpdate(string $email): ?Usuario
+    {
+        return Usuario::query()
+            ->whereRaw('LOWER("DS_EMAIL") = ?', [strtolower($email)])
+            ->lockForUpdate()
+            ->first();
+    }
+
     public function findById(int $id): ?Usuario
     {
         return Usuario::query()

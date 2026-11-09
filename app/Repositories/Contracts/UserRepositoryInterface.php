@@ -15,6 +15,8 @@ interface UserRepositoryInterface
 
     public function findByEmail(string $email): ?Usuario;
 
+    public function findByEmailForUpdate(string $email): ?Usuario;
+
     public function findById(int $id): ?Usuario;
 
     public function lockForUpdate(int $id): void;
