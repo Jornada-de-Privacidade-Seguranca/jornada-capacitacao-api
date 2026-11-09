@@ -181,12 +181,10 @@ class AccessProfilePermissionsTest extends TestCase
                 $requiredColumn => null,
             ];
 
-            try {
-                DB::table('TH_ALTERACAO_PERFIS')->insert($row);
-                $this->fail("{$requiredColumn} deveria ser obrigatorio.");
-            } catch (QueryException) {
-                $this->addToAssertionCount(1);
-            }
+            $this->assertQueryFails(
+                fn () => DB::table('TH_ALTERACAO_PERFIS')->insert($row),
+                "{$requiredColumn} deveria ser obrigatorio.",
+            );
         }
 
         $this->assertDatabaseCount('TH_ALTERACAO_PERFIS', 0);
@@ -202,12 +200,12 @@ class AccessProfilePermissionsTest extends TestCase
             'FK_USUARIO_ADM' => $admin->PK_USUARIO,
         ]);
 
-        try {
-            DB::table('TB_USUARIO')->where('PK_USUARIO', $user->PK_USUARIO)->delete();
-            $this->fail('A exclusao fisica de um usuario com historico deveria ser recusada.');
-        } catch (QueryException) {
-            $this->assertDatabaseCount('TH_ALTERACAO_PERFIS', 1);
-        }
+        $this->assertQueryFails(
+            fn () => DB::table('TB_USUARIO')->where('PK_USUARIO', $user->PK_USUARIO)->delete(),
+            'A exclusao fisica de um usuario com historico deveria ser recusada.',
+        );
+
+        $this->assertDatabaseCount('TH_ALTERACAO_PERFIS', 1);
     }
 
     public function test_migration_assigns_profiles_from_user_type_and_can_be_rolled_back(): void
@@ -235,6 +233,20 @@ class AccessProfilePermissionsTest extends TestCase
         $this->assertDatabaseHas('TB_USUARIO', ['DS_EMAIL' => 'user@jornada.local', 'FK_TIPO_PERFIL' => self::USER_PROFILE]);
         $this->assertDatabaseCount('TB_PERMISSOES', count(self::ALL_PERMISSIONS));
         $this->assertDatabaseCount('RL_PERMISSOES_PERFIS', 17);
+    }
+
+    /**
+     * Roda a consulta num savepoint: no Postgres, um erro de restricao aborta a
+     * transacao aberta pelo RefreshDatabase, e as consultas seguintes do teste falhariam.
+     */
+    private function assertQueryFails(callable $query, string $message): void
+    {
+        try {
+            DB::transaction($query);
+            $this->fail($message);
+        } catch (QueryException) {
+            $this->addToAssertionCount(1);
+        }
     }
 
     /**

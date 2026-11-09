@@ -22,6 +22,10 @@ class ListJourneyProfileRequest extends FormRequest
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'modality' => ['sometimes', 'string', 'in:Privacidade,Segurança,Privacidade/Segurança'],
             'search' => ['sometimes', 'string', 'max:255'],
+            'domains' => ['sometimes', 'array'],
+            'domains.*' => ['integer', 'distinct', 'exists:TB_DOMINIO_CONHECIMENTO,PK_DOMINIO_CONHECIMENTO'],
+            'user_status' => ['sometimes', 'array'],
+            'user_status.*' => ['string', 'distinct', 'in:completed,pending,not_done'],
         ];
     }
 
@@ -37,6 +41,14 @@ class ListJourneyProfileRequest extends FormRequest
             'modality.in' => 'A modalidade deve ser Privacidade, Segurança ou Privacidade/Segurança.',
             'search.string' => 'A busca deve ser um texto.',
             'search.max' => 'A busca nao pode ter mais de 255 caracteres.',
+            'domains.array' => 'Os dominios devem ser enviados como uma lista de ids.',
+            'domains.*.integer' => 'Cada dominio deve ser informado pelo id numerico.',
+            'domains.*.distinct' => 'Os dominios nao podem se repetir.',
+            'domains.*.exists' => 'Um ou mais dominios informados nao existem.',
+            'user_status.array' => 'A situacao deve ser enviada como uma lista.',
+            'user_status.*.string' => 'Cada situacao deve ser um texto.',
+            'user_status.*.distinct' => 'As situacoes nao podem se repetir.',
+            'user_status.*.in' => 'A situacao deve ser completed, pending ou not_done.',
         ];
     }
 
@@ -70,5 +82,19 @@ class ListJourneyProfileRequest extends FormRequest
         $search = trim((string) $this->validated('search', ''));
 
         return $search === '' ? null : $search;
+    }
+
+    /** @return list<int>|null */
+    public function domains(): ?array
+    {
+        $domains = $this->validated('domains');
+
+        return $domains === null ? null : array_map('intval', $domains);
+    }
+
+    /** @return list<string>|null */
+    public function userStatuses(): ?array
+    {
+        return $this->validated('user_status');
     }
 }
