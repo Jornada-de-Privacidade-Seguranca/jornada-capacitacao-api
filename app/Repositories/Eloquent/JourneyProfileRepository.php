@@ -6,6 +6,7 @@ use App\Models\JourneyProfile;
 use App\Repositories\Contracts\JourneyProfileRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 
 class JourneyProfileRepository implements JourneyProfileRepositoryInterface
@@ -16,20 +17,79 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
 
     private const JOINT_DOMAIN_ID = 3;
 
-    public function all(int $page, int $perPage, ?string $modality = null, ?string $search = null): LengthAwarePaginator
-    {
-        $domainIds = match ($modality) {
+    public function all(
+        int $page,
+        int $perPage,
+        ?string $modality = null,
+        ?string $search = null,
+        ?array $domainIds = null,
+        ?array $userStatuses = null,
+        ?int $userId = null,
+    ): LengthAwarePaginator {
+        $modalityDomainIds = match ($modality) {
             'Privacidade' => [self::PRIVACY_DOMAIN_ID, self::JOINT_DOMAIN_ID],
             'Segurança' => [self::SECURITY_DOMAIN_ID, self::JOINT_DOMAIN_ID],
             default => null,
         };
 
-        return JourneyProfile::query()
+        $query = JourneyProfile::query()
+            ->with('knowledgeDomain')
             ->whereNotNull('NO_PERFIS_PT')
-            ->when($domainIds !== null, fn ($query) => $query->whereIn('FK_DOMINIO_CONHECIMENTO', $domainIds))
+            ->when($domainIds !== null, fn (Builder $query) => $query->whereIn('FK_DOMINIO_CONHECIMENTO', $domainIds))
+            ->when($modalityDomainIds !== null, fn (Builder $query) => $query->whereIn('FK_DOMINIO_CONHECIMENTO', $modalityDomainIds))
             ->when($search !== null, fn (Builder $query) => $this->applySearch($query, $search))
-            ->orderBy('PK_PERFIS_JORNADA')
-            ->paginate(perPage: $perPage, page: $page);
+            ->orderBy('PK_PERFIS_JORNADA');
+
+        $grammar = JourneyProfile::query()->getQuery()->getGrammar();
+        $competencyColumn = $grammar->wrap('RL_PERFIS_COMPETENCIAS.FK_COMPETENCIAS');
+        $query->select('TB_PERFIS_JORNADA.*')->selectSub(
+            DB::table('RL_PERFIS_COMPETENCIAS')
+                ->whereColumn('RL_PERFIS_COMPETENCIAS.FK_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA')
+                ->selectRaw('COUNT(DISTINCT '.$competencyColumn.')'),
+            'competencies_count',
+        );
+
+        $userId ??= 0;
+        $query->selectSub(
+            $this->userJourneys($userId)->whereNotNull('DH_FIM')->selectRaw('1')->limit(1),
+            'completed_journey_exists',
+        )->selectSub(
+            $this->userJourneys($userId)->whereNull('DH_FIM')->selectRaw('1')->limit(1),
+            'pending_journey_exists',
+        )->selectSub(
+            $this->userJourneys($userId)
+                ->whereNotNull('DH_FIM')
+                ->orderByDesc('DH_FIM')
+                ->orderByDesc('PK_JORNADA')
+                ->limit(1)
+                ->select('NU_PONTUACAO_TOTAL'),
+            'last_score',
+        );
+
+        if ($userStatuses !== null) {
+            $query->where(function (Builder $query) use ($userStatuses, $userId): void {
+                if (in_array('completed', $userStatuses, true)) {
+                    $query->orWhereExists($this->userJourneys($userId)->whereNotNull('DH_FIM')->selectRaw('1'));
+                }
+
+                if (in_array('pending', $userStatuses, true)) {
+                    $query->orWhereExists($this->userJourneys($userId)->whereNull('DH_FIM')->selectRaw('1'));
+                }
+
+                if (in_array('not_done', $userStatuses, true)) {
+                    $query->orWhereNotExists($this->userJourneys($userId)->selectRaw('1'));
+                }
+            });
+        }
+
+        return $query->paginate(perPage: $perPage, page: $page);
+    }
+
+    private function userJourneys(int $userId): QueryBuilder
+    {
+        return DB::table('TB_JORNADA')
+            ->whereColumn('TB_JORNADA.FK_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA')
+            ->where('TB_JORNADA.FK_USUARIO', $userId);
     }
 
     private function applySearch(Builder $query, string $search): void

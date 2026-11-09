@@ -7,7 +7,15 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface JourneyProfileRepositoryInterface
 {
-    public function all(int $page, int $perPage, ?string $modality = null, ?string $search = null): LengthAwarePaginator;
+    public function all(
+        int $page,
+        int $perPage,
+        ?string $modality = null,
+        ?string $search = null,
+        ?array $domainIds = null,
+        ?array $userStatuses = null,
+        ?int $userId = null,
+    ): LengthAwarePaginator;
 
     public function findOrFail(int $id): JourneyProfile;
 

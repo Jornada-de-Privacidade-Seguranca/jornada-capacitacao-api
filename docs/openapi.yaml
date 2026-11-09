@@ -3186,12 +3186,34 @@ paths:
           Segurança retorna perfis dos domínios Segurança da Informação e Conjunta (Privacidade/Segurança).
           Privacidade/Segurança retorna todos os perfis, sem filtrar por domínio.
         required: false
+        deprecated: true
         schema:
           type: string
           enum:
             - Privacidade
             - Segurança
             - Privacidade/Segurança
+      - name: domains[]
+        in: query
+        description: Filtra por um ou mais IDs de domínio do conhecimento.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+      - name: user_status[]
+        in: query
+        description: Filtra por histórico de jornadas do usuário autenticado em cada perfil. completed inclui perfis com ao menos uma jornada concluída, mesmo que exista outra em andamento; pending inclui perfis com jornada em andamento; not_done inclui perfis sem nenhuma jornada. O campo user_status do resultado dá precedência a pending quando existem jornadas em andamento e concluídas; last_score continua vindo da jornada concluída mais recente.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum: [completed, pending, not_done]
       - name: search
         in: query
         description: Busca por nome ou descrição em português/inglês, sem diferenciar maiúsculas/minúsculas ou acentos.
@@ -3249,6 +3271,22 @@ paths:
                     errors:
                       search:
                         - A busca deve ser um texto.
+                    code: VALIDATION_ERROR
+                invalidDomain:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      domains.0:
+                        - Um ou mais dominios informados nao existem.
+                    code: VALIDATION_ERROR
+                invalidUserStatus:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      user_status.0:
+                        - A situacao deve ser completed, pending ou not_done.
                     code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:
@@ -5418,6 +5456,41 @@ components:
             - "null"
           description: ID do dominio de conhecimento associado ao perfil de jornada.
           example: 1
+        knowledge_domain:
+          type:
+            - object
+            - "null"
+          description: Domínio de conhecimento associado ao perfil.
+          properties:
+            id:
+              type: integer
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
+        user_status:
+          type: string
+          enum: [completed, pending, not_done]
+          description: Situação da jornada do usuário autenticado para este perfil. Uma jornada em andamento tem precedência sobre jornadas concluídas.
+          example: completed
+        last_score:
+          type:
+            - number
+            - "null"
+          description: Nota da jornada concluída mais recente do usuário para este perfil.
+          example: 82.25
+        competencies_count:
+          type: integer
+          minimum: 0
+          description: Total de competências associadas ao perfil de jornada.
+          example: 12
     JourneyProfileDetail:
       allOf:
         - $ref: "#/components/schemas/JourneyProfile"
