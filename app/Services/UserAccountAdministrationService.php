@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\InvalidAccountStateException;
+use App\Models\ProfileType;
 use App\Models\Usuario;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -11,8 +12,6 @@ use Illuminate\Support\Facades\DB;
 
 class UserAccountAdministrationService
 {
-    private const COMMON_USER_TYPE = 2;
-
     private const ACTIVE_STATUS = 1;
 
     private const PENDING_STATUS = 2;
@@ -37,7 +36,7 @@ class UserAccountAdministrationService
 
             return $this->userRepository->update($user, [
                 'ST_ATIVO' => self::ACTIVE_STATUS,
-                'FK_TIPO_USUARIO' => self::COMMON_USER_TYPE,
+                'FK_TIPO_PERFIL' => ProfileType::USER_ID,
             ]);
         });
     }
@@ -48,7 +47,7 @@ class UserAccountAdministrationService
             $user = $this->findUserForUpdate($userId);
 
             if ((int) $user->ST_ATIVO !== self::ACTIVE_STATUS
-                || (int) $user->FK_TIPO_USUARIO !== self::COMMON_USER_TYPE) {
+                || (int) $user->FK_TIPO_PERFIL !== ProfileType::USER_ID) {
                 throw new InvalidAccountStateException;
             }
 

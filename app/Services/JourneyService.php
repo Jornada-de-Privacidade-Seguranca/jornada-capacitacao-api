@@ -317,9 +317,8 @@ class JourneyService
         }
 
         $isOwnJourney = (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
-        $requiredPermission = $isOwnJourney ? 'journeys.take' : 'journeys.assign';
-
-        if (! $authenticatedUser->hasPermission($requiredPermission)) {
+        if (! $authenticatedUser->hasPermission('journeys.take')
+            || (! $isOwnJourney && ! $authenticatedUser->hasPermission('users.manage'))) {
             throw new AccessDeniedHttpException;
         }
 

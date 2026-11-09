@@ -44,6 +44,7 @@ class UserAccountAdministrationTest extends TestCase
     {
         $admin = $this->user('Administrator', 1, 1);
         $pending = $this->user('Pending User', 2, null);
+        $pending->update(['FK_TIPO_PERFIL' => 1]);
 
         $this->actingAs($admin)
             ->postJsonWithCsrf("/api/admin/users/{$pending->PK_USUARIO}/activate")
@@ -51,16 +52,16 @@ class UserAccountAdministrationTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.id', $pending->PK_USUARIO)
             ->assertJsonPath('data.active_status', 1)
-            ->assertJsonPath('data.user_type_id', 2);
+            ->assertJsonMissingPath('data.user_type_id');
 
         $this->assertDatabaseHas('TB_USUARIO', [
             'PK_USUARIO' => $pending->PK_USUARIO,
             'ST_ATIVO' => 1,
-            'FK_TIPO_USUARIO' => 2,
+            'FK_TIPO_PERFIL' => 3,
         ]);
     }
 
-    public function test_administrator_deactivates_active_common_user_without_changing_its_type(): void
+    public function test_administrator_deactivates_active_common_user_without_changing_its_access_profile(): void
     {
         $admin = $this->user('Administrator', 1, 1);
         $commonUser = $this->user('Common User', 1, 2);
@@ -70,18 +71,36 @@ class UserAccountAdministrationTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.id', $commonUser->PK_USUARIO)
-            ->assertJsonPath('data.active_status', 0)
-            ->assertJsonPath('data.user_type_id', 2);
+            ->assertJsonPath('data.active_status', 0);
 
         $this->assertDatabaseHas('TB_USUARIO', [
             'PK_USUARIO' => $commonUser->PK_USUARIO,
             'ST_ATIVO' => 0,
-            'FK_TIPO_USUARIO' => 2,
+            'FK_TIPO_PERFIL' => 3,
         ]);
         $this->actingAs($admin)
             ->getJson('/api/admin/users/pending-activation')
             ->assertOk()
             ->assertJsonCount(0, 'data');
+    }
+
+    public function test_deactivation_uses_the_access_profile_instead_of_legacy_user_type(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+        $commonUser = $this->user('Common User with legacy admin type', 1, 1);
+        $commonUser->update(['FK_TIPO_PERFIL' => 3]);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$commonUser->PK_USUARIO}/deactivate")
+            ->assertOk()
+            ->assertJsonPath('data.active_status', 0);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $commonUser->PK_USUARIO,
+            'ST_ATIVO' => 0,
+            'FK_TIPO_PERFIL' => 3,
+            'FK_TIPO_USUARIO' => 1,
+        ]);
     }
 
     public function test_common_user_cannot_list_or_change_accounts(): void
@@ -121,6 +140,18 @@ class UserAccountAdministrationTest extends TestCase
             ->postJsonWithCsrf("/api/admin/users/{$pending->PK_USUARIO}/activate")
             ->assertForbidden()
             ->assertJsonPath('code', 'PERMISSION_DENIED');
+
+        $activeUser = $this->user('Active User', 1, 2);
+
+        $this->actingAs($manager)
+            ->postJsonWithCsrf("/api/admin/users/{$activeUser->PK_USUARIO}/deactivate")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $activeUser->PK_USUARIO,
+            'ST_ATIVO' => 1,
+        ]);
     }
 
     public function test_pending_status_migration_reclassifies_existing_inactive_accounts(): void

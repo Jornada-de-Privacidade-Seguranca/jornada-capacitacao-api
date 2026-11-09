@@ -364,7 +364,7 @@ COMMENT ON COLUMN PUBLIC.TB_USUARIO.NU_MATRICULA IS 'Número de matrícula do us
 COMMENT ON COLUMN PUBLIC.TB_USUARIO.DS_EMAIL IS 'Email do usuário';
 COMMENT ON COLUMN PUBLIC.TB_USUARIO.DS_SENHA IS 'Senha do usuário';
 COMMENT ON COLUMN PUBLIC.TB_USUARIO.DH_CRIADO_EM IS 'Data de criação do usuário no sistema';
-COMMENT ON COLUMN PUBLIC.TB_USUARIO.ST_ATIVO IS 'Sinaliza se o usuário está ativo ou não: 1-Ativo, 2-Inativo';
+COMMENT ON COLUMN PUBLIC.TB_USUARIO.ST_ATIVO IS 'Sinaliza o estado da conta: 0-Inativo, 1-Ativo, 2-Pendente de ativacao';
 comment on column PUBLIC.TB_USUARIO.TP_ATIVACAO IS 'Indicador do tipo de criação do usuário: 1-Usuário criado na tela de login do sistema, 2-Usuário criado por um administrador do sistema';
 comment on column PUBLIC.TB_USUARIO.DH_ATIVACAO IS 'Sinaliza a data e hora de quando o usuário foi ativado no sistema';
 

@@ -87,6 +87,28 @@ class UserJourneyRecordCompetenciesTest extends TestCase
             ->assertJsonPath('code', 'PERMISSION_DENIED');
     }
 
+    public function test_manager_cannot_record_competencies_for_another_users_journey(): void
+    {
+        $manager = $this->activeUser('Manager', 2);
+        $manager->update(['FK_TIPO_PERFIL' => 2]);
+        $otherUser = $this->activeUser('Journey Owner', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $journey = $this->journey($otherUser, $profile, '2026-08-01 09:00:00');
+        $competency = $this->competency('LGPD Fundamentos', $profile);
+
+        $this->actingAs($manager)->withCsrfToken()
+            ->postJson("/api/journeys/{$journey->PK_JORNADA}/competencies", [
+                'competencies' => [['competency_id' => $competency->PK_COMPETENCIAS, 'is_acquired' => true]],
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+
+        $this->assertDatabaseMissing('TB_CONHECIMENTOS_ADQUIRIDOS', [
+            'FK_JORNADA' => $journey->PK_JORNADA,
+            'FK_COMPETENCIAS' => $competency->PK_COMPETENCIAS,
+        ]);
+    }
+
     public function test_it_returns_not_found_for_unknown_journey(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
