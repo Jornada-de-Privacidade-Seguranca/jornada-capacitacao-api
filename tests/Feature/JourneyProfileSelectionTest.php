@@ -134,6 +134,7 @@ class JourneyProfileSelectionTest extends TestCase
     private function activeUser(string $name): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => 3,
             'FK_TIPO_USUARIO' => 2,
             'NO_USUARIO' => $name,
             'DS_EMAIL' => strtolower(str_replace(' ', '.', $name)).'@example.com',

@@ -294,7 +294,7 @@ class UserJourneyDetailTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Voce nao possui permissao para visualizar esta jornada.')
-            ->assertJsonPath('code', 'JOURNEY_FORBIDDEN')
+            ->assertJsonPath('code', 'PERMISSION_DENIED')
             ->assertJsonPath('errors', []);
     }
 
@@ -390,6 +390,7 @@ class UserJourneyDetailTest extends TestCase
     private function activeUser(string $name, int $userType): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => $userType === 1 ? 1 : 3,
             'FK_TIPO_USUARIO' => $userType,
             'NO_USUARIO' => $name,
             'DS_EMAIL' => strtolower(str_replace(' ', '.', $name)).'@example.com',

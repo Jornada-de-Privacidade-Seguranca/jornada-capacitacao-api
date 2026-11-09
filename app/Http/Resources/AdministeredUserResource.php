@@ -18,7 +18,6 @@ class AdministeredUserResource extends JsonResource
             'name' => $this->NO_USUARIO,
             'email' => $this->DS_EMAIL,
             'active_status' => (int) $this->ST_ATIVO,
-            'user_type_id' => $this->FK_TIPO_USUARIO,
         ];
     }
 }

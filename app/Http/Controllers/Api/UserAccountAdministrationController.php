@@ -23,7 +23,6 @@ class UserAccountAdministrationController
     {
         try {
             $users = $this->service->pendingActivationUsers(
-                authenticatedUser: $request->user(),
                 page: (int) $request->validated('page'),
                 perPage: (int) $request->validated('per_page'),
             );
@@ -53,7 +52,7 @@ class UserAccountAdministrationController
         }
 
         try {
-            $account = $this->service->activate($request->user(), $userId);
+            $account = $this->service->activate($userId);
         } catch (AccessDeniedHttpException) {
             return $this->forbiddenResponse();
         } catch (ModelNotFoundException) {
@@ -83,7 +82,7 @@ class UserAccountAdministrationController
         }
 
         try {
-            $account = $this->service->deactivate($request->user(), $userId);
+            $account = $this->service->deactivate($userId);
         } catch (AccessDeniedHttpException) {
             return $this->forbiddenResponse();
         } catch (ModelNotFoundException) {
@@ -109,7 +108,7 @@ class UserAccountAdministrationController
         return ApiResponse::error(
             message: 'Voce nao possui permissao para gerenciar contas de usuario.',
             status: Response::HTTP_FORBIDDEN,
-            code: 'USER_ACCOUNT_ADMINISTRATION_FORBIDDEN',
+            code: 'PERMISSION_DENIED',
         );
     }
 

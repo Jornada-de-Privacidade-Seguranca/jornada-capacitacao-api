@@ -19,6 +19,7 @@ trait CreatesJourneyFixtures
     private function activeUser(string $name, int $userType): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => $userType === 1 ? 1 : 3,
             'FK_TIPO_USUARIO' => $userType,
             'NO_USUARIO' => $name,
             'DS_EMAIL' => strtolower(str_replace(' ', '.', $name)).'@example.com',

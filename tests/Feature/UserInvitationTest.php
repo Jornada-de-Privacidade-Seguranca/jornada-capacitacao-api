@@ -64,6 +64,18 @@ class UserInvitationTest extends TestCase
         $this->actingAs($commonUser)
             ->postJsonWithCsrf('/api/admin/user-invitations', ['email' => 'new.user@example.com'])
             ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+
+        $nonAdministratorWithRegistrationPermission = $this->user(
+            'Misconfigured User',
+            'misconfigured@example.com',
+            1,
+            2,
+            1,
+        );
+        $this->actingAs($nonAdministratorWithRegistrationPermission)
+            ->postJsonWithCsrf('/api/admin/user-invitations', ['email' => 'new.user@example.com'])
+            ->assertForbidden()
             ->assertJsonPath('code', 'USER_INVITATION_FORBIDDEN');
 
         $this->assertDatabaseMissing('TB_USUARIO', ['DS_EMAIL' => 'new.user@example.com']);
@@ -276,9 +288,10 @@ class UserInvitationTest extends TestCase
         ], $overrides);
     }
 
-    private function user(string $name, string $email, int $status, int $userType): Usuario
+    private function user(string $name, string $email, int $status, int $userType, ?int $accessProfile = null): Usuario
     {
         return Usuario::query()->create([
+            'FK_TIPO_PERFIL' => $accessProfile ?? ($userType === 1 ? 1 : 3),
             'FK_TIPO_USUARIO' => $userType,
             'NO_USUARIO' => $name,
             'DS_EMAIL' => $email,

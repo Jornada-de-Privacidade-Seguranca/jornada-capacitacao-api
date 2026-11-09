@@ -6,6 +6,7 @@ use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Usuario extends JornadaModel implements AuthenticatableContract
 {
@@ -54,6 +55,22 @@ class Usuario extends JornadaModel implements AuthenticatableContract
     public function profileType(): BelongsTo
     {
         return $this->belongsTo(ProfileType::class, 'FK_TIPO_PERFIL', 'PK_TIPO_PERFIL');
+    }
+
+    /**
+     * @return Collection<int, string>
+     */
+    public function permissionCodes(): Collection
+    {
+        return $this->profileType?->permissions
+            ?->pluck('NO_PERMISSOES')
+            ->sort()
+            ->values() ?? collect();
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return $this->permissionCodes()->contains($permission);
     }
 
     public function selectedJourneyProfile(): BelongsTo
