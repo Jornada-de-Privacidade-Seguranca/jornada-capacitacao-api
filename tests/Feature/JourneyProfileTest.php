@@ -436,6 +436,35 @@ class JourneyProfileTest extends TestCase
             ->assertJsonPath('data.0.last_score', 75.25);
 
         $this->assertIsFloat($response->json('data.0.last_score'));
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'user_status' => ['completed'],
+                'search' => 'Mixed journey status profile',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 1)
+            ->assertJsonPath('data.0.id', $profile->PK_PERFIS_JORNADA)
+            ->assertJsonPath('data.0.user_status', 'pending');
+    }
+
+    public function test_it_intersects_domains_and_deprecated_modality_filters(): void
+    {
+        $user = $this->activeUser();
+        $privacyProfile = $this->profileInDomain('Privacidade', 'Intersection privacy profile');
+        $privacyDomainId = $privacyProfile->FK_DOMINIO_CONHECIMENTO;
+
+        $this->actingAs($user)
+            ->getJson('/api/journey-profiles?'.http_build_query([
+                'domains' => [$privacyDomainId],
+                'modality' => 'Segurança',
+                'search' => 'Intersection',
+                'per_page' => 100,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('meta.pagination.total', 0)
+            ->assertJsonCount(0, 'data')
+            ->assertJsonMissing(['id' => $privacyProfile->PK_PERFIS_JORNADA]);
     }
 
     public function test_it_shows_a_journey_profile(): void

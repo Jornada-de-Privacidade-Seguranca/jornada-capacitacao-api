@@ -3073,7 +3073,7 @@ paths:
             type: integer
       - name: user_status[]
         in: query
-        description: Filtra por situação do usuário autenticado em cada perfil. pending indica jornada em andamento e tem precedência quando também há jornadas concluídas; completed indica ao menos uma jornada concluída sem jornada em andamento; not_done indica que nunca iniciou o perfil. last_score continua vindo da jornada concluída mais recente.
+        description: Filtra por histórico de jornadas do usuário autenticado em cada perfil. completed inclui perfis com ao menos uma jornada concluída, mesmo que exista outra em andamento; pending inclui perfis com jornada em andamento; not_done inclui perfis sem nenhuma jornada. O campo user_status do resultado dá precedência a pending quando existem jornadas em andamento e concluídas; last_score continua vindo da jornada concluída mais recente.
         required: false
         style: form
         explode: true
