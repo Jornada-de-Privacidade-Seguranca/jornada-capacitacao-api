@@ -191,6 +191,7 @@ return new class extends Migration
             $table->unsignedInteger('FK_ATUACAO_PERFIL')->nullable();
             $table->unsignedInteger('FK_SUBCRITERIOS_INGLES')->nullable();
             $table->integer('NU_PONTUACAO_TOTAL')->nullable();
+            $table->integer('TP_JORNADA_ATRIBUIDA')->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->timestamp('DH_FIM')->nullable();
 
