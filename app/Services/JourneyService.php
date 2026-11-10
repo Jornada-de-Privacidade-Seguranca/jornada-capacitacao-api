@@ -78,7 +78,11 @@ class JourneyService
             throw new JourneyProfileNotFoundException;
         }
 
-        return DB::transaction(function () use ($requestedUser, $data) {
+        $attributionType = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO
+            ? Journey::ATTRIBUTION_SELF
+            : Journey::ATTRIBUTION_ADMIN;
+
+        return DB::transaction(function () use ($requestedUser, $data, $attributionType) {
             $this->userRepository->lockForUpdate((int) $requestedUser->PK_USUARIO);
 
             $user = $this->userRepository->findById((int) $requestedUser->PK_USUARIO);
@@ -104,6 +108,7 @@ class JourneyService
             return $this->journeyRepository->create([
                 'FK_USUARIO' => $requestedUser->PK_USUARIO,
                 'FK_PERFIS_JORNADA' => $journeyProfileId,
+                'TP_JORNADA_ATRIBUIDA' => $attributionType,
                 'DH_CRIADO_EM' => now(),
                 'DH_FIM' => null,
             ]);

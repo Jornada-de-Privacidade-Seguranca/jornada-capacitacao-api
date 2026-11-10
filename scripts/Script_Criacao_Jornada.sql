@@ -563,6 +563,7 @@ CREATE TABLE PUBLIC.TB_JORNADA(
 	FK_ATUACAO_PERFIL INTEGER,
 	FK_SUBCRITERIOS_INGLES INTEGER,
 	NU_PONTUACAO_TOTAL DECIMAL(8,3),
+	TP_JORNADA_ATRIBUIDA INTEGER,
 	DH_CRIADO_EM TIMESTAMP,
 	DH_FIM TIMESTAMP,
 	CONSTRAINT PK_JORNADA PRIMARY KEY (PK_JORNADA),
@@ -603,6 +604,7 @@ COMMENT ON COLUMN PUBLIC.TB_JORNADA.FK_EXPERIENCIA_PROFISSIONAL IS 'Chave estran
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.FK_ATUACAO_PERFIL IS 'Chave estrangeira para a tabela TB_EXPERIENCIA_ATUACAO, armazena o tempo de atuação no perfil escolhido pra jornada';
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.FK_SUBCRITERIOS_INGLES IS 'Chave estrangeira para a tabela TB_SUBCRITERIOS, armazena o nível de proficiência em inglês do usuário na jornada.';
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.NU_PONTUACAO_TOTAL IS 'Pontuação total da jornada';
+COMMENT ON COLUMN PUBLIC.TB_JORNADA.TP_JORNADA_ATRIBUIDA IS 'Tipo da jornada atribuida ao usuário: 1 - Atribuída por um administrador. 2 - Atribuída por conta própria.';
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.DH_CRIADO_EM IS 'Data de início da jornada no sistema';
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.DH_FIM IS 'Data de finalização da jornada no sistema';
 

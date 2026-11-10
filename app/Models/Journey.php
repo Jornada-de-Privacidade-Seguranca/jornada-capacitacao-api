@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Journey extends JornadaModel
 {
+    public const ATTRIBUTION_ADMIN = 1;
+
+    public const ATTRIBUTION_SELF = 2;
+
     protected $table = 'TB_JORNADA';
 
     protected $primaryKey = 'PK_JORNADA';
@@ -19,6 +23,7 @@ class Journey extends JornadaModel
         'FK_ATUACAO_PERFIL',
         'FK_SUBCRITERIOS_INGLES',
         'NU_PONTUACAO_TOTAL',
+        'TP_JORNADA_ATRIBUIDA',
         'JS_SCORE_BREAKDOWN',
         'DH_CRIADO_EM',
         'DH_FIM',
@@ -26,6 +31,7 @@ class Journey extends JornadaModel
 
     protected $casts = [
         'NU_PONTUACAO_TOTAL' => 'float',
+        'TP_JORNADA_ATRIBUIDA' => 'integer',
         'JS_SCORE_BREAKDOWN' => 'array',
         'DH_CRIADO_EM' => 'datetime',
         'DH_FIM' => 'datetime',
