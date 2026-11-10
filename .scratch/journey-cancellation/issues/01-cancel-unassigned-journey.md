@@ -2,7 +2,9 @@
 
 - Taiga ID: 9645333
 - Taiga URL: https://tree.taiga.io/project/jotaf-dashboard/us/121
-- Status: in-progress
+- Status: ready-for-human
+- Pull request: https://github.com/Jornada-de-Privacidade-Seguranca/jornada-capacitacao-api/pull/80
+- Reviewer: Gabriel Cesário (`Cezari0o`), requested
 
 ## Critérios de aceite
 
@@ -17,3 +19,6 @@
 ## Comments
 
 - Dependências confirmadas integradas à `main`: PR #79 grava `TP_JORNADA_ATRIBUIDA` na criação; PR #42 preserva a regra de uma jornada em andamento por usuário.
+- Implementado e aberto para revisão no PR #80; Taiga está em Needs Review e permanece desbloqueada.
+- Validação: 81 testes afetados / 765 assertions, sem falhas (warnings ambientais porque `.env` não existe); Pint, PHPStan, PHPMD, `git diff --check` e parse de `docs/openapi.yaml` passaram.
+- Verificação HTTP manual não executada: Docker não está disponível nesta sessão; as rotas foram exercitadas pela suíte Feature usando SQLite em memória.
