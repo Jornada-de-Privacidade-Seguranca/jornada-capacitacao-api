@@ -13,6 +13,7 @@ class DashboardRepository implements DashboardRepositoryInterface
     {
         return $this->baseJourneyQuery($userId)
             ->whereNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
             ->first();
     }
 

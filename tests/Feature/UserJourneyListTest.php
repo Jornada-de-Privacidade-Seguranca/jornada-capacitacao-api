@@ -80,6 +80,54 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('meta.pagination.has_next_page', false);
     }
 
+    public function test_journey_list_exposes_known_and_unknown_origins(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $journeys = [
+            $this->journey($user, $profile, '2026-07-01 09:00:00', null, null, null),
+            $this->journey($user, $profile, '2026-07-02 09:00:00', null, null, Journey::ATTRIBUTION_ADMIN),
+            $this->journey($user, $profile, '2026-07-03 09:00:00', null, null, Journey::ATTRIBUTION_SELF),
+        ];
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys")
+            ->assertOk()
+            ->assertJsonPath('data.2.id', $journeys[0]->PK_JORNADA)
+            ->assertJsonPath('data.2.origin', null)
+            ->assertJsonPath('data.1.id', $journeys[1]->PK_JORNADA)
+            ->assertJsonPath('data.1.origin', 'assigned')
+            ->assertJsonPath('data.0.id', $journeys[2]->PK_JORNADA)
+            ->assertJsonPath('data.0.origin', 'self_started');
+    }
+
+    public function test_manager_can_list_another_users_journeys_with_results_view_all(): void
+    {
+        $manager = $this->activeUser('Manager', 2);
+        $manager->update(['FK_TIPO_PERFIL' => 2]);
+        $owner = $this->activeUser('Journey Owner', 2);
+        $profile = $this->journeyProfile('Profile');
+        $this->journey($owner, $profile, '2026-07-23 08:00:00');
+
+        $this->actingAs($manager)
+            ->getJson("/api/users/{$owner->PK_USUARIO}/journeys")
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data');
+    }
+
+    public function test_legacy_administrator_user_type_does_not_grant_results_view_all(): void
+    {
+        $user = $this->activeUser('Legacy Admin', 1);
+        $user->update(['FK_TIPO_PERFIL' => 3]);
+        $other = $this->activeUser('Journey Owner', 2);
+
+        $this->actingAs($user)
+            ->getJson("/api/users/{$other->PK_USUARIO}/journeys")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+    }
+
     public function test_it_returns_stored_score_for_completed_journey_list_items(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -112,7 +160,7 @@ class UserJourneyListTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Voce nao possui permissao para visualizar as jornadas deste usuario.')
-            ->assertJsonPath('code', 'USER_JOURNEYS_FORBIDDEN')
+            ->assertJsonPath('code', 'PERMISSION_DENIED')
             ->assertJsonPath('errors', []);
     }
 
@@ -269,7 +317,7 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Validation error.')
             ->assertJsonPath('code', 'VALIDATION_ERROR')
-            ->assertJsonPath('errors.status.0', 'A situacao da jornada deve ser completed ou ongoing.')
+            ->assertJsonPath('errors.status.0', 'A situacao da jornada deve ser completed, ongoing ou cancelled.')
             ->assertJsonPath('errors.journey_profile_id.0', 'O perfil de jornada informado nao existe.')
             ->assertJsonPath('errors.started_from.0', 'A data inicial minima deve estar no formato Y-m-d.')
             ->assertJsonPath('errors.ended_to.0', 'A data de finalizacao maxima deve ser maior ou igual a data de finalizacao minima.');
@@ -310,6 +358,7 @@ class UserJourneyListTest extends TestCase
     private function activeUser(string $name, int $userType): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => $userType === 1 ? 1 : 3,
             'FK_TIPO_USUARIO' => $userType,
             'NO_USUARIO' => $name,
             'DS_EMAIL' => strtolower(str_replace(' ', '.', $name)).'@example.com',
@@ -336,11 +385,13 @@ class UserJourneyListTest extends TestCase
         string $startedAt,
         ?string $finishedAt = null,
         ?float $score = null,
+        ?int $origin = null,
     ): Journey {
         return Journey::create([
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
             'NU_PONTUACAO_TOTAL' => $score,
+            'TP_JORNADA_ATRIBUIDA' => $origin,
             'DH_CRIADO_EM' => $startedAt,
             'DH_FIM' => $finishedAt,
         ]);

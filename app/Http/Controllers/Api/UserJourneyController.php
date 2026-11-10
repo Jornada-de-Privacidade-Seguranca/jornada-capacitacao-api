@@ -47,7 +47,7 @@ class UserJourneyController
             return ApiResponse::error(
                 message: 'Voce nao possui permissao para visualizar as jornadas deste usuario.',
                 status: Response::HTTP_FORBIDDEN,
-                code: 'USER_JOURNEYS_FORBIDDEN',
+                code: 'PERMISSION_DENIED',
             );
         } catch (Throwable) {
             return ApiResponse::error(
@@ -85,7 +85,7 @@ class UserJourneyController
             return ApiResponse::error(
                 message: 'Voce nao possui permissao para visualizar as metricas deste usuario.',
                 status: Response::HTTP_FORBIDDEN,
-                code: 'USER_JOURNEYS_FORBIDDEN',
+                code: 'PERMISSION_DENIED',
             );
         } catch (Throwable) {
             return ApiResponse::error(
@@ -119,7 +119,7 @@ class UserJourneyController
             return ApiResponse::error(
                 message: 'Voce nao possui permissao para iniciar uma jornada para este usuario.',
                 status: Response::HTTP_FORBIDDEN,
-                code: 'USER_JOURNEYS_FORBIDDEN',
+                code: 'PERMISSION_DENIED',
             );
         } catch (JourneyProfileNotFoundException) {
             return ApiResponse::error(
@@ -177,7 +177,7 @@ class UserJourneyController
             return ApiResponse::error(
                 message: 'Voce nao possui permissao para visualizar esta jornada.',
                 status: Response::HTTP_FORBIDDEN,
-                code: 'JOURNEY_FORBIDDEN',
+                code: 'PERMISSION_DENIED',
             );
         } catch (IncompleteJourneyException $exception) {
             return ApiResponse::error(

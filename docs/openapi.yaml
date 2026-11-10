@@ -189,7 +189,7 @@ paths:
       tags:
         - Auth
       summary: Lista contas pendentes de ativacao
-      description: Lista contas com ST_ATIVO igual a 2 e FK_TIPO_USUARIO nulo. Somente administradores ativos podem consultar. A listagem e paginada.
+      description: Lista contas pendentes com ST_ATIVO igual a 2. Exige a permissao users.view. A listagem e paginada; ST_ATIVO igual a 0 indica conta inativa e 1 indica conta ativa.
       operationId: listPendingUserActivations
       security:
         - sessionAuth: []
@@ -219,7 +219,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: Usuario autenticado sem permissao de administrador
+          description: Usuario autenticado sem a permissao users.view (code PERMISSION_DENIED)
           content:
             application/json:
               schema:
@@ -235,7 +235,7 @@ paths:
       tags:
         - Auth
       summary: Ativa uma conta pendente como usuario comum
-      description: Somente um administrador autenticado pode ativar uma conta com ST_ATIVO igual a 2 e FK_TIPO_USUARIO nulo. A rota exige CSRF.
+      description: Exige a permissao users.deactivate e CSRF. A conta deve ter ST_ATIVO igual a 2; a ativacao define ST_ATIVO igual a 1 e o perfil de acesso como Usuario.
       operationId: activatePendingUser
       security:
         - sessionAuth: []
@@ -258,7 +258,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
         "403":
-          description: Usuario autenticado sem permissao de administrador
+          description: Usuario autenticado sem a permissao users.deactivate (code PERMISSION_DENIED)
           content:
             application/json:
               schema:
@@ -282,7 +282,7 @@ paths:
       tags:
         - Auth
       summary: Desativa um usuario comum ativo
-      description: Somente um administrador autenticado pode desativar conta ativa de usuario comum. A rota exige CSRF e preserva o tipo de usuario comum.
+      description: Exige users.deactivate e CSRF. A conta deve estar ativa e ter perfil de acesso Usuario; a desativacao define ST_ATIVO igual a 0.
       operationId: deactivateCommonUser
       security:
         - sessionAuth: []
@@ -305,7 +305,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
         "403":
-          description: Usuario autenticado sem permissao de administrador
+          description: Usuario autenticado sem a permissao users.deactivate (code PERMISSION_DENIED)
           content:
             application/json:
               schema:
@@ -390,9 +390,13 @@ paths:
                       profile:
                         role: common_user
                         label: Usuario comum
-                        user_type_id: 2
-                        profile_type_id: 1
-                        profile_type_name: Aluno
+                        id: 3
+                        name: Usuário
+                        permissions:
+                          - journeys.take
+                          - results.view_own
+                        profile_type_id: 3
+                        profile_type_name: Usuário
                       active_status: 1
                     meta:
                       session:
@@ -413,9 +417,21 @@ paths:
                       profile:
                         role: administrator
                         label: Administrador
-                        user_type_id: 1
-                        profile_type_id: null
-                        profile_type_name: null
+                        id: 1
+                        name: Administrador
+                        permissions:
+                          - journeys.take
+                          - journeys.assign
+                          - results.view_own
+                          - results.view_all
+                          - users.view
+                          - users.register
+                          - users.deactivate
+                          - users.manage
+                          - users.change_profile
+                          - catalog.manage
+                        profile_type_id: 1
+                        profile_type_name: Administrador
                       active_status: 1
                     meta:
                       session:
@@ -496,7 +512,8 @@ paths:
       tags:
         - Auth
       summary: Recupera o usuario autenticado
-      description: Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui o tempo maximo de inatividade da sessao, em minutos. Se o usuario da sessao for desativado apos o login, a sessao e invalidada e a resposta e 403.
+      description: >-
+        Retorna os dados do usuario identificado pela sessao atual, sem receber identificador pelo cliente, e renova a atividade da sessao. A resposta inclui o perfil de acesso (id, nome e permissoes) e o tempo maximo de inatividade em minutos. O campo role e derivado do perfil de acesso e nunca de FK_TIPO_USUARIO.
       operationId: getAuthenticatedUser
       security:
         - sessionAuth: []
@@ -524,9 +541,13 @@ paths:
                       profile:
                         role: common_user
                         label: Usuario comum
-                        user_type_id: 2
-                        profile_type_id: 1
-                        profile_type_name: Aluno
+                        id: 3
+                        name: Usuário
+                        permissions:
+                          - journeys.take
+                          - results.view_own
+                        profile_type_id: 3
+                        profile_type_name: Usuário
                         journey_profile_id: 1
                         journey_profile_name: Encarregado pelo Tratamento de Dados Pessoais
                         journey_profile_name_en: Data Protection Officer
@@ -612,7 +633,11 @@ paths:
                       profile:
                         role: common_user
                         label: Usuario comum
-                        user_type_id: 2
+                        id: 3
+                        name: Usuário
+                        permissions:
+                          - journeys.take
+                          - results.view_own
                         profile_type_id: 3
                         profile_type_name: Usuário
                         journey_profile_id: 1
@@ -805,7 +830,11 @@ paths:
                         profile:
                           role: common_user
                           label: Usuario comum
-                          user_type_id: 2
+                          id: 3
+                          name: Usuário
+                          permissions:
+                            - journeys.take
+                            - results.view_own
                           profile_type_id: 1
                           profile_type_name: Aluno
                         active_status: 1
@@ -819,6 +848,7 @@ paths:
                           status: in_progress
                           started_at: "2026-07-24 08:00:00"
                           finished_at: null
+                          origin: self_started
                           journey_profile:
                             id: 2
                             name_pt: Encarregado pelo Tratamento de Dados Pessoais
@@ -849,6 +879,7 @@ paths:
                           status: completed
                           started_at: "2026-07-23 08:00:00"
                           finished_at: "2026-07-23 09:00:00"
+                          origin: assigned
                           journey_profile:
                             id: 2
                             name_pt: Encarregado pelo Tratamento de Dados Pessoais
@@ -960,7 +991,7 @@ paths:
       tags:
         - Journeys
       summary: Lista jornadas paginadas de um usuario
-      description: Retorna as jornadas do usuario informado, da mais recente para a mais antiga. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      description: Retorna as jornadas do usuario informado, da mais recente para a mais antiga. O proprio usuario exige results.view_own; consultar outra conta exige results.view_all. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: listUserJourneys
       security:
         - sessionAuth: []
@@ -994,6 +1025,7 @@ paths:
             enum:
               - completed
               - ongoing
+              - cancelled
           example: ongoing
         - name: journey_profile_id
           in: query
@@ -1085,8 +1117,11 @@ paths:
                             name: Privacidade
                         started_at: "2026-07-23 16:30:00"
                         finished_at: null
+                        cancelled_at: null
+                        origin: self_started
                         status: ongoing
                         is_completed: false
+                        is_cancelled: false
                         score: null
                         summary:
                           acquired_knowledges_count: 8
@@ -1146,7 +1181,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para visualizar as jornadas deste usuario.
                     errors: []
-                    code: USER_JOURNEYS_FORBIDDEN
+                    code: PERMISSION_DENIED
         "404":
           description: Usuario informado nao encontrado
           content:
@@ -1244,8 +1279,11 @@ paths:
                           name: Privacidade
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
+                      cancelled_at: null
+                      origin: self_started
                       status: ongoing
                       is_completed: false
+                      is_cancelled: false
                       summary:
                         acquired_knowledges_count: 0
                         professional_certifications_count: 0
@@ -1266,7 +1304,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para iniciar uma jornada para este usuario.
                     errors: []
-                    code: USER_JOURNEYS_FORBIDDEN
+                    code: PERMISSION_DENIED
         "404":
           description: Usuario ou perfil de jornada informado nao encontrado
           content:
@@ -1432,7 +1470,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para visualizar as metricas deste usuario.
                     errors: []
-                    code: USER_JOURNEYS_FORBIDDEN
+                    code: PERMISSION_DENIED
         "404":
           description: Usuario informado nao encontrado
           content:
@@ -1465,7 +1503,7 @@ paths:
       tags:
         - Journeys
       summary: Atualiza os dados gerais de uma jornada em andamento
-      description: Atualiza as respostas de contexto de uma jornada (experiencia profissional, atuacao no perfil e proficiencia em ingles). Cada campo e opcional e so e alterado quando enviado. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      description: Atualiza as respostas de contexto de uma jornada (experiencia profissional, atuacao no perfil e proficiencia em ingles). Exige journeys.take na propria jornada ou journeys.take e users.manage em jornada de outra pessoa. Cada campo e opcional e so e alterado quando enviado. A jornada precisa estar em andamento (DH_FIM nulo).
       operationId: updateJourneyAnswers
       security:
         - sessionAuth: []
@@ -1517,7 +1555,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para atualizar esta jornada.
                     errors: []
-                    code: JOURNEY_FORBIDDEN
+                    code: PERMISSION_DENIED
         "409":
           description: Jornada ja finalizada
           content:
@@ -1569,7 +1607,7 @@ paths:
       summary: Vincula cursos superiores/pos-graduacao a uma jornada em andamento
       description: >-
         Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
-        Anexa um ou mais cursos superiores (graduacao ou pos-graduacao) a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+        Anexa um ou mais cursos superiores (graduacao ou pos-graduacao) a jornada. IDs ja vinculados sao ignorados silenciosamente. Exige journeys.take na propria jornada ou journeys.take e users.manage em jornada de outra pessoa. A jornada precisa estar em andamento (DH_FIM nulo).
       deprecated: true
       operationId: attachJourneyCourses
       security:
@@ -1621,7 +1659,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para atualizar esta jornada.
                     errors: []
-                    code: JOURNEY_FORBIDDEN
+                    code: PERMISSION_DENIED
         "409":
           description: Jornada ja finalizada
           content:
@@ -1673,7 +1711,7 @@ paths:
       summary: Vincula certificacoes profissionais a uma jornada em andamento
       description: >-
         Deprecado: o pre-questionario saiu do fluxo da jornada. Esta rota nao e mais exigida pela finalizacao nem entra na nota, e sera removida futuramente.
-        Anexa uma ou mais certificacoes profissionais a jornada. IDs ja vinculados sao ignorados silenciosamente. Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+        Anexa uma ou mais certificacoes profissionais a jornada. IDs ja vinculados sao ignorados silenciosamente. Exige journeys.take na propria jornada ou journeys.take e users.manage em jornada de outra pessoa. A jornada precisa estar em andamento (DH_FIM nulo).
       deprecated: true
       operationId: attachJourneyCertifications
       security:
@@ -1725,7 +1763,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para atualizar esta jornada.
                     errors: []
-                    code: JOURNEY_FORBIDDEN
+                    code: PERMISSION_DENIED
         "409":
           description: Jornada ja finalizada
           content:
@@ -1775,7 +1813,7 @@ paths:
       tags:
         - Journeys
       summary: Registra competencias adquiridas em uma jornada em andamento
-      description: Registra, para cada competencia informada, se ela foi adquirida (is_acquired) na jornada. Reenviar a mesma competencia atualiza o valor anterior (upsert). Usuario comum so pode atualizar as proprias jornadas; administradores podem atualizar jornadas de qualquer usuario. A jornada precisa estar em andamento (DH_FIM nulo).
+      description: Registra, para cada competencia informada, se ela foi adquirida (is_acquired) na jornada. Reenviar a mesma competencia atualiza o valor anterior (upsert). Exige journeys.take na propria jornada ou journeys.take e users.manage em jornada de outra pessoa. A jornada precisa estar em andamento (DH_FIM nulo).
       operationId: recordJourneyCompetencies
       security:
         - sessionAuth: []
@@ -1830,7 +1868,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para atualizar esta jornada.
                     errors: []
-                    code: JOURNEY_FORBIDDEN
+                    code: PERMISSION_DENIED
         "409":
           description: Jornada ja finalizada
           content:
@@ -1984,12 +2022,98 @@ paths:
                     errors: []
                     code: JOURNEY_FINALIZATION_FAILED
 
+  /journeys/{journey}/cancel:
+    post:
+      tags:
+        - Journeys
+      summary: Cancela uma jornada propria em andamento
+      description: Cancela somente uma jornada em andamento do usuario autenticado com origem TP_JORNADA_ATRIBUIDA igual a 2. Jornadas atribuídas por administrador, com origem desconhecida, concluídas, já canceladas ou pertencentes a outra pessoa são recusadas. O cancelamento fica registrado em cancelled_at e não preenche finished_at. Requer sessão autenticada e token CSRF.
+      operationId: cancelOwnJourney
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Jornada cancelada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCancellationResponse"
+              examples:
+                cancelled:
+                  value:
+                    success: true
+                    message: Jornada cancelada com sucesso.
+                    data:
+                      journey_id: 10
+                      status: cancelled
+                      cancelled_at: "2026-11-10 14:30:00"
+                      is_completed: false
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: A jornada pertence a outra pessoa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para cancelar esta jornada.
+                    errors: []
+                    code: PERMISSION_DENIED
+        "404":
+          description: Jornada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada concluida, já cancelada, atribuida por administrador ou sem origem conhecida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                cancellationNotAllowed:
+                  value:
+                    success: false
+                    message: Esta jornada nao pode ser cancelada.
+                    errors: []
+                    code: JOURNEY_CANCELLATION_NOT_ALLOWED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel cancelar a jornada no momento.
+                    errors: []
+                    code: JOURNEY_CANCELLATION_FAILED
+
   /journeys/{journey}:
     get:
       tags:
         - Journeys
       summary: Busca o detalhe de uma jornada por ID
-      description: Retorna o detalhe completo de uma jornada, incluindo respostas do questionario, conhecimentos adquiridos e nao adquiridos agrupados por dominio e certificacoes profissionais. Usuarios comuns so podem consultar as proprias jornadas; administradores podem consultar jornadas de qualquer usuario. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
+      description: Retorna o detalhe completo de uma jornada, incluindo respostas do questionario, conhecimentos adquiridos e nao adquiridos agrupados por dominio e certificacoes profissionais. O proprio usuario exige results.view_own; consultar outra conta exige results.view_all. Para testar no Swagger local, faca login antes em /auth/login usando o token retornado por /auth/csrf-token; nao cole manualmente o cookie no botao Authorize.
       operationId: getJourneyDetail
       security:
         - sessionAuth: []
@@ -2055,8 +2179,11 @@ paths:
                               name_en: Basic
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
+                      cancelled_at: null
+                      origin: self_started
                       status: ongoing
                       is_completed: false
+                      is_cancelled: false
                       score: null
                       score_breakdown: null
                       answers:
@@ -2177,7 +2304,7 @@ paths:
                     success: false
                     message: Voce nao possui permissao para visualizar esta jornada.
                     errors: []
-                    code: JOURNEY_FORBIDDEN
+                    code: PERMISSION_DENIED
         "404":
           description: Jornada nao encontrada
           content:
@@ -2234,6 +2361,138 @@ paths:
                     message: Nao foi possivel buscar os dados da jornada no momento.
                     errors: []
                     code: JOURNEY_SEARCH_FAILED
+  /journeys/{journey}/pdf:
+    get:
+      tags:
+        - Journeys
+      summary: Baixa o resultado de uma jornada concluida em PDF
+      description: >-
+        Gera o PDF do resultado de uma jornada concluida, com o mesmo conteudo da
+        tela de resultado: nome do perfil de jornada, nome do usuario, data de
+        conclusao, nota geral de 0 a 100 com a faixa (A desenvolver abaixo de 60,
+        Medio de 60 a 74 e Forte a partir de 75), conhecimento adquirido por area
+        com o minimo recomendado de 60% (separado por dominio nas jornadas
+        conjuntas) e competencias declaradas e nao declaradas agrupadas por area,
+        com o nivel e o dominio. A nota e a salva em NU_PONTUACAO_TOTAL,
+        arredondada para inteiro. Nao inclui a pontuacao por criterio, os dados do
+        pre-questionario nem pesos internos. O acesso segue o detalhe da jornada:
+        usuarios comuns so baixam as proprias jornadas; administradores, as de
+        qualquer usuario. O nome do arquivo vem no cabecalho Content-Disposition,
+        exposto no CORS, no formato resultado-jornada-{id}-{data de conclusao}.pdf.
+      operationId: downloadJourneyResultPdf
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - name: locale
+          in: query
+          required: false
+          description: Idioma do PDF. Sem o parametro, o PDF sai em portugues.
+          schema:
+            type: string
+            enum:
+              - pt
+              - en
+            default: pt
+      responses:
+        "200":
+          description: PDF do resultado da jornada
+          headers:
+            Content-Disposition:
+              description: Anexo com o nome do arquivo.
+              schema:
+                type: string
+                example: attachment; filename="resultado-jornada-10-2026-07-24.pdf"
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao para visualizar a jornada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar esta jornada.
+                    errors: []
+                    code: JOURNEY_FORBIDDEN
+        "404":
+          description: Jornada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada ainda em andamento ou concluida com dados obrigatorios incompletos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                notCompleted:
+                  value:
+                    success: false
+                    message: A jornada ainda nao foi finalizada.
+                    errors: []
+                    code: JOURNEY_NOT_COMPLETED
+                incompleteJourney:
+                  value:
+                    success: false
+                    message: Jornada concluida possui dados obrigatorios incompletos.
+                    errors:
+                      fields:
+                        - journey_profile
+                    code: INCOMPLETE_JOURNEY
+        "422":
+          description: Identificador de jornada ou idioma invalido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidIdentifier:
+                  value:
+                    success: false
+                    message: Identificador da jornada invalido.
+                    errors:
+                      journey:
+                        - O identificador da jornada deve ser um numero inteiro maior ou igual a 1.
+                    code: INVALID_JOURNEY_IDENTIFIER
+                invalidLocale:
+                  value:
+                    success: false
+                    message: Idioma do PDF invalido.
+                    errors:
+                      locale:
+                        - O idioma deve ser pt ou en.
+                    code: INVALID_LOCALE
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel gerar o PDF da jornada no momento.
+                    errors: []
+                    code: JOURNEY_PDF_FAILED
   /journeys/current/general-data/options:
     get:
       tags:
@@ -3197,12 +3456,34 @@ paths:
           Segurança retorna perfis dos domínios Segurança da Informação e Conjunta (Privacidade/Segurança).
           Privacidade/Segurança retorna todos os perfis, sem filtrar por domínio.
         required: false
+        deprecated: true
         schema:
           type: string
           enum:
             - Privacidade
             - Segurança
             - Privacidade/Segurança
+      - name: domains[]
+        in: query
+        description: Filtra por um ou mais IDs de domínio do conhecimento.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+      - name: user_status[]
+        in: query
+        description: Filtra por histórico de jornadas do usuário autenticado em cada perfil. completed inclui perfis com ao menos uma jornada concluída, mesmo que exista outra em andamento; pending inclui perfis com jornada em andamento; not_done inclui perfis sem nenhuma jornada. O campo user_status do resultado dá precedência a pending quando existem jornadas em andamento e concluídas; last_score continua vindo da jornada concluída mais recente.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum: [completed, pending, not_done]
       - name: search
         in: query
         description: Busca por nome ou descrição em português/inglês, sem diferenciar maiúsculas/minúsculas ou acentos.
@@ -3260,6 +3541,22 @@ paths:
                     errors:
                       search:
                         - A busca deve ser um texto.
+                    code: VALIDATION_ERROR
+                invalidDomain:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      domains.0:
+                        - Um ou mais dominios informados nao existem.
+                    code: VALIDATION_ERROR
+                invalidUserStatus:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      user_status.0:
+                        - A situacao deve ser completed, pending ou not_done.
                     code: VALIDATION_ERROR
   /journey-profiles/{id}:
     parameters:
@@ -3607,7 +3904,6 @@ components:
             - name
             - email
             - active_status
-            - user_type_id
           properties:
             id:
               type: integer
@@ -3618,10 +3914,7 @@ components:
               format: email
             active_status:
               type: integer
-              enum: [1, 2]
-            user_type_id:
-              type: integer
-              enum: [2]
+              enum: [0, 1, 2]
     UserRegistrationResponse:
       type: object
       required:
@@ -3866,6 +4159,7 @@ components:
           type: string
           enum:
             - common_user
+            - manager
             - administrator
           example: common_user
         profile:
@@ -3879,7 +4173,9 @@ components:
       required:
         - role
         - label
-        - user_type_id
+        - id
+        - name
+        - permissions
         - profile_type_id
         - profile_type_name
         - journey_profile_id
@@ -3890,20 +4186,36 @@ components:
           type: string
           enum:
             - common_user
+            - manager
             - administrator
           example: common_user
         label:
           type: string
           enum:
             - Usuario comum
+            - Gestor
             - Administrador
           example: Usuario comum
-        user_type_id:
+        id:
           type:
             - integer
             - "null"
-          description: 1 representa administrador; outros valores ou nulo representam usuario comum.
-          example: 2
+          description: Identificador do perfil de acesso definido em TB_TIPO_PERFIL.
+          example: 3
+        name:
+          type:
+            - string
+            - "null"
+          description: Nome do perfil de acesso.
+          example: Usuário
+        permissions:
+          type: array
+          description: Codigos de permissao concedidos ao perfil do usuario.
+          items:
+            type: string
+          example:
+            - journeys.take
+            - results.view_own
         profile_type_id:
           type:
             - integer
@@ -3961,6 +4273,42 @@ components:
               type: string
               description: Instante em que a pontuacao foi calculada e a jornada foi finalizada.
               example: "2026-09-28 14:30:00"
+    JourneyCancellationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornada cancelada com sucesso.
+        data:
+          type: object
+          required:
+            - journey_id
+            - status
+            - cancelled_at
+            - is_completed
+          properties:
+            journey_id:
+              type: integer
+              example: 10
+            status:
+              type: string
+              enum:
+                - cancelled
+              example: cancelled
+            cancelled_at:
+              type: string
+              description: Instante em que a jornada foi cancelada. Nao representa sua conclusao.
+              example: "2026-11-10 14:30:00"
+            is_completed:
+              type: boolean
+              example: false
 
     CurrentJourneyGeneralDataOptionsResponse:
       type: object
@@ -4306,8 +4654,11 @@ components:
         - journey_profile
         - started_at
         - finished_at
+        - cancelled_at
+        - origin
         - status
         - is_completed
+        - is_cancelled
         - score
         - summary
         - detail
@@ -4335,13 +4686,35 @@ components:
             - string
             - "null"
           example: null
+        cancelled_at:
+          type:
+            - string
+            - "null"
+          example: null
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         status:
           type: string
           enum:
             - completed
             - ongoing
+            - cancelled
           example: ongoing
         is_completed:
+          type: boolean
+          example: false
+        is_cancelled:
           type: boolean
           example: false
         score:
@@ -4533,8 +4906,11 @@ components:
         - journey_profile
         - started_at
         - finished_at
+        - cancelled_at
+        - origin
         - status
         - is_completed
+        - is_cancelled
         - score
         - score_breakdown
         - answers
@@ -4560,13 +4936,35 @@ components:
             - string
             - "null"
           example: null
+        cancelled_at:
+          type:
+            - string
+            - "null"
+          example: null
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         status:
           type: string
           enum:
             - completed
             - ongoing
+            - cancelled
           example: ongoing
         is_completed:
+          type: boolean
+          example: false
+        is_cancelled:
           type: boolean
           example: false
         score:
@@ -5042,6 +5440,7 @@ components:
         - status
         - started_at
         - finished_at
+        - origin
         - journey_profile
         - professional_experience
         - profile_experience
@@ -5077,6 +5476,19 @@ components:
             - string
             - "null"
           example: "2026-07-23 09:00:00"
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         journey_profile:
           type: object
           required:
@@ -5563,6 +5975,41 @@ components:
             - "null"
           description: ID do dominio de conhecimento associado ao perfil de jornada.
           example: 1
+        knowledge_domain:
+          type:
+            - object
+            - "null"
+          description: Domínio de conhecimento associado ao perfil.
+          properties:
+            id:
+              type: integer
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
+        user_status:
+          type: string
+          enum: [completed, pending, not_done]
+          description: Situação da jornada do usuário autenticado para este perfil. Uma jornada em andamento tem precedência sobre jornadas concluídas.
+          example: completed
+        last_score:
+          type:
+            - number
+            - "null"
+          description: Nota da jornada concluída mais recente do usuário para este perfil.
+          example: 82.25
+        competencies_count:
+          type: integer
+          minimum: 0
+          description: Total de competências associadas ao perfil de jornada.
+          example: 12
     JourneyProfileDetail:
       allOf:
         - $ref: "#/components/schemas/JourneyProfile"

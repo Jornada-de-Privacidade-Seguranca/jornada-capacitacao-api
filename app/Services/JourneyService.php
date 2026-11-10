@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\IncompleteJourneyException;
 use App\Exceptions\JourneyAlreadyFinishedException;
+use App\Exceptions\JourneyCancellationNotAllowedException;
+use App\Exceptions\JourneyNotInProgressException;
 use App\Exceptions\JourneyProfileNotFoundException;
 use App\Exceptions\JourneyProfileSelectionException;
 use App\Exceptions\NoOngoingJourneyException;
@@ -27,8 +29,6 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class JourneyService
 {
-    private const ADMIN_USER_TYPE = 1;
-
     public function __construct(
         private readonly JourneyRepositoryInterface $journeyRepository,
         private readonly CriterionRepositoryInterface $criterionRepository,
@@ -85,7 +85,10 @@ class JourneyService
             throw new ModelNotFoundException;
         }
 
-        if (! $this->canViewUserJourneys($authenticatedUser, $requestedUser)) {
+        $isOwnJourney = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO;
+        $requiredPermission = $isOwnJourney ? 'journeys.take' : 'journeys.assign';
+
+        if (! $authenticatedUser->hasPermission($requiredPermission)) {
             throw new AccessDeniedHttpException;
         }
 
@@ -95,7 +98,11 @@ class JourneyService
             throw new JourneyProfileNotFoundException;
         }
 
-        return DB::transaction(function () use ($requestedUser, $data) {
+        $attributionType = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO
+            ? Journey::ATTRIBUTION_SELF
+            : Journey::ATTRIBUTION_ADMIN;
+
+        return DB::transaction(function () use ($requestedUser, $data, $attributionType) {
             $this->userRepository->lockForUpdate((int) $requestedUser->PK_USUARIO);
 
             $user = $this->userRepository->findById((int) $requestedUser->PK_USUARIO);
@@ -121,6 +128,7 @@ class JourneyService
             return $this->journeyRepository->create([
                 'FK_USUARIO' => $requestedUser->PK_USUARIO,
                 'FK_PERFIS_JORNADA' => $journeyProfileId,
+                'TP_JORNADA_ATRIBUIDA' => $attributionType,
                 'DH_CRIADO_EM' => now(),
                 'DH_FIM' => null,
             ]);
@@ -257,6 +265,33 @@ class JourneyService
         });
     }
 
+    public function cancelForUser(Usuario $authenticatedUser, int $journeyId): Journey
+    {
+        return DB::transaction(function () use ($authenticatedUser, $journeyId): Journey {
+            $journey = $this->journeyRepository->findDetailedByIdForUpdate($journeyId);
+
+            if ($journey === null) {
+                throw new ModelNotFoundException;
+            }
+
+            if ((int) $authenticatedUser->PK_USUARIO !== (int) $journey->FK_USUARIO) {
+                throw new AccessDeniedHttpException;
+            }
+
+            if (
+                $journey->DH_FIM !== null
+                || $journey->DH_CANCELADA_EM !== null
+                || (int) $journey->TP_JORNADA_ATRIBUIDA !== Journey::ATTRIBUTION_SELF
+            ) {
+                throw new JourneyCancellationNotAllowedException;
+            }
+
+            $this->journeyRepository->update($journey, ['DH_CANCELADA_EM' => now()]);
+
+            return $journey->refresh();
+        });
+    }
+
     public function getCurrentGeneralDataOptions(Usuario $authenticatedUser): array
     {
         $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
@@ -311,20 +346,16 @@ class JourneyService
 
     private function canViewUserJourneys(Usuario $authenticatedUser, Usuario $requestedUser): bool
     {
-        if ((int) $authenticatedUser->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE) {
-            return true;
-        }
+        $isOwnUser = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO;
 
-        return (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO;
+        return $authenticatedUser->hasPermission($isOwnUser ? 'results.view_own' : 'results.view_all');
     }
 
     private function canViewJourney(Usuario $authenticatedUser, Journey $journey): bool
     {
-        if ((int) $authenticatedUser->FK_TIPO_USUARIO === self::ADMIN_USER_TYPE) {
-            return true;
-        }
+        $isOwnJourney = (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
 
-        return (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
+        return $authenticatedUser->hasPermission($isOwnJourney ? 'results.view_own' : 'results.view_all');
     }
 
     private function resolveJourneyForManagement(
@@ -337,12 +368,18 @@ class JourneyService
             throw new ModelNotFoundException;
         }
 
-        if (! $this->canViewJourney($authenticatedUser, $journey)) {
+        $isOwnJourney = (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
+        if (! $authenticatedUser->hasPermission('journeys.take')
+            || (! $isOwnJourney && ! $authenticatedUser->hasPermission('users.manage'))) {
             throw new AccessDeniedHttpException;
         }
 
         if ($journey->DH_FIM !== null) {
             throw new JourneyAlreadyFinishedException;
+        }
+
+        if ($journey->DH_CANCELADA_EM !== null) {
+            throw new JourneyNotInProgressException;
         }
 
         return $journey;

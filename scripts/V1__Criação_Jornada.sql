@@ -364,7 +364,7 @@ COMMENT ON COLUMN PUBLIC.TB_USUARIO.NU_MATRICULA IS 'Número de matrícula do us
 COMMENT ON COLUMN PUBLIC.TB_USUARIO.DS_EMAIL IS 'Email do usuário';
 COMMENT ON COLUMN PUBLIC.TB_USUARIO.DS_SENHA IS 'Senha do usuário';
 COMMENT ON COLUMN PUBLIC.TB_USUARIO.DH_CRIADO_EM IS 'Data de criação do usuário no sistema';
-COMMENT ON COLUMN PUBLIC.TB_USUARIO.ST_ATIVO IS 'Sinaliza se o usuário está ativo ou não: 1-Ativo, 2-Inativo';
+COMMENT ON COLUMN PUBLIC.TB_USUARIO.ST_ATIVO IS 'Sinaliza o estado da conta: 0-Inativo, 1-Ativo, 2-Pendente de ativacao';
 comment on column PUBLIC.TB_USUARIO.TP_ATIVACAO IS 'Indicador do tipo de criação do usuário: 1-Usuário criado na tela de login do sistema, 2-Usuário criado por um administrador do sistema';
 comment on column PUBLIC.TB_USUARIO.DH_ATIVACAO IS 'Sinaliza a data e hora de quando o usuário foi ativado no sistema';
 
@@ -380,6 +380,7 @@ CREATE TABLE PUBLIC.TB_JORNADA(
 	TP_JORNADA_ATRIBUIDA INTEGER,
 	DH_CRIADO_EM TIMESTAMP,
 	DH_FIM TIMESTAMP,
+	DH_CANCELADA_EM TIMESTAMP,
 	CONSTRAINT PK_JORNADA PRIMARY KEY (PK_JORNADA),
 	CONSTRAINT FK_JORNADA_USUARIO FOREIGN KEY (FK_USUARIO) REFERENCES PUBLIC.TB_USUARIO (PK_USUARIO),
 	CONSTRAINT FK_JORNADA_PERFIS_JORNADA FOREIGN KEY (FK_PERFIS_JORNADA) REFERENCES PUBLIC.TB_PERFIS_JORNADA (PK_PERFIS_JORNADA)
@@ -415,6 +416,7 @@ COMMENT ON COLUMN PUBLIC.TB_JORNADA.NU_PONTUACAO_TOTAL IS 'Pontuação total da 
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.TP_JORNADA_ATRIBUIDA IS 'Tipo da jornada atribuida ao usuário: 1 - Atribuída por um administrador. 2 - Atribuída por conta própria.';
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.DH_CRIADO_EM IS 'Data de início da jornada no sistema';
 COMMENT ON COLUMN PUBLIC.TB_JORNADA.DH_FIM IS 'Data de finalização da jornada no sistema';
+COMMENT ON COLUMN PUBLIC.TB_JORNADA.DH_CANCELADA_EM IS 'Data de cancelamento da jornada pelo usuário';
 
 -- TB_CONHECIMENTOS_ADQUIRIDOS
 

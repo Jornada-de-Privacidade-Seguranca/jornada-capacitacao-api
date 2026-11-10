@@ -10,6 +10,7 @@ use App\Repositories\Contracts\JourneyRepositoryInterface;
 use App\Repositories\Eloquent\Concerns\AppliesNormalizedSearch;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 
 class JourneyRepository implements JourneyRepositoryInterface
 {
@@ -41,6 +42,7 @@ class JourneyRepository implements JourneyRepositoryInterface
             ])
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->first();
@@ -80,6 +82,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         return Journey::query()
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA');
     }
@@ -89,6 +92,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         return Journey::query()
             ->with(self::DETAILED_RELATIONS)
             ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_CANCELADA_EM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->lockForUpdate()
@@ -120,13 +124,7 @@ class JourneyRepository implements JourneyRepositoryInterface
             ])
             ->where('FK_USUARIO', $userId);
 
-        if (($filters['status'] ?? null) === 'completed') {
-            $query->whereNotNull('DH_FIM');
-        }
-
-        if (($filters['status'] ?? null) === 'ongoing') {
-            $query->whereNull('DH_FIM');
-        }
+        $this->applyStatusFilter($query, $filters['status'] ?? null);
 
         if (isset($filters['journey_profile_id'])) {
             $query->where('FK_PERFIS_JORNADA', $filters['journey_profile_id']);
@@ -154,6 +152,16 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    private function applyStatusFilter(Builder $query, ?string $status): void
+    {
+        match ($status) {
+            'completed' => $query->whereNotNull('DH_FIM')->whereNull('DH_CANCELADA_EM'),
+            'ongoing' => $query->whereNull('DH_FIM')->whereNull('DH_CANCELADA_EM'),
+            'cancelled' => $query->whereNotNull('DH_CANCELADA_EM'),
+            default => null,
+        };
     }
 
     public function updateGeneralData(Journey $journey, array $data): Journey
@@ -187,6 +195,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         return Journey::query()
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
             ->exists();
     }
 
@@ -269,90 +278,177 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->orderBy('PK_DOMINIO_CONHECIMENTO')
             ->get();
 
-        $journeys = Journey::query()
-            ->with([
-                'journeyProfile.knowledgeDomain',
-                'acquiredKnowledges',
-            ])
-            ->where('FK_USUARIO', $userId)
-            ->orderByDesc('DH_CRIADO_EM')
-            ->orderByDesc('PK_JORNADA')
-            ->get();
-
-        $completedJourneys = $journeys->whereNotNull('DH_FIM');
-        $completedScores = $completedJourneys
-            ->pluck('NU_PONTUACAO_TOTAL')
-            ->filter(fn ($score) => $score !== null)
-            ->map(fn ($score) => (float) $score);
-
-        $summary = [
-            'total_journeys' => $journeys->count(),
-            'completed_journeys' => $completedJourneys->count(),
-            'ongoing_journeys' => $journeys->whereNull('DH_FIM')->count(),
-            'average_score' => $completedScores->isNotEmpty() ? round($completedScores->avg(), 2) : null,
-            'highest_score' => $completedScores->isNotEmpty() ? round($completedScores->max(), 2) : null,
-            'latest_score' => $completedJourneys->first()?->NU_PONTUACAO_TOTAL !== null
-                ? (float) $completedJourneys->first()->NU_PONTUACAO_TOTAL
-                : null,
-        ];
+        $summary = $this->fetchOverallSummaryForUser($userId);
+        $journeyStatsByDomain = $this->fetchJourneyStatsByDomain($userId);
+        $latestScoresByDomain = $this->fetchLatestScoresByDomain($userId);
+        $competencyStatsByDomain = $this->fetchCompetencyStatsByDomain($userId);
 
         $domainMetrics = [];
 
         foreach ($domains as $domain) {
             $domainId = (int) $domain->PK_DOMINIO_CONHECIMENTO;
-            $domainJourneys = $journeys->filter(function (Journey $journey) use ($domainId): bool {
-                return (int) ($journey->journeyProfile?->FK_DOMINIO_CONHECIMENTO ?? 0) === $domainId;
-            });
-
-            $domainCompleted = $domainJourneys->whereNotNull('DH_FIM');
-            $domainScores = $domainCompleted
-                ->pluck('NU_PONTUACAO_TOTAL')
-                ->filter(fn ($score) => $score !== null)
-                ->map(fn ($score) => (float) $score);
-
-            $allDomainAcquiredKnowledges = $domainJourneys->flatMap(
-                fn (Journey $journey) => $journey->acquiredKnowledges
+            $domainMetrics[] = $this->buildDomainMetricEntry(
+                domain: $domain,
+                journeyStat: $journeyStatsByDomain->get($domainId),
+                latestScore: $latestScoresByDomain->get($domainId),
+                competencyStat: $competencyStatsByDomain->get($domainId),
             );
-
-            $evaluatedCompetencies = $allDomainAcquiredKnowledges
-                ->pluck('FK_COMPETENCIAS')
-                ->filter()
-                ->unique()
-                ->count();
-
-            $acquiredCompetencies = $allDomainAcquiredKnowledges
-                ->filter(fn ($knowledge) => (int) $knowledge->TP_ADQUIRIDO === 1)
-                ->pluck('FK_COMPETENCIAS')
-                ->filter()
-                ->unique()
-                ->count();
-
-            $acquisitionRate = $evaluatedCompetencies > 0
-                ? round(($acquiredCompetencies / $evaluatedCompetencies) * 100, 2)
-                : null;
-
-            $domainMetrics[] = [
-                'domain_id' => $domainId,
-                'domain_name_pt' => $domain->NO_DOMINIO_CONHECIMENTO_PT,
-                'domain_name_en' => $domain->NO_DOMINIO_CONHECIMENTO_EN,
-                'total_journeys' => $domainJourneys->count(),
-                'completed_journeys' => $domainCompleted->count(),
-                'ongoing_journeys' => $domainJourneys->whereNull('DH_FIM')->count(),
-                'average_score' => $domainScores->isNotEmpty() ? round($domainScores->avg(), 2) : null,
-                'highest_score' => $domainScores->isNotEmpty() ? round($domainScores->max(), 2) : null,
-                'latest_score' => $domainCompleted->first()?->NU_PONTUACAO_TOTAL !== null
-                    ? (float) $domainCompleted->first()->NU_PONTUACAO_TOTAL
-                    : null,
-                'acquired_competencies_count' => $acquiredCompetencies,
-                'total_competencies_evaluated' => $evaluatedCompetencies,
-                'competency_acquisition_rate' => $acquisitionRate,
-            ];
         }
 
         return [
             'user_id' => $userId,
             'summary' => $summary,
             'domains' => $domainMetrics,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function fetchOverallSummaryForUser(int $userId): array
+    {
+        $connection = Journey::query()->getConnection();
+        $grammar = $connection->getQueryGrammar();
+
+        $summaryRow = $connection->table('TB_JORNADA')
+            ->where('FK_USUARIO', $userId)
+            ->selectRaw('COUNT(*) as total_journeys')
+            ->selectRaw("SUM(CASE WHEN {$grammar->wrap('DH_FIM')} IS NOT NULL AND {$grammar->wrap('DH_CANCELADA_EM')} IS NULL THEN 1 ELSE 0 END) as completed_journeys")
+            ->selectRaw("SUM(CASE WHEN {$grammar->wrap('DH_FIM')} IS NULL AND {$grammar->wrap('DH_CANCELADA_EM')} IS NULL THEN 1 ELSE 0 END) as ongoing_journeys")
+            ->selectRaw("AVG(CASE WHEN {$grammar->wrap('DH_FIM')} IS NOT NULL AND {$grammar->wrap('DH_CANCELADA_EM')} IS NULL THEN {$grammar->wrap('NU_PONTUACAO_TOTAL')} END) as average_score")
+            ->selectRaw("MAX(CASE WHEN {$grammar->wrap('DH_FIM')} IS NOT NULL AND {$grammar->wrap('DH_CANCELADA_EM')} IS NULL THEN {$grammar->wrap('NU_PONTUACAO_TOTAL')} END) as highest_score")
+            ->first();
+
+        $latestScore = Journey::query()
+            ->where('FK_USUARIO', $userId)
+            ->whereNotNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
+            ->orderByDesc('DH_CRIADO_EM')
+            ->orderByDesc('PK_JORNADA')
+            ->limit(1)
+            ->value('NU_PONTUACAO_TOTAL');
+
+        $summaryData = $summaryRow !== null ? (array) $summaryRow : [];
+
+        return [
+            'total_journeys' => (int) ($summaryData['total_journeys'] ?? 0),
+            'completed_journeys' => (int) ($summaryData['completed_journeys'] ?? 0),
+            'ongoing_journeys' => (int) ($summaryData['ongoing_journeys'] ?? 0),
+            'average_score' => isset($summaryData['average_score']) ? round((float) $summaryData['average_score'], 2) : null,
+            'highest_score' => isset($summaryData['highest_score']) ? round((float) $summaryData['highest_score'], 2) : null,
+            'latest_score' => $latestScore !== null ? (float) $latestScore : null,
+        ];
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function fetchJourneyStatsByDomain(int $userId): Collection
+    {
+        $connection = Journey::query()->getConnection();
+        $grammar = $connection->getQueryGrammar();
+
+        return $connection->table('TB_JORNADA')
+            ->join('TB_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA', '=', 'TB_JORNADA.FK_PERFIS_JORNADA')
+            ->where('TB_JORNADA.FK_USUARIO', $userId)
+            ->whereNotNull('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO')
+            ->groupBy('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO')
+            ->select('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO as domain_id')
+            ->selectRaw('COUNT(*) as total_journeys')
+            ->selectRaw("SUM(CASE WHEN {$grammar->wrap('TB_JORNADA.DH_FIM')} IS NOT NULL AND {$grammar->wrap('TB_JORNADA.DH_CANCELADA_EM')} IS NULL THEN 1 ELSE 0 END) as completed_journeys")
+            ->selectRaw("SUM(CASE WHEN {$grammar->wrap('TB_JORNADA.DH_FIM')} IS NULL AND {$grammar->wrap('TB_JORNADA.DH_CANCELADA_EM')} IS NULL THEN 1 ELSE 0 END) as ongoing_journeys")
+            ->selectRaw("AVG(CASE WHEN {$grammar->wrap('TB_JORNADA.DH_FIM')} IS NOT NULL AND {$grammar->wrap('TB_JORNADA.DH_CANCELADA_EM')} IS NULL THEN {$grammar->wrap('TB_JORNADA.NU_PONTUACAO_TOTAL')} END) as average_score")
+            ->selectRaw("MAX(CASE WHEN {$grammar->wrap('TB_JORNADA.DH_FIM')} IS NOT NULL AND {$grammar->wrap('TB_JORNADA.DH_CANCELADA_EM')} IS NULL THEN {$grammar->wrap('TB_JORNADA.NU_PONTUACAO_TOTAL')} END) as highest_score")
+            ->get()
+            ->mapWithKeys(fn (object $row): array => [(int) ((array) $row)['domain_id'] => (array) $row]);
+    }
+
+    /**
+     * @return Collection<int, mixed>
+     */
+    private function fetchLatestScoresByDomain(int $userId): Collection
+    {
+        $connection = Journey::query()->getConnection();
+        $grammar = $connection->getQueryGrammar();
+
+        $rankedJourneys = $connection->table('TB_JORNADA')
+            ->join('TB_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA', '=', 'TB_JORNADA.FK_PERFIS_JORNADA')
+            ->where('TB_JORNADA.FK_USUARIO', $userId)
+            ->whereNotNull('TB_JORNADA.DH_FIM')
+            ->whereNull('TB_JORNADA.DH_CANCELADA_EM')
+            ->whereNotNull('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO')
+            ->select([
+                'TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO as domain_id',
+                'TB_JORNADA.NU_PONTUACAO_TOTAL as score',
+            ])
+            ->selectRaw(
+                "ROW_NUMBER() OVER (PARTITION BY {$grammar->wrap('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO')} ORDER BY {$grammar->wrap('TB_JORNADA.DH_CRIADO_EM')} DESC, {$grammar->wrap('TB_JORNADA.PK_JORNADA')} DESC) as row_num"
+            );
+
+        return $connection->query()
+            ->fromSub($rankedJourneys, 'ranked_domain_journeys')
+            ->where('row_num', 1)
+            ->get()
+            ->mapWithKeys(function (object $row): array {
+                $rowData = (array) $row;
+
+                return [(int) $rowData['domain_id'] => $rowData['score']];
+            });
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function fetchCompetencyStatsByDomain(int $userId): Collection
+    {
+        $connection = Journey::query()->getConnection();
+        $grammar = $connection->getQueryGrammar();
+
+        return $connection->table('TB_CONHECIMENTOS_ADQUIRIDOS')
+            ->join('TB_JORNADA', 'TB_JORNADA.PK_JORNADA', '=', 'TB_CONHECIMENTOS_ADQUIRIDOS.FK_JORNADA')
+            ->join('TB_PERFIS_JORNADA', 'TB_PERFIS_JORNADA.PK_PERFIS_JORNADA', '=', 'TB_JORNADA.FK_PERFIS_JORNADA')
+            ->where('TB_JORNADA.FK_USUARIO', $userId)
+            ->whereNull('TB_JORNADA.DH_CANCELADA_EM')
+            ->whereNotNull('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO')
+            ->whereNotNull('TB_CONHECIMENTOS_ADQUIRIDOS.FK_COMPETENCIAS')
+            ->groupBy('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO')
+            ->select('TB_PERFIS_JORNADA.FK_DOMINIO_CONHECIMENTO as domain_id')
+            ->selectRaw("COUNT(DISTINCT {$grammar->wrap('TB_CONHECIMENTOS_ADQUIRIDOS.FK_COMPETENCIAS')}) as total_competencies_evaluated")
+            ->selectRaw("COUNT(DISTINCT CASE WHEN {$grammar->wrap('TB_CONHECIMENTOS_ADQUIRIDOS.TP_ADQUIRIDO')} = 1 THEN {$grammar->wrap('TB_CONHECIMENTOS_ADQUIRIDOS.FK_COMPETENCIAS')} END) as acquired_competencies_count")
+            ->get()
+            ->mapWithKeys(fn (object $row): array => [(int) ((array) $row)['domain_id'] => (array) $row]);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $journeyStat
+     * @param  array<string, mixed>|null  $competencyStat
+     * @return array<string, mixed>
+     */
+    private function buildDomainMetricEntry(
+        KnowledgeDomain $domain,
+        ?array $journeyStat,
+        mixed $latestScore,
+        ?array $competencyStat,
+    ): array {
+        $evaluatedCompetencies = (int) ($competencyStat['total_competencies_evaluated'] ?? 0);
+        $acquiredCompetencies = (int) ($competencyStat['acquired_competencies_count'] ?? 0);
+        $acquisitionRate = $evaluatedCompetencies > 0
+            ? round(($acquiredCompetencies / $evaluatedCompetencies) * 100, 2)
+            : null;
+
+        return [
+            'domain_id' => (int) $domain->PK_DOMINIO_CONHECIMENTO,
+            'domain_name_pt' => $domain->NO_DOMINIO_CONHECIMENTO_PT,
+            'domain_name_en' => $domain->NO_DOMINIO_CONHECIMENTO_EN,
+            'total_journeys' => (int) ($journeyStat['total_journeys'] ?? 0),
+            'completed_journeys' => (int) ($journeyStat['completed_journeys'] ?? 0),
+            'ongoing_journeys' => (int) ($journeyStat['ongoing_journeys'] ?? 0),
+            'average_score' => isset($journeyStat['average_score']) ? round((float) $journeyStat['average_score'], 2) : null,
+            'highest_score' => isset($journeyStat['highest_score']) ? round((float) $journeyStat['highest_score'], 2) : null,
+            'latest_score' => $latestScore !== null ? (float) $latestScore : null,
+            'acquired_competencies_count' => $acquiredCompetencies,
+            'total_competencies_evaluated' => $evaluatedCompetencies,
+            'competency_acquisition_rate' => $acquisitionRate,
         ];
     }
 

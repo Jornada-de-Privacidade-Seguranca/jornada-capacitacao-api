@@ -126,6 +126,7 @@ class CertificationOptionsTest extends TestCase
     private function activeUser(): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => 3,
             'FK_TIPO_USUARIO' => 2,
             'NO_USUARIO' => 'Maria Silva',
             'DS_EMAIL' => fake()->unique()->safeEmail(),

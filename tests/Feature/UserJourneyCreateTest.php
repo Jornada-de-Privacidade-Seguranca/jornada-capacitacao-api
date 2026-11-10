@@ -43,6 +43,7 @@ class UserJourneyCreateTest extends TestCase
             'PK_JORNADA' => $response->json('data.id'),
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'TP_JORNADA_ATRIBUIDA' => 2,
             'DH_FIM' => null,
         ]);
     }
@@ -65,6 +66,7 @@ class UserJourneyCreateTest extends TestCase
             'PK_JORNADA' => $response->json('data.id'),
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'TP_JORNADA_ATRIBUIDA' => 1,
             'DH_FIM' => null,
         ]);
     }
@@ -102,7 +104,7 @@ class UserJourneyCreateTest extends TestCase
             ->assertForbidden()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Voce nao possui permissao para iniciar uma jornada para este usuario.')
-            ->assertJsonPath('code', 'USER_JOURNEYS_FORBIDDEN')
+            ->assertJsonPath('code', 'PERMISSION_DENIED')
             ->assertJsonPath('errors', []);
     }
 

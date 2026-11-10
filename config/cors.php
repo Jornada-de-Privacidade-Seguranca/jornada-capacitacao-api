@@ -15,7 +15,8 @@ return [
     ]),
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
-    'exposed_headers' => [],
+    // O front le o nome do arquivo baixado (PDF do resultado) neste cabecalho
+    'exposed_headers' => ['Content-Disposition'],
     'max_age' => 0,
     'supports_credentials' => env('CORS_SUPPORTS_CREDENTIALS', true),
 ];

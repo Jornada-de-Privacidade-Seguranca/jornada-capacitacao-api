@@ -29,7 +29,7 @@ class ListUserJourneysRequest extends FormRequest
         return [
             'page' => ['required', 'integer', 'min:1'],
             'per_page' => ['required', 'integer', 'min:1', 'max:100'],
-            'status' => ['sometimes', 'string', Rule::in(['completed', 'ongoing'])],
+            'status' => ['sometimes', 'string', Rule::in(['completed', 'ongoing', 'cancelled'])],
             'journey_profile_id' => ['sometimes', 'integer', 'exists:TB_PERFIS_JORNADA,PK_PERFIS_JORNADA'],
             'started_from' => ['sometimes', 'date_format:Y-m-d'],
             'started_to' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:started_from'],
@@ -50,7 +50,7 @@ class ListUserJourneysRequest extends FormRequest
             'per_page.integer' => 'A quantidade de registros por pagina deve ser um numero inteiro.',
             'per_page.min' => 'A quantidade de registros por pagina deve ser maior ou igual a 1.',
             'per_page.max' => 'A quantidade de registros por pagina nao pode ser maior que 100.',
-            'status.in' => 'A situacao da jornada deve ser completed ou ongoing.',
+            'status.in' => 'A situacao da jornada deve ser completed, ongoing ou cancelled.',
             'journey_profile_id.integer' => 'O perfil de jornada deve ser um numero inteiro.',
             'journey_profile_id.exists' => 'O perfil de jornada informado nao existe.',
             'started_from.date_format' => 'A data inicial minima deve estar no formato Y-m-d.',

@@ -611,6 +611,7 @@ class CurrentJourneyGeneralDataUpdateTest extends TestCase
         string $registrationNumber = '123',
     ): Usuario {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => 3,
             'FK_TIPO_USUARIO' => 2,
             'NO_USUARIO' => 'Maria Silva',
             'DS_EMAIL' => $email,

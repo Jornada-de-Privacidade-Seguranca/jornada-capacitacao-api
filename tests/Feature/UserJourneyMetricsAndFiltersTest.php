@@ -225,7 +225,73 @@ class UserJourneyMetricsAndFiltersTest extends TestCase
         $this->actingAs($user1)
             ->getJson("/api/users/{$user2->PK_USUARIO}/journeys/metrics")
             ->assertForbidden()
-            ->assertJsonPath('code', 'USER_JOURNEYS_FORBIDDEN');
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+    }
+
+    public function test_user_without_results_view_all_permission_cannot_view_another_users_metrics_even_with_admin_type(): void
+    {
+        $userWithoutViewAll = Usuario::create([
+            'FK_TIPO_PERFIL' => 3,
+            'FK_TIPO_USUARIO' => 1,
+            'NO_USUARIO' => 'Sem Permissao',
+            'DS_EMAIL' => 'sem.permissao@example.com',
+            'ST_ATIVO' => 1,
+        ]);
+        $targetUser = $this->activeUser('Alvo', 2);
+
+        $this->actingAs($userWithoutViewAll)
+            ->getJson("/api/users/{$targetUser->PK_USUARIO}/journeys/metrics")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+    }
+
+    public function test_manager_with_results_view_all_permission_can_view_any_user_metrics(): void
+    {
+        $manager = Usuario::create([
+            'FK_TIPO_PERFIL' => 2,
+            'FK_TIPO_USUARIO' => 2,
+            'NO_USUARIO' => 'Gestor',
+            'DS_EMAIL' => 'gestor@example.com',
+            'ST_ATIVO' => 1,
+        ]);
+        $targetUser = $this->activeUser('Alvo Gestor', 2);
+
+        $this->actingAs($manager)
+            ->getJson("/api/users/{$targetUser->PK_USUARIO}/journeys/metrics")
+            ->assertOk()
+            ->assertJsonPath('data.user_id', $targetUser->PK_USUARIO);
+    }
+
+    public function test_metrics_exclude_cancelled_journeys_from_completed_ongoing_and_scores(): void
+    {
+        $user = $this->activeUser('Usuario Cancelado', 2);
+        $domain = KnowledgeDomain::create(['NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade']);
+        $profile = JourneyProfile::create([
+            'FK_DOMINIO_CONHECIMENTO' => $domain->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'Perfil Teste',
+        ]);
+
+        $this->journey($user, $profile, '2026-07-01 10:00:00', '2026-07-01 11:00:00', 80.0);
+        Journey::create([
+            'FK_USUARIO' => $user->PK_USUARIO,
+            'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'NU_PONTUACAO_TOTAL' => 100.0,
+            'DH_CRIADO_EM' => '2026-07-02 10:00:00',
+            'DH_FIM' => '2026-07-02 11:00:00',
+            'DH_CANCELADA_EM' => '2026-07-02 12:00:00',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys/metrics")
+            ->assertOk();
+
+        $response
+            ->assertJsonPath('data.summary.total_journeys', 2)
+            ->assertJsonPath('data.summary.completed_journeys', 1)
+            ->assertJsonPath('data.summary.ongoing_journeys', 0)
+            ->assertJsonPath('data.summary.average_score', fn ($score) => (float) $score === 80.0)
+            ->assertJsonPath('data.summary.highest_score', fn ($score) => (float) $score === 80.0)
+            ->assertJsonPath('data.summary.latest_score', fn ($score) => (float) $score === 80.0);
     }
 
     public function test_metrics_endpoint_rejects_unauthenticated_request(): void
@@ -249,6 +315,7 @@ class UserJourneyMetricsAndFiltersTest extends TestCase
     private function activeUser(string $name, int $userType): Usuario
     {
         return Usuario::create([
+            'FK_TIPO_PERFIL' => $userType === 1 ? 1 : 3,
             'FK_TIPO_USUARIO' => $userType,
             'NO_USUARIO' => $name,
             'DS_EMAIL' => strtolower(str_replace(' ', '.', $name)).'@example.com',

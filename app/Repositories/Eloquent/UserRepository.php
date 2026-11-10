@@ -65,7 +65,6 @@ class UserRepository implements UserRepositoryInterface
     {
         return Usuario::query()
             ->where('ST_ATIVO', 2)
-            ->whereNull('FK_TIPO_USUARIO')
             ->orderBy('DH_CRIADO_EM')
             ->orderBy('PK_USUARIO')
             ->paginate($perPage, ['*'], 'page', $page);

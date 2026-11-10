@@ -20,6 +20,7 @@ class DashboardJourneyResource extends JsonResource
             'status' => $this->DH_FIM === null ? 'in_progress' : 'completed',
             'started_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),
             'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
+            'origin' => $this->origin,
             'journey_profile' => [
                 'id' => $this->journeyProfile?->PK_PERFIS_JORNADA,
                 'name_pt' => $this->journeyProfile?->NO_PERFIS_PT,
