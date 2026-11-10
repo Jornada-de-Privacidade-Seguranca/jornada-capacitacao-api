@@ -91,11 +91,14 @@ class DashboardTest extends TestCase
                 'FK_SUBCRITERIOS_INGLES' => $english->PK_SUBCRITERIOS,
             ],
         );
+        $latestCompleted->update(['TP_JORNADA_ATRIBUIDA' => Journey::ATTRIBUTION_ADMIN]);
+        $secondCompleted->update(['TP_JORNADA_ATRIBUIDA' => null]);
         $latestCompleted->higherEducationCourses()->attach([
             $higherEducation->PK_CURSO_SUPERIOR,
             $secondHigherEducation->PK_CURSO_SUPERIOR,
         ]);
         $unfinished = $this->createJourney($user, $journeyProfile, '2026-07-05 08:00:00', null);
+        $unfinished->update(['TP_JORNADA_ATRIBUIDA' => Journey::ATTRIBUTION_SELF]);
         $this->createJourney($otherUser, $journeyProfile, '2026-07-06 08:00:00', '2026-07-06 09:00:00');
 
         $this->loginAs('maria.silva@example.com');
@@ -115,9 +118,11 @@ class DashboardTest extends TestCase
             ->assertJsonPath('data.journeys.has_unfinished_journey', true)
             ->assertJsonPath('data.journeys.unfinished_journey.id', $unfinished->PK_JORNADA)
             ->assertJsonPath('data.journeys.unfinished_journey.status', 'in_progress')
+            ->assertJsonPath('data.journeys.unfinished_journey.origin', 'self_started')
             ->assertJsonPath('data.journeys.unfinished_journey.finished_at', null)
             ->assertJsonPath('data.journeys.latest_journey.id', $latestCompleted->PK_JORNADA)
             ->assertJsonPath('data.journeys.latest_journey.status', 'completed')
+            ->assertJsonPath('data.journeys.latest_journey.origin', 'assigned')
             ->assertJsonPath('data.journeys.latest_journey.journey_profile.name_pt', 'Privacidade')
             ->assertJsonPath('data.journeys.latest_journey.journey_profile.description_pt', 'Privacidade')
             ->assertJsonPath(
@@ -141,6 +146,7 @@ class DashboardTest extends TestCase
             ->assertJsonPath('data.journeys.latest_journey.higher_education_courses.1.subcriterion.name_en', 'Postgraduate')
             ->assertJsonCount(3, 'data.journeys.recent_journeys')
             ->assertJsonPath('data.journeys.recent_journeys.0.id', $secondCompleted->PK_JORNADA)
+            ->assertJsonPath('data.journeys.recent_journeys.0.origin', null)
             ->assertJsonPath('data.journeys.recent_journeys.1.id', $thirdCompleted->PK_JORNADA)
             ->assertJsonPath('data.journeys.recent_journeys.2.id', $oldestCompleted->PK_JORNADA);
     }

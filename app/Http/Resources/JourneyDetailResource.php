@@ -23,6 +23,7 @@ class JourneyDetailResource extends JsonResource
             'started_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),
             'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
             'cancelled_at' => $this->DH_CANCELADA_EM?->format('Y-m-d H:i:s'),
+            'origin' => $this->origin,
             'status' => $isCancelled ? 'cancelled' : ($isCompleted ? 'completed' : 'ongoing'),
             'is_completed' => $isCompleted,
             'is_cancelled' => $isCancelled,

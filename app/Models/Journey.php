@@ -39,6 +39,15 @@ class Journey extends JornadaModel
         'DH_CANCELADA_EM' => 'datetime',
     ];
 
+    public function getOriginAttribute(): ?string
+    {
+        return match ($this->TP_JORNADA_ATRIBUIDA) {
+            self::ATTRIBUTION_SELF => 'self_started',
+            self::ATTRIBUTION_ADMIN => 'assigned',
+            default => null,
+        };
+    }
+
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'FK_USUARIO', 'PK_USUARIO');

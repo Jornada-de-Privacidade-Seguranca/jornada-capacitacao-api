@@ -848,6 +848,7 @@ paths:
                           status: in_progress
                           started_at: "2026-07-24 08:00:00"
                           finished_at: null
+                          origin: self_started
                           journey_profile:
                             id: 2
                             name_pt: Encarregado pelo Tratamento de Dados Pessoais
@@ -878,6 +879,7 @@ paths:
                           status: completed
                           started_at: "2026-07-23 08:00:00"
                           finished_at: "2026-07-23 09:00:00"
+                          origin: assigned
                           journey_profile:
                             id: 2
                             name_pt: Encarregado pelo Tratamento de Dados Pessoais
@@ -1091,6 +1093,7 @@ paths:
                         started_at: "2026-07-23 16:30:00"
                         finished_at: null
                         cancelled_at: null
+                        origin: self_started
                         status: ongoing
                         is_completed: false
                         is_cancelled: false
@@ -1232,6 +1235,7 @@ paths:
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
                       cancelled_at: null
+                      origin: self_started
                       status: ongoing
                       is_completed: false
                       is_cancelled: false
@@ -2033,6 +2037,7 @@ paths:
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
                       cancelled_at: null
+                      origin: self_started
                       status: ongoing
                       is_completed: false
                       is_cancelled: false
@@ -4373,6 +4378,7 @@ components:
         - started_at
         - finished_at
         - cancelled_at
+        - origin
         - status
         - is_completed
         - is_cancelled
@@ -4408,6 +4414,19 @@ components:
             - string
             - "null"
           example: null
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         status:
           type: string
           enum:
@@ -4611,6 +4630,7 @@ components:
         - started_at
         - finished_at
         - cancelled_at
+        - origin
         - status
         - is_completed
         - is_cancelled
@@ -4644,6 +4664,19 @@ components:
             - string
             - "null"
           example: null
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         status:
           type: string
           enum:
@@ -5130,6 +5163,7 @@ components:
         - status
         - started_at
         - finished_at
+        - origin
         - journey_profile
         - professional_experience
         - profile_experience
@@ -5165,6 +5199,19 @@ components:
             - string
             - "null"
           example: "2026-07-23 09:00:00"
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         journey_profile:
           type: object
           required:
