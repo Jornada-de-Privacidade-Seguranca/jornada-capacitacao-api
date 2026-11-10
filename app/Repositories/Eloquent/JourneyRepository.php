@@ -37,6 +37,7 @@ class JourneyRepository implements JourneyRepositoryInterface
             ])
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->first();
@@ -76,6 +77,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         return Journey::query()
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA');
     }
@@ -85,6 +87,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         return Journey::query()
             ->with(self::DETAILED_RELATIONS)
             ->where('FK_USUARIO', $userId)
+            ->whereNull('DH_CANCELADA_EM')
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->lockForUpdate()
@@ -116,13 +119,7 @@ class JourneyRepository implements JourneyRepositoryInterface
             ])
             ->where('FK_USUARIO', $userId);
 
-        if (($filters['status'] ?? null) === 'completed') {
-            $query->whereNotNull('DH_FIM');
-        }
-
-        if (($filters['status'] ?? null) === 'ongoing') {
-            $query->whereNull('DH_FIM');
-        }
+        $this->applyStatusFilter($query, $filters['status'] ?? null);
 
         if (isset($filters['journey_profile_id'])) {
             $query->where('FK_PERFIS_JORNADA', $filters['journey_profile_id']);
@@ -148,6 +145,16 @@ class JourneyRepository implements JourneyRepositoryInterface
             ->orderByDesc('DH_CRIADO_EM')
             ->orderByDesc('PK_JORNADA')
             ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    private function applyStatusFilter(Builder $query, ?string $status): void
+    {
+        match ($status) {
+            'completed' => $query->whereNotNull('DH_FIM')->whereNull('DH_CANCELADA_EM'),
+            'ongoing' => $query->whereNull('DH_FIM')->whereNull('DH_CANCELADA_EM'),
+            'cancelled' => $query->whereNotNull('DH_CANCELADA_EM'),
+            default => null,
+        };
     }
 
     public function updateGeneralData(Journey $journey, array $data): Journey
@@ -181,6 +188,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         return Journey::query()
             ->where('FK_USUARIO', $userId)
             ->whereNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM')
             ->exists();
     }
 

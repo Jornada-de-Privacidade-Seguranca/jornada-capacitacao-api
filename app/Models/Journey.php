@@ -27,6 +27,7 @@ class Journey extends JornadaModel
         'JS_SCORE_BREAKDOWN',
         'DH_CRIADO_EM',
         'DH_FIM',
+        'DH_CANCELADA_EM',
     ];
 
     protected $casts = [
@@ -35,7 +36,17 @@ class Journey extends JornadaModel
         'JS_SCORE_BREAKDOWN' => 'array',
         'DH_CRIADO_EM' => 'datetime',
         'DH_FIM' => 'datetime',
+        'DH_CANCELADA_EM' => 'datetime',
     ];
+
+    public function getOriginAttribute(): ?string
+    {
+        return match ($this->TP_JORNADA_ATRIBUIDA) {
+            self::ATTRIBUTION_SELF => 'self_started',
+            self::ATTRIBUTION_ADMIN => 'assigned',
+            default => null,
+        };
+    }
 
     public function usuario(): BelongsTo
     {
