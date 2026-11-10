@@ -329,7 +329,7 @@ paths:
       tags:
         - Auth
       summary: Convida usuario por e-mail para definir a senha inicial
-      description: Exige sessao autenticada, permissao users.register, perfil de acesso Administrador e CSRF. A conta e criada como usuario comum inativo, com TP_ATIVACAO igual a 2. Se ja houver convite pendente, um novo token substitui o anterior. O e-mail contem link para a tela do frontend, fora do escopo desta API. Aceita no maximo 10 requisicoes por minuto por administrador.
+      description: Exige sessao autenticada, permissao users.register e CSRF. A conta e criada como usuario comum inativo, com TP_ATIVACAO igual a 2. Se ja houver convite pendente, um novo token substitui o anterior. O e-mail contem link para a tela do frontend, fora do escopo desta API. Aceita no maximo 10 requisicoes por minuto por usuario autenticado.
       operationId: inviteUserByEmail
       security:
         - sessionAuth: []
@@ -355,7 +355,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: Usuario autenticado sem permissao users.register ou cujo tipo nao seja administrador
+          description: Usuario autenticado sem permissao users.register
           content:
             application/json:
               schema:

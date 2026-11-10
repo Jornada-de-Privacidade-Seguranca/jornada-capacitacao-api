@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Mail\UserInvitationMail;
 use App\Models\Usuario;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class UserInvitationTest extends TestCase
@@ -54,7 +56,7 @@ class UserInvitationTest extends TestCase
         Mail::assertSent(UserInvitationMail::class, fn (UserInvitationMail $mail): bool => $mail->email === 'new.user@example.com');
     }
 
-    public function test_only_an_authenticated_administrator_can_create_an_invitation(): void
+    public function test_invitation_authorization_uses_the_users_register_permission(): void
     {
         $this->withCsrfToken()->postJson('/api/admin/user-invitations', ['email' => 'new.user@example.com'])
             ->assertUnauthorized()
@@ -67,19 +69,48 @@ class UserInvitationTest extends TestCase
             ->assertJsonPath('code', 'PERMISSION_DENIED');
 
         $nonAdministratorWithRegistrationPermission = $this->user(
-            'Misconfigured User',
-            'misconfigured@example.com',
+            'Profile Administrator',
+            'profile-admin@example.com',
             1,
             2,
             1,
         );
         $this->actingAs($nonAdministratorWithRegistrationPermission)
             ->postJsonWithCsrf('/api/admin/user-invitations', ['email' => 'new.user@example.com'])
-            ->assertForbidden()
-            ->assertJsonPath('code', 'USER_INVITATION_FORBIDDEN');
+            ->assertCreated()
+            ->assertJsonPath('success', true);
 
-        $this->assertDatabaseMissing('TB_USUARIO', ['DS_EMAIL' => 'new.user@example.com']);
-        Mail::assertNothingSent();
+        $userWithoutRegistrationPermission = $this->user(
+            'Common User',
+            'common-without-register@example.com',
+            1,
+            2,
+            3,
+        );
+        $this->actingAs($userWithoutRegistrationPermission)
+            ->postJsonWithCsrf('/api/admin/user-invitations', ['email' => 'another.user@example.com'])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+
+        $this->assertDatabaseHas('TB_USUARIO', ['DS_EMAIL' => 'new.user@example.com']);
+        $this->assertDatabaseMissing('TB_USUARIO', ['DS_EMAIL' => 'another.user@example.com']);
+    }
+
+    public function test_activation_columns_migration_adds_missing_columns_and_is_idempotent(): void
+    {
+        Schema::table('TB_USUARIO', function (Blueprint $table): void {
+            $table->dropColumn(['TP_ATIVACAO', 'DH_ATIVACAO']);
+        });
+
+        $migration = require database_path('migrations/2026_11_10_000000_add_activation_columns_to_tb_usuario.php');
+        $migration->up();
+
+        $this->assertTrue(Schema::hasColumn('TB_USUARIO', 'TP_ATIVACAO'));
+        $this->assertTrue(Schema::hasColumn('TB_USUARIO', 'DH_ATIVACAO'));
+
+        $migration->up();
+        $this->assertTrue(Schema::hasColumn('TB_USUARIO', 'TP_ATIVACAO'));
+        $this->assertTrue(Schema::hasColumn('TB_USUARIO', 'DH_ATIVACAO'));
     }
 
     public function test_invitation_requires_csrf_and_valid_email_and_rejects_existing_accounts(): void
@@ -256,6 +287,33 @@ class UserInvitationTest extends TestCase
         $this->assertDatabaseMissing('TB_USUARIO', ['DS_EMAIL' => 'new.user@example.com']);
         $this->assertDatabaseMissing('password_reset_tokens', ['email' => 'new.user@example.com']);
         Mail::assertNothingSent();
+    }
+
+    public function test_failed_invitation_email_can_be_reissued(): void
+    {
+        $admin = $this->user('Administrator', 'admin@example.com', 1, 1);
+        $mailManager = app('mail.manager');
+        Mail::shouldReceive('to')
+            ->once()
+            ->with('new.user@example.com')
+            ->andThrow(new \RuntimeException('SMTP unavailable'));
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf('/api/admin/user-invitations', ['email' => 'new.user@example.com'])
+            ->assertInternalServerError()
+            ->assertJsonPath('code', 'USER_INVITATION_FAILED');
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'DS_EMAIL' => 'new.user@example.com',
+            'ST_ATIVO' => 2,
+            'TP_ATIVACAO' => 2,
+        ]);
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => 'new.user@example.com']);
+
+        Mail::swap($mailManager);
+        Mail::fake();
+        $this->invite($admin, 'new.user@example.com');
+        Mail::assertSent(UserInvitationMail::class);
     }
 
     private function invite(Usuario $admin, string $email): void

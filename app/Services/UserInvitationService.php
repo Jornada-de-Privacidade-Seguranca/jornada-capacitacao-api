@@ -16,12 +16,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RuntimeException;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class UserInvitationService
 {
-    private const ADMIN_USER_TYPE = 1;
-
     private const COMMON_USER_TYPE = 2;
 
     private const PENDING_STATUS = 2;
@@ -35,10 +32,8 @@ class UserInvitationService
         private readonly PasswordResetTokenRepositoryInterface $tokenRepository,
     ) {}
 
-    public function invite(Usuario $authenticatedUser, string $email): Usuario
+    public function invite(string $email): Usuario
     {
-        $this->authorizeAdministrator($authenticatedUser);
-
         $mailer = (string) config('mail.default');
         if (config("mail.mailers.{$mailer}.transport") === 'log') {
             throw new RuntimeException('Invitation links cannot be sent through the log mailer.');
@@ -149,13 +144,6 @@ class UserInvitationService
         $expiresAt = $createdAt->addMinutes((int) config('auth.passwords.users.expire', 60));
 
         return $expiresAt->isFuture() && Hash::check($token, $record->token);
-    }
-
-    private function authorizeAdministrator(Usuario $authenticatedUser): void
-    {
-        if ((int) $authenticatedUser->FK_TIPO_USUARIO !== self::ADMIN_USER_TYPE) {
-            throw new AccessDeniedHttpException;
-        }
     }
 
     private function isUniqueEmailViolation(QueryException $exception): bool

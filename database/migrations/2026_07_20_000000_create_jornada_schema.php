@@ -141,8 +141,6 @@ return new class extends Migration
             $table->string('DS_SENHA', 255)->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable()->useCurrent();
             $table->integer('ST_ATIVO')->nullable();
-            $table->integer('TP_ATIVACAO')->nullable();
-            $table->timestamp('DH_ATIVACAO')->nullable();
 
             $table->foreign('FK_TIPO_PERFIL')->references('PK_TIPO_PERFIL')->on('TB_TIPO_PERFIL');
         });

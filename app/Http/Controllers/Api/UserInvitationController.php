@@ -8,12 +8,10 @@ use App\Http\Requests\CompleteUserInvitationRequest;
 use App\Http\Requests\CreateUserInvitationRequest;
 use App\Http\Requests\ValidateUserInvitationRequest;
 use App\Http\Resources\InvitedUserResource;
-use App\Models\Usuario;
 use App\Services\UserInvitationService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
 
 class UserInvitationController
@@ -23,15 +21,7 @@ class UserInvitationController
     public function store(CreateUserInvitationRequest $request): JsonResponse
     {
         try {
-            /** @var Usuario $authenticatedUser */
-            $authenticatedUser = $request->user();
-            $user = $this->service->invite($authenticatedUser, $request->validated('email'));
-        } catch (AccessDeniedHttpException) {
-            return ApiResponse::error(
-                message: 'Voce nao possui permissao para convidar usuarios.',
-                status: Response::HTTP_FORBIDDEN,
-                code: 'USER_INVITATION_FORBIDDEN',
-            );
+            $user = $this->service->invite($request->validated('email'));
         } catch (AccountAlreadyExistsException) {
             return ApiResponse::error(
                 message: 'Ja existe uma conta cadastrada com este e-mail.',
