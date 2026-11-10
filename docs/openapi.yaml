@@ -1002,6 +1002,7 @@ paths:
                           status: in_progress
                           started_at: "2026-07-24 08:00:00"
                           finished_at: null
+                          origin: self_started
                           journey_profile:
                             id: 2
                             name_pt: Encarregado pelo Tratamento de Dados Pessoais
@@ -1032,6 +1033,7 @@ paths:
                           status: completed
                           started_at: "2026-07-23 08:00:00"
                           finished_at: "2026-07-23 09:00:00"
+                          origin: assigned
                           journey_profile:
                             id: 2
                             name_pt: Encarregado pelo Tratamento de Dados Pessoais
@@ -1177,6 +1179,7 @@ paths:
             enum:
               - completed
               - ongoing
+              - cancelled
           example: ongoing
         - name: journey_profile_id
           in: query
@@ -1243,8 +1246,11 @@ paths:
                             name: Privacidade
                         started_at: "2026-07-23 16:30:00"
                         finished_at: null
+                        cancelled_at: null
+                        origin: self_started
                         status: ongoing
                         is_completed: false
+                        is_cancelled: false
                         score: null
                         summary:
                           acquired_knowledges_count: 8
@@ -1382,8 +1388,11 @@ paths:
                           name: Privacidade
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
+                      cancelled_at: null
+                      origin: self_started
                       status: ongoing
                       is_completed: false
+                      is_cancelled: false
                       summary:
                         acquired_knowledges_count: 0
                         professional_certifications_count: 0
@@ -2024,6 +2033,92 @@ paths:
                     errors: []
                     code: JOURNEY_FINALIZATION_FAILED
 
+  /journeys/{journey}/cancel:
+    post:
+      tags:
+        - Journeys
+      summary: Cancela uma jornada propria em andamento
+      description: Cancela somente uma jornada em andamento do usuario autenticado com origem TP_JORNADA_ATRIBUIDA igual a 2. Jornadas atribuídas por administrador, com origem desconhecida, concluídas, já canceladas ou pertencentes a outra pessoa são recusadas. O cancelamento fica registrado em cancelled_at e não preenche finished_at. Requer sessão autenticada e token CSRF.
+      operationId: cancelOwnJourney
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/JourneyId"
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Jornada cancelada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JourneyCancellationResponse"
+              examples:
+                cancelled:
+                  value:
+                    success: true
+                    message: Jornada cancelada com sucesso.
+                    data:
+                      journey_id: 10
+                      status: cancelled
+                      cancelled_at: "2026-11-10 14:30:00"
+                      is_completed: false
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: A jornada pertence a outra pessoa
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para cancelar esta jornada.
+                    errors: []
+                    code: PERMISSION_DENIED
+        "404":
+          description: Jornada nao encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                journeyNotFound:
+                  value:
+                    success: false
+                    message: Jornada nao encontrada.
+                    errors: []
+                    code: JOURNEY_NOT_FOUND
+        "409":
+          description: Jornada concluida, já cancelada, atribuida por administrador ou sem origem conhecida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                cancellationNotAllowed:
+                  value:
+                    success: false
+                    message: Esta jornada nao pode ser cancelada.
+                    errors: []
+                    code: JOURNEY_CANCELLATION_NOT_ALLOWED
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel cancelar a jornada no momento.
+                    errors: []
+                    code: JOURNEY_CANCELLATION_FAILED
+
   /journeys/{journey}:
     get:
       tags:
@@ -2095,8 +2190,11 @@ paths:
                               name_en: Basic
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
+                      cancelled_at: null
+                      origin: self_started
                       status: ongoing
                       is_completed: false
+                      is_cancelled: false
                       score: null
                       score_breakdown: null
                       answers:
@@ -4291,6 +4389,42 @@ components:
               type: string
               description: Instante em que a pontuacao foi calculada e a jornada foi finalizada.
               example: "2026-09-28 14:30:00"
+    JourneyCancellationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Jornada cancelada com sucesso.
+        data:
+          type: object
+          required:
+            - journey_id
+            - status
+            - cancelled_at
+            - is_completed
+          properties:
+            journey_id:
+              type: integer
+              example: 10
+            status:
+              type: string
+              enum:
+                - cancelled
+              example: cancelled
+            cancelled_at:
+              type: string
+              description: Instante em que a jornada foi cancelada. Nao representa sua conclusao.
+              example: "2026-11-10 14:30:00"
+            is_completed:
+              type: boolean
+              example: false
 
     CurrentJourneyGeneralDataOptionsResponse:
       type: object
@@ -4502,8 +4636,11 @@ components:
         - journey_profile
         - started_at
         - finished_at
+        - cancelled_at
+        - origin
         - status
         - is_completed
+        - is_cancelled
         - score
         - summary
         - detail
@@ -4531,13 +4668,35 @@ components:
             - string
             - "null"
           example: null
+        cancelled_at:
+          type:
+            - string
+            - "null"
+          example: null
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         status:
           type: string
           enum:
             - completed
             - ongoing
+            - cancelled
           example: ongoing
         is_completed:
+          type: boolean
+          example: false
+        is_cancelled:
           type: boolean
           example: false
         score:
@@ -4729,8 +4888,11 @@ components:
         - journey_profile
         - started_at
         - finished_at
+        - cancelled_at
+        - origin
         - status
         - is_completed
+        - is_cancelled
         - score
         - score_breakdown
         - answers
@@ -4756,13 +4918,35 @@ components:
             - string
             - "null"
           example: null
+        cancelled_at:
+          type:
+            - string
+            - "null"
+          example: null
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         status:
           type: string
           enum:
             - completed
             - ongoing
+            - cancelled
           example: ongoing
         is_completed:
+          type: boolean
+          example: false
+        is_cancelled:
           type: boolean
           example: false
         score:
@@ -5238,6 +5422,7 @@ components:
         - status
         - started_at
         - finished_at
+        - origin
         - journey_profile
         - professional_experience
         - profile_experience
@@ -5273,6 +5458,19 @@ components:
             - string
             - "null"
           example: "2026-07-23 09:00:00"
+        origin:
+          type:
+            - string
+            - "null"
+          enum:
+            - self_started
+            - assigned
+            - null
+          description: Origem da jornada; null representa valor nulo ou desconhecido em registros antigos.
+          examples:
+            - self_started
+            - assigned
+            - null
         journey_profile:
           type: object
           required:

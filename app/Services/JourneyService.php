@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\IncompleteJourneyException;
 use App\Exceptions\JourneyAlreadyFinishedException;
+use App\Exceptions\JourneyCancellationNotAllowedException;
+use App\Exceptions\JourneyNotInProgressException;
 use App\Exceptions\JourneyProfileNotFoundException;
 use App\Exceptions\JourneyProfileSelectionException;
 use App\Exceptions\NoOngoingJourneyException;
@@ -78,7 +80,11 @@ class JourneyService
             throw new JourneyProfileNotFoundException;
         }
 
-        return DB::transaction(function () use ($requestedUser, $data) {
+        $attributionType = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO
+            ? Journey::ATTRIBUTION_SELF
+            : Journey::ATTRIBUTION_ADMIN;
+
+        return DB::transaction(function () use ($requestedUser, $data, $attributionType) {
             $this->userRepository->lockForUpdate((int) $requestedUser->PK_USUARIO);
 
             $user = $this->userRepository->findById((int) $requestedUser->PK_USUARIO);
@@ -104,6 +110,7 @@ class JourneyService
             return $this->journeyRepository->create([
                 'FK_USUARIO' => $requestedUser->PK_USUARIO,
                 'FK_PERFIS_JORNADA' => $journeyProfileId,
+                'TP_JORNADA_ATRIBUIDA' => $attributionType,
                 'DH_CRIADO_EM' => now(),
                 'DH_FIM' => null,
             ]);
@@ -240,6 +247,33 @@ class JourneyService
         });
     }
 
+    public function cancelForUser(Usuario $authenticatedUser, int $journeyId): Journey
+    {
+        return DB::transaction(function () use ($authenticatedUser, $journeyId): Journey {
+            $journey = $this->journeyRepository->findDetailedByIdForUpdate($journeyId);
+
+            if ($journey === null) {
+                throw new ModelNotFoundException;
+            }
+
+            if ((int) $authenticatedUser->PK_USUARIO !== (int) $journey->FK_USUARIO) {
+                throw new AccessDeniedHttpException;
+            }
+
+            if (
+                $journey->DH_FIM !== null
+                || $journey->DH_CANCELADA_EM !== null
+                || (int) $journey->TP_JORNADA_ATRIBUIDA !== Journey::ATTRIBUTION_SELF
+            ) {
+                throw new JourneyCancellationNotAllowedException;
+            }
+
+            $this->journeyRepository->update($journey, ['DH_CANCELADA_EM' => now()]);
+
+            return $journey->refresh();
+        });
+    }
+
     public function getCurrentGeneralDataOptions(Usuario $authenticatedUser): array
     {
         $journey = $this->journeyRepository->findCurrentByUserId((int) $authenticatedUser->PK_USUARIO);
@@ -324,6 +358,10 @@ class JourneyService
 
         if ($journey->DH_FIM !== null) {
             throw new JourneyAlreadyFinishedException;
+        }
+
+        if ($journey->DH_CANCELADA_EM !== null) {
+            throw new JourneyNotInProgressException;
         }
 
         return $journey;

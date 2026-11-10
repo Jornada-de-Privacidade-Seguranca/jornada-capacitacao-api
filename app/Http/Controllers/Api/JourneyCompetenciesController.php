@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\CompetencyNotInJourneyProfileException;
 use App\Exceptions\JourneyAlreadyFinishedException;
+use App\Exceptions\JourneyNotInProgressException;
 use App\Http\Requests\RecordJourneyCompetenciesRequest;
 use App\Http\Resources\JourneyDetailResource;
 use App\Services\JourneyService;
@@ -37,6 +38,12 @@ class JourneyCompetenciesController
                 message: 'Voce nao possui permissao para atualizar esta jornada.',
                 status: Response::HTTP_FORBIDDEN,
                 code: 'PERMISSION_DENIED',
+            );
+        } catch (JourneyNotInProgressException) {
+            return ApiResponse::error(
+                message: 'Jornada cancelada nao pode ser alterada.',
+                status: Response::HTTP_CONFLICT,
+                code: 'JOURNEY_NOT_IN_PROGRESS',
             );
         } catch (JourneyAlreadyFinishedException) {
             return ApiResponse::error(

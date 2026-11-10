@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CurrentJourneyCoursesController;
 use App\Http\Controllers\Api\CurrentJourneyGeneralDataController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\JourneyAnswersController;
+use App\Http\Controllers\Api\JourneyCancellationController;
 use App\Http\Controllers\Api\JourneyCertificationController;
 use App\Http\Controllers\Api\JourneyCertificationsController;
 use App\Http\Controllers\Api\JourneyCompetenciesController;
@@ -86,6 +87,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
         Route::get('/journeys/{journey}', [UserJourneyController::class, 'show']);
         Route::get('/journeys/{journey}/pdf', JourneyResultPdfController::class);
         Route::post('/users/{user}/journeys', [UserJourneyController::class, 'store']);
+        Route::post('/journeys/{journey}/cancel', JourneyCancellationController::class);
         Route::patch('/journeys/{journey}/answers', JourneyAnswersController::class)
             ->middleware('permission:journeys.take');
         Route::post('/journeys/{journey}/courses', JourneyCoursesController::class)

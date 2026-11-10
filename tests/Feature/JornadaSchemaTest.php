@@ -539,6 +539,7 @@ class JornadaSchemaTest extends TestCase
             $table->unsignedInteger('FK_POS_GRADUACAO')->nullable();
             $table->timestamp('DH_CRIADO_EM')->nullable();
             $table->timestamp('DH_FIM')->nullable();
+            $table->timestamp('DH_CANCELADA_EM')->nullable();
         });
     }
 
