@@ -17,6 +17,7 @@ class JourneyListResource extends JsonResource
     public function toArray(Request $request): array
     {
         $isCompleted = $this->DH_FIM !== null;
+        $isCancelled = $this->DH_CANCELADA_EM !== null;
 
         return [
             'id' => $this->PK_JORNADA,
@@ -33,8 +34,10 @@ class JourneyListResource extends JsonResource
             ],
             'started_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),
             'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
-            'status' => $isCompleted ? 'completed' : 'ongoing',
+            'cancelled_at' => $this->DH_CANCELADA_EM?->format('Y-m-d H:i:s'),
+            'status' => $isCancelled ? 'cancelled' : ($isCompleted ? 'completed' : 'ongoing'),
             'is_completed' => $isCompleted,
+            'is_cancelled' => $isCancelled,
             'score' => $this->NU_PONTUACAO_TOTAL,
             'summary' => [
                 'acquired_knowledges_count' => $this->acquired_knowledges_count ?? 0,

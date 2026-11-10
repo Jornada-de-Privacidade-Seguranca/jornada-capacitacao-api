@@ -296,7 +296,7 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Validation error.')
             ->assertJsonPath('code', 'VALIDATION_ERROR')
-            ->assertJsonPath('errors.status.0', 'A situacao da jornada deve ser completed ou ongoing.')
+            ->assertJsonPath('errors.status.0', 'A situacao da jornada deve ser completed, ongoing ou cancelled.')
             ->assertJsonPath('errors.journey_profile_id.0', 'O perfil de jornada informado nao existe.')
             ->assertJsonPath('errors.started_from.0', 'A data inicial minima deve estar no formato Y-m-d.')
             ->assertJsonPath('errors.ended_to.0', 'A data de finalizacao maxima deve ser maior ou igual a data de finalizacao minima.');

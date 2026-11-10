@@ -43,6 +43,7 @@ class UserJourneyCreateTest extends TestCase
             'PK_JORNADA' => $response->json('data.id'),
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'TP_JORNADA_ATRIBUIDA' => 2,
             'DH_FIM' => null,
         ]);
     }
@@ -65,6 +66,7 @@ class UserJourneyCreateTest extends TestCase
             'PK_JORNADA' => $response->json('data.id'),
             'FK_USUARIO' => $user->PK_USUARIO,
             'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+            'TP_JORNADA_ATRIBUIDA' => 1,
             'DH_FIM' => null,
         ]);
     }

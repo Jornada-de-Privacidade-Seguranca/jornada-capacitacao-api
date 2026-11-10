@@ -54,7 +54,7 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
             $this->userJourneys($userId)->whereNotNull('DH_FIM')->selectRaw('1')->limit(1),
             'completed_journey_exists',
         )->selectSub(
-            $this->userJourneys($userId)->whereNull('DH_FIM')->selectRaw('1')->limit(1),
+            $this->userJourneys($userId)->whereNull('DH_FIM')->whereNull('DH_CANCELADA_EM')->selectRaw('1')->limit(1),
             'pending_journey_exists',
         )->selectSub(
             $this->userJourneys($userId)
@@ -73,11 +73,20 @@ class JourneyProfileRepository implements JourneyProfileRepositoryInterface
                 }
 
                 if (in_array('pending', $userStatuses, true)) {
-                    $query->orWhereExists($this->userJourneys($userId)->whereNull('DH_FIM')->selectRaw('1'));
+                    $query->orWhereExists(
+                        $this->userJourneys($userId)
+                            ->whereNull('DH_FIM')
+                            ->whereNull('DH_CANCELADA_EM')
+                            ->selectRaw('1'),
+                    );
                 }
 
                 if (in_array('not_done', $userStatuses, true)) {
-                    $query->orWhereNotExists($this->userJourneys($userId)->selectRaw('1'));
+                    $query->orWhereNotExists(
+                        $this->userJourneys($userId)
+                            ->whereNull('DH_CANCELADA_EM')
+                            ->selectRaw('1'),
+                    );
                 }
             });
         }
