@@ -33,7 +33,6 @@ Route::post('/auth/register', UserRegistrationController::class)->middleware('th
 // Rota temporaria de teste/scaffold do projeto.
 // Quando o projeto nao precisar mais demonstrar o contrato padrao, remova este exemplo.
 Route::get('/template-example', TemplateExampleController::class);
-Route::get('/system-summary', SystemSummaryController::class);
 
 // Rota de autenticacao de usuario
 Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group(function (): void {
@@ -41,6 +40,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
 
     Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
+        Route::get('/system-summary', SystemSummaryController::class);
         Route::get('/me', AuthenticatedUserController::class);
         Route::patch('/me', [AuthenticatedUserController::class, 'update']);
         Route::get('/admin/users/pending-activation', [UserAccountAdministrationController::class, 'pending']);

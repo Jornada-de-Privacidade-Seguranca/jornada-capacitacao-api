@@ -99,8 +99,10 @@ paths:
       tags:
         - System
       summary: Retorna estatisticas e resumo do sistema
-      description: Endpoint auxiliar de consulta que demonstra o uso de MVC, Service, Repository, Resource e ApiResponse integrado ao banco.
+      description: Endpoint administrativo autenticado para consulta de resumo operacional do sistema e banco de dados. Somente administradores ativos podem consultar.
       operationId: getSystemSummary
+      security:
+        - sessionAuth: []
       parameters:
         - name: include_database_status
           in: query
@@ -138,6 +140,21 @@ paths:
                         competencies_count: 5
                         connected: true
                         driver: pgsql
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario autenticado sem permissao de administrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar o resumo do sistema.
+                    errors: []
+                    code: SYSTEM_SUMMARY_FORBIDDEN
         "422":
           description: Erro de validacao no contrato padrao
           content:
@@ -153,6 +170,19 @@ paths:
                       include_database_status:
                         - The include database status field must be true or false.
                     code: VALIDATION_ERROR
+        "500":
+          description: Erro interno ao buscar resumo do sistema
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar o resumo do sistema no momento.
+                    errors: []
+                    code: SYSTEM_SUMMARY_FAILED
   /auth/register:
     post:
       tags:
