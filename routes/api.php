@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\JourneyProfileSelectionController;
 use App\Http\Controllers\Api\JourneyResultPdfController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\LogoutController;
+use App\Http\Controllers\Api\SystemSummaryController;
 use App\Http\Controllers\Api\TemplateExampleController;
 use App\Http\Controllers\Api\UserAccountAdministrationController;
 use App\Http\Controllers\Api\UserJourneyController;
@@ -41,6 +42,7 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
 
     Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
+        Route::get('/system-summary', SystemSummaryController::class);
         Route::get('/me', AuthenticatedUserController::class);
         Route::patch('/me', [AuthenticatedUserController::class, 'update']);
         Route::get('/admin/users/pending-activation', [UserAccountAdministrationController::class, 'pending'])

@@ -13,6 +13,7 @@ use App\Repositories\Contracts\JourneyRepositoryInterface;
 use App\Repositories\Contracts\ProfessionalCertificationRepositoryInterface;
 use App\Repositories\Contracts\ProfessionalExperienceRepositoryInterface;
 use App\Repositories\Contracts\SubcriterionRepositoryInterface;
+use App\Repositories\Contracts\SystemSummaryRepositoryInterface;
 use App\Repositories\Contracts\TemplateExampleRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Repositories\Eloquent\CompetencyCriterionWeightRepository;
@@ -26,6 +27,7 @@ use App\Repositories\Eloquent\JourneyRepository;
 use App\Repositories\Eloquent\ProfessionalCertificationRepository;
 use App\Repositories\Eloquent\ProfessionalExperienceRepository;
 use App\Repositories\Eloquent\SubcriterionRepository;
+use App\Repositories\Eloquent\SystemSummaryRepository;
 use App\Repositories\Eloquent\TemplateExampleRepository;
 use App\Repositories\Eloquent\UserRepository;
 use Illuminate\Support\ServiceProvider;
@@ -48,6 +50,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProfessionalExperienceRepositoryInterface::class, ProfessionalExperienceRepository::class);
         $this->app->bind(ProfessionalCertificationRepositoryInterface::class, ProfessionalCertificationRepository::class);
         $this->app->bind(SubcriterionRepositoryInterface::class, SubcriterionRepository::class);
+        $this->app->bind(SystemSummaryRepositoryInterface::class, SystemSummaryRepository::class);
         $this->app->bind(TemplateExampleRepositoryInterface::class, TemplateExampleRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
     }
