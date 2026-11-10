@@ -20,5 +20,6 @@
 
 - Dependências confirmadas integradas à `main`: PR #79 grava `TP_JORNADA_ATRIBUIDA` na criação; PR #42 preserva a regra de uma jornada em andamento por usuário.
 - Implementado e aberto para revisão no PR #80; Taiga está em Needs Review e permanece desbloqueada.
-- Validação: 81 testes afetados / 765 assertions, sem falhas (warnings ambientais porque `.env` não existe); Pint, PHPStan, PHPMD, `git diff --check` e parse de `docs/openapi.yaml` passaram.
+- Validação: suíte completa com 2.381 assertions e sem falhas (377 warnings ambientais porque `.env` não existe); Pint, PHPStan, PHPMD, `git diff --check` e parse de `docs/openapi.yaml` passaram.
+- Testes afetados: 81 testes / 765 assertions, sem falhas.
 - Verificação HTTP manual não executada: Docker não está disponível nesta sessão; as rotas foram exercitadas pela suíte Feature usando SQLite em memória.
