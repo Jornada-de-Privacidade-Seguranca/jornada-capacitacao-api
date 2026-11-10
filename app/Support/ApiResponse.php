@@ -32,20 +32,22 @@ class ApiResponse
         ], $status);
     }
 
-    public static function paginated(mixed $resource, LengthAwarePaginator $paginator, string $message = 'Resources retrieved successfully.'): JsonResponse
+    public static function paginated(mixed $resource, LengthAwarePaginator $paginator, string $message = 'Resources retrieved successfully.', array $meta = []): JsonResponse
     {
+        $paginationMeta = [
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+                'has_next_page' => $paginator->hasMorePages(),
+            ],
+        ];
+
         return self::success(
             data: $resource,
             message: $message,
-            meta: [
-                'pagination' => [
-                    'current_page' => $paginator->currentPage(),
-                    'per_page' => $paginator->perPage(),
-                    'total' => $paginator->total(),
-                    'last_page' => $paginator->lastPage(),
-                    'has_next_page' => $paginator->hasMorePages(),
-                ],
-            ],
+            meta: array_merge($paginationMeta, $meta),
         );
     }
 }

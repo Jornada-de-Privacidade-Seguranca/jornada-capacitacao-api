@@ -61,7 +61,7 @@ services:
       SWAGGER_JSON: /docs/openapi.yaml
       WITH_CREDENTIALS: "true"
     volumes:
-      - ./docs/openapi.yaml:/docs/openapi.yaml:ro
+      - ./docs:/docs:ro
     networks:
       - jornada
 

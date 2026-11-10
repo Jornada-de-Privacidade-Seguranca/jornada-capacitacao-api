@@ -11,10 +11,12 @@ use App\Http\Requests\ShowJourneyRequest;
 use App\Http\Requests\StoreUserJourneyRequest;
 use App\Http\Resources\JourneyDetailResource;
 use App\Http\Resources\JourneyListResource;
+use App\Http\Resources\UserDomainMetricsResource;
 use App\Services\JourneyService;
 use App\Support\ApiResponse;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
@@ -30,6 +32,10 @@ class UserJourneyController
                 authenticatedUser: $request->user(),
                 userId: $user,
                 filters: $request->validated(),
+            );
+            $metrics = $this->journeyService->getDomainMetricsForUser(
+                authenticatedUser: $request->user(),
+                userId: $user,
             );
         } catch (ModelNotFoundException) {
             return ApiResponse::error(
@@ -55,6 +61,43 @@ class UserJourneyController
             resource: JourneyListResource::collection($journeys)->resolve(),
             paginator: $journeys,
             message: 'Jornadas retornadas com sucesso.',
+            meta: [
+                'domain_metrics' => $metrics['domains'],
+                'metrics_summary' => $metrics['summary'],
+            ],
+        );
+    }
+
+    public function metrics(Request $request, int $user): JsonResponse
+    {
+        try {
+            $metrics = $this->journeyService->getDomainMetricsForUser(
+                authenticatedUser: $request->user(),
+                userId: $user,
+            );
+        } catch (ModelNotFoundException) {
+            return ApiResponse::error(
+                message: 'Usuario nao encontrado.',
+                status: Response::HTTP_NOT_FOUND,
+                code: 'USER_NOT_FOUND',
+            );
+        } catch (AccessDeniedHttpException) {
+            return ApiResponse::error(
+                message: 'Voce nao possui permissao para visualizar as metricas deste usuario.',
+                status: Response::HTTP_FORBIDDEN,
+                code: 'PERMISSION_DENIED',
+            );
+        } catch (Throwable) {
+            return ApiResponse::error(
+                message: 'Nao foi possivel buscar as metricas no momento.',
+                status: Response::HTTP_INTERNAL_SERVER_ERROR,
+                code: 'METRICS_SEARCH_FAILED',
+            );
+        }
+
+        return ApiResponse::success(
+            data: (new UserDomainMetricsResource($metrics))->resolve(),
+            message: 'Metricas por dominio recuperadas com sucesso.',
         );
     }
 
