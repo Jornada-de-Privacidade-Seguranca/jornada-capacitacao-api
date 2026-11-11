@@ -44,7 +44,7 @@ class UserJourneyMetricsAndFiltersTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $journey1->PK_JORNADA)
-            ->assertJsonPath('data.0.journey_profile.name', 'Encarregado de Dados');
+            ->assertJsonPath('data.0.journey_profile.name_pt', 'Encarregado de Dados');
 
         // Busca por termo em inglês
         $this->actingAs($user)

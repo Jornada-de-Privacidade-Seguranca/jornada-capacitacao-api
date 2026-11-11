@@ -25,11 +25,14 @@ class JourneyListResource extends JsonResource
             'user_name' => $this->usuario?->NO_USUARIO,
             'journey_profile' => [
                 'id' => $this->journeyProfile?->PK_PERFIS_JORNADA,
-                'name' => $this->journeyProfile?->NO_PERFIS_PT,
-                'description' => $this->journeyProfile?->DS_PERFIS_PT,
+                'name_pt' => $this->journeyProfile?->NO_PERFIS_PT,
+                'name_en' => $this->journeyProfile?->NO_PERFIS_EN,
+                'description_pt' => $this->journeyProfile?->DS_PERFIS_PT,
+                'description_en' => $this->journeyProfile?->DS_PERFIS_EN,
                 'knowledge_domain' => [
                     'id' => $this->journeyProfile?->knowledgeDomain?->PK_DOMINIO_CONHECIMENTO,
-                    'name' => $this->journeyProfile?->knowledgeDomain?->NO_DOMINIO_CONHECIMENTO_PT,
+                    'name_pt' => $this->journeyProfile?->knowledgeDomain?->NO_DOMINIO_CONHECIMENTO_PT,
+                    'name_en' => $this->journeyProfile?->knowledgeDomain?->NO_DOMINIO_CONHECIMENTO_EN,
                 ],
             ],
             'started_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),

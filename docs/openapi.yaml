@@ -1201,11 +1201,14 @@ paths:
                         user_name: Maria Silva
                         journey_profile:
                           id: 1
-                          name: Encarregado pelo Tratamento de Dados Pessoais
-                          description: Privacidade e Seguranca
+                          name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                          name_en: Data Protection Officer
+                          description_pt: Privacidade e Seguranca
+                          description_en: Privacy and Security
                           knowledge_domain:
                             id: 1
-                            name: Privacidade
+                            name_pt: Privacidade
+                            name_en: Privacy
                         started_at: "2026-07-23 16:30:00"
                         finished_at: null
                         cancelled_at: null
@@ -1363,11 +1366,14 @@ paths:
                       user_name: Maria Silva
                       journey_profile:
                         id: 1
-                        name: Encarregado pelo Tratamento de Dados Pessoais
-                        description: Privacidade e Seguranca
+                        name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                        name_en: Data Protection Officer
+                        description_pt: Privacidade e Seguranca
+                        description_en: Privacy and Security
                         knowledge_domain:
                           id: 1
-                          name: Privacidade
+                          name_pt: Privacidade
+                          name_en: Privacy
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
                       cancelled_at: null
@@ -4876,8 +4882,10 @@ components:
       type: object
       required:
         - id
-        - name
-        - description
+        - name_pt
+        - name_en
+        - description_pt
+        - description_en
         - knowledge_domain
       properties:
         id:
@@ -4885,32 +4893,48 @@ components:
             - integer
             - "null"
           example: 1
-        name:
+        name_pt:
           type:
             - string
             - "null"
           example: Encarregado pelo Tratamento de Dados Pessoais
-        description:
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Data Protection Officer
+        description_pt:
           type:
             - string
             - "null"
           example: Privacidade e Seguranca
+        description_en:
+          type:
+            - string
+            - "null"
+          example: Privacy and Security
         knowledge_domain:
           type: object
           required:
             - id
-            - name
+            - name_pt
+            - name_en
           properties:
             id:
               type:
                 - integer
                 - "null"
               example: 1
-            name:
+            name_pt:
               type:
                 - string
                 - "null"
               example: Privacidade
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
     UserJourneySummary:
       type: object
       required:

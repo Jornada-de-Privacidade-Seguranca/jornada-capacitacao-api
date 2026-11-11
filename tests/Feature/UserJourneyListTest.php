@@ -47,7 +47,7 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('data.1.user_id', $user->PK_USUARIO)
             ->assertJsonPath('data.1.user_name', 'Maria Silva')
             ->assertJsonPath('data.1.journey_profile.id', $profile->PK_PERFIS_JORNADA)
-            ->assertJsonPath('data.1.journey_profile.description', 'Privacidade')
+            ->assertJsonPath('data.1.journey_profile.description_pt', 'Privacidade')
             ->assertJsonPath('data.1.started_at', '2026-07-02 09:00:00')
             ->assertJsonPath('data.1.finished_at', null)
             ->assertJsonPath('data.1.status', 'ongoing')
@@ -242,6 +242,29 @@ class UserJourneyListTest extends TestCase
             ->assertJsonPath('meta.pagination.total', 1);
     }
 
+    public function test_it_returns_profile_and_domain_names_in_portuguese_and_english(): void
+    {
+        $user = $this->activeUser('Maria Silva', 2);
+        $profile = $this->journeyProfile('Privacidade');
+        $this->journey($user, $profile, '2026-07-01 09:00:00', '2026-07-01 10:00:00', 80.0);
+
+        $response = $this->actingAs($user)
+            ->getJson("/api/users/{$user->PK_USUARIO}/journeys?page=1&per_page=10")
+            ->assertOk()
+            ->assertJsonPath('data.0.journey_profile.name_pt', 'Privacidade')
+            ->assertJsonPath('data.0.journey_profile.name_en', 'Privacidade EN')
+            ->assertJsonPath('data.0.journey_profile.description_pt', 'Privacidade')
+            ->assertJsonPath('data.0.journey_profile.description_en', 'Privacidade EN')
+            ->assertJsonPath('data.0.journey_profile.knowledge_domain.id', $profile->FK_DOMINIO_CONHECIMENTO)
+            ->assertJsonPath('data.0.journey_profile.knowledge_domain.name_pt', 'Privacidade')
+            ->assertJsonPath('data.0.journey_profile.knowledge_domain.name_en', 'Privacidade EN');
+
+        $journeyProfile = $response->json('data.0.journey_profile');
+        $this->assertArrayNotHasKey('name', $journeyProfile);
+        $this->assertArrayNotHasKey('description', $journeyProfile);
+        $this->assertArrayNotHasKey('name', $journeyProfile['knowledge_domain']);
+    }
+
     public function test_it_filters_journeys_by_journey_profile_id(): void
     {
         $user = $this->activeUser('Maria Silva', 2);
@@ -256,7 +279,7 @@ class UserJourneyListTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $privacyJourney->PK_JORNADA)
             ->assertJsonPath('data.0.journey_profile.id', $privacyProfile->PK_PERFIS_JORNADA)
-            ->assertJsonPath('data.0.journey_profile.description', 'Privacidade')
+            ->assertJsonPath('data.0.journey_profile.description_pt', 'Privacidade')
             ->assertJsonPath('meta.pagination.total', 1);
     }
 
@@ -370,12 +393,15 @@ class UserJourneyListTest extends TestCase
     {
         $knowledgeDomain = KnowledgeDomain::create([
             'NO_DOMINIO_CONHECIMENTO_PT' => $description,
+            'NO_DOMINIO_CONHECIMENTO_EN' => "{$description} EN",
         ]);
 
         return JourneyProfile::create([
             'FK_DOMINIO_CONHECIMENTO' => $knowledgeDomain->PK_DOMINIO_CONHECIMENTO,
             'NO_PERFIS_PT' => $description,
+            'NO_PERFIS_EN' => "{$description} EN",
             'DS_PERFIS_PT' => $description,
+            'DS_PERFIS_EN' => "{$description} EN",
         ]);
     }
 
