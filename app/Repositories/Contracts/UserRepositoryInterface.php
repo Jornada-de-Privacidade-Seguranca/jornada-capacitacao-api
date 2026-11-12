@@ -24,4 +24,15 @@ interface UserRepositoryInterface
     public function findByIdForUpdate(int $id): ?Usuario;
 
     public function pendingActivationPaginated(int $page, int $perPage): LengthAwarePaginator;
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function paginatedUsers(array $filters, int $page, int $perPage): LengthAwarePaginator;
+
+    public function lockActiveAdministrators(): void;
+
+    public function countActiveAdministratorsExcept(int $userId): int;
+
+    public function softDelete(Usuario $user): void;
 }

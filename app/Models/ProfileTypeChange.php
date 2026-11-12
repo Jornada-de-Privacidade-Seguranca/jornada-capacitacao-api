@@ -24,12 +24,12 @@ class ProfileTypeChange extends JornadaModel
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'FK_USUARIO_ALTERADO', 'PK_USUARIO');
+        return $this->belongsTo(Usuario::class, 'FK_USUARIO_ALTERADO', 'PK_USUARIO')->withTrashed();
     }
 
     public function changedBy(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'FK_USUARIO_ADM', 'PK_USUARIO');
+        return $this->belongsTo(Usuario::class, 'FK_USUARIO_ADM', 'PK_USUARIO')->withTrashed();
     }
 
     /**
