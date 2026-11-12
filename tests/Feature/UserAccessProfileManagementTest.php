@@ -81,7 +81,42 @@ class UserAccessProfileManagementTest extends TestCase
             ->getJson("/api/users/{$user->PK_USUARIO}")
             ->assertOk()
             ->assertJsonPath('data.id', $user->PK_USUARIO)
-            ->assertJsonPath('data.registration_number', 'MAT-200');
+            ->assertJsonPath('data.registration_number', 'MAT-200')
+            ->assertJsonPath('data.journey_profile_id', null);
+
+        // Rota com identificador nao numerico nao captura rotas fixas e responde 404
+        $this->actingAs($admin)
+            ->getJson('/api/users/not-a-number')
+            ->assertNotFound();
+
+        // registration_number vazio ou null na edicao e rejeitado com 422
+        $this->actingAs($admin)
+            ->withCsrfToken()
+            ->patchJson("/api/users/{$user->PK_USUARIO}", [
+                'registration_number' => '',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonValidationErrors(['registration_number']);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $user->PK_USUARIO,
+            'NU_MATRICULA' => 'MAT-200',
+        ]);
+
+        $this->actingAs($admin)
+            ->withCsrfToken()
+            ->patchJson("/api/users/{$user->PK_USUARIO}", [
+                'registration_number' => null,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonValidationErrors(['registration_number']);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $user->PK_USUARIO,
+            'NU_MATRICULA' => 'MAT-200',
+        ]);
 
         // E-mail duplicado -> 409
         $this->actingAs($admin)
@@ -235,8 +270,31 @@ class UserAccessProfileManagementTest extends TestCase
             ->assertJsonPath('success', true);
 
         $this->assertSoftDeleted('TB_USUARIO', ['PK_USUARIO' => $user->PK_USUARIO]);
-        $this->actingAs($admin1)->getJson("/api/users/{$user->PK_USUARIO}")->assertNotFound();
+        $this->actingAs($admin1)
+            ->getJson("/api/users/{$user->PK_USUARIO}")
+            ->assertNotFound()
+            ->assertJsonPath('code', 'USER_NOT_FOUND');
         $this->actingAs($admin1)->getJson('/api/users?search=deletavel')->assertOk()->assertJsonCount(0, 'data');
+
+        // Sessao aberta de usuario excluido e invalidada na proxima chamada
+        $this->actingAs($user)
+            ->getJson('/api/me')
+            ->assertUnauthorized()
+            ->assertJsonPath('code', 'UNAUTHENTICATED');
+
+        // Cadastro publico com e-mail de conta excluida e recusado com 409
+        $this->withCsrfToken()
+            ->postJson('/api/auth/register', [
+                'name' => 'Novo Deletavel',
+                'email' => 'deletavel@example.com',
+                'password' => 'NovaSenhaSegura123',
+                'password_confirmation' => 'NovaSenhaSegura123',
+                'organization' => 'Org Nova',
+                'department' => 'TI',
+                'registration_number' => 'MAT-NOVA',
+            ])
+            ->assertConflict()
+            ->assertJsonPath('code', 'ACCOUNT_ALREADY_EXISTS');
 
         // Login recusado para usuario excluido
         $this->withCsrfToken()->postJson('/api/auth/login', [
@@ -319,9 +377,14 @@ class UserAccessProfileManagementTest extends TestCase
         $migration->down();
         $this->assertFalse(Schema::hasColumn('TB_USUARIO', 'DH_EXCLUIDO_EM'));
 
+        // Idempotent down
+        $migration->down();
+        $this->assertFalse(Schema::hasColumn('TB_USUARIO', 'DH_EXCLUIDO_EM'));
+
         $migration->up();
         $this->assertTrue(Schema::hasColumn('TB_USUARIO', 'DH_EXCLUIDO_EM'));
 
+        // Idempotent up
         $migration->up();
         $this->assertTrue(Schema::hasColumn('TB_USUARIO', 'DH_EXCLUIDO_EM'));
     }

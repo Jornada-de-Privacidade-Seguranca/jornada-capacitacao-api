@@ -7214,12 +7214,18 @@ components:
         - type: object
           required:
             - registration_number
+            - journey_profile_id
           properties:
             registration_number:
               type:
                 - string
                 - "null"
               example: MAT-123
+            journey_profile_id:
+              type:
+                - integer
+                - "null"
+              example: 1
     UpdateUserPayload:
       type: object
       properties:
@@ -7237,9 +7243,7 @@ components:
           type: string
           maxLength: 100
         registration_number:
-          type:
-            - string
-            - "null"
+          type: string
           maxLength: 50
     ChangeUserAccessProfilePayload:
       type: object

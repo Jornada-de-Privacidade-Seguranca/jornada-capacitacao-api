@@ -68,14 +68,19 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
         Route::get('/users', [UserManagementController::class, 'index'])
             ->middleware('permission:users.view');
         Route::get('/users/{user}', [UserManagementController::class, 'show'])
+            ->whereNumber('user')
             ->middleware('permission:users.view');
         Route::patch('/users/{user}', [UserManagementController::class, 'update'])
+            ->whereNumber('user')
             ->middleware('permission:users.manage');
         Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])
+            ->whereNumber('user')
             ->middleware('permission:users.manage');
         Route::put('/users/{user}/access-profile', [AccessProfileController::class, 'changeProfile'])
+            ->whereNumber('user')
             ->middleware('permission:users.change_profile');
         Route::get('/users/{user}/access-profile-history', [AccessProfileController::class, 'history'])
+            ->whereNumber('user')
             ->middleware('permission:users.view');
         Route::put('/me/journey-profile', [JourneyProfileSelectionController::class, 'update']);
         Route::get('/dashboard', DashboardController::class);

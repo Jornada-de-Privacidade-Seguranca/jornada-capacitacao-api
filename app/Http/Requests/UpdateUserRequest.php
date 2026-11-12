@@ -45,7 +45,7 @@ class UpdateUserRequest extends FormRequest
             'email' => ['sometimes', 'required', 'email:rfc', 'max:100'],
             'organization' => ['sometimes', 'required', 'string', 'max:100'],
             'department' => ['sometimes', 'required', 'string', 'max:100'],
-            'registration_number' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'registration_number' => ['sometimes', 'required', 'string', 'max:50'],
         ];
     }
 
@@ -68,6 +68,7 @@ class UpdateUserRequest extends FormRequest
             'department.required' => 'Informe o setor.',
             'department.string' => 'O setor deve ser um texto.',
             'department.max' => 'O setor deve ter no maximo 100 caracteres.',
+            'registration_number.required' => 'Informe o codigo do funcionario.',
             'registration_number.string' => 'O codigo de funcionario deve ser um texto.',
             'registration_number.max' => 'O codigo de funcionario deve ter no maximo 50 caracteres.',
         ];

@@ -90,19 +90,19 @@ class UserManagementService
         }
 
         return DB::transaction(function () use ($authenticatedUser, $userId, $newProfileTypeId): Usuario {
+            $this->userRepository->lockActiveAdministrators();
+            $this->accessProfileRepository->findOrFail($newProfileTypeId);
+
             $user = $this->userRepository->findByIdForUpdate($userId);
 
             if ($user === null) {
                 throw new ModelNotFoundException;
             }
 
-            $this->userRepository->lockActiveAdministrators();
-            $this->accessProfileRepository->findOrFail($newProfileTypeId);
-
             $previousProfileTypeId = $user->FK_TIPO_PERFIL !== null ? (int) $user->FK_TIPO_PERFIL : null;
 
             if ($previousProfileTypeId === $newProfileTypeId) {
-                return $user->load(['profileType', 'selectedJourneyProfile']);
+                return $user->load('profileType');
             }
 
             if ($previousProfileTypeId === ProfileType::ADMIN_ID
@@ -153,13 +153,13 @@ class UserManagementService
         }
 
         DB::transaction(function () use ($userId): void {
+            $this->userRepository->lockActiveAdministrators();
+
             $user = $this->userRepository->findByIdForUpdate($userId);
 
             if ($user === null) {
                 throw new ModelNotFoundException;
             }
-
-            $this->userRepository->lockActiveAdministrators();
 
             if ((int) $user->FK_TIPO_PERFIL === ProfileType::ADMIN_ID
                 && (int) $user->ST_ATIVO === self::ACTIVE_STATUS
