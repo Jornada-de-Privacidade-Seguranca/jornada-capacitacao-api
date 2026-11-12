@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Repositories\Contracts\AdminResultRepositoryInterface;
 use App\Repositories\Contracts\CompetencyCriterionWeightRepositoryInterface;
 use App\Repositories\Contracts\CompetencyRepositoryInterface;
 use App\Repositories\Contracts\CriterionRepositoryInterface;
@@ -16,6 +17,7 @@ use App\Repositories\Contracts\SubcriterionRepositoryInterface;
 use App\Repositories\Contracts\SystemSummaryRepositoryInterface;
 use App\Repositories\Contracts\TemplateExampleRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Repositories\Eloquent\AdminResultRepository;
 use App\Repositories\Eloquent\CompetencyCriterionWeightRepository;
 use App\Repositories\Eloquent\CompetencyRepository;
 use App\Repositories\Eloquent\CriterionRepository;
@@ -39,6 +41,7 @@ class RepositoryServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(AdminResultRepositoryInterface::class, AdminResultRepository::class);
         $this->app->bind(CompetencyCriterionWeightRepositoryInterface::class, CompetencyCriterionWeightRepository::class);
         $this->app->bind(CompetencyRepositoryInterface::class, CompetencyRepository::class);
         $this->app->bind(CriterionRepositoryInterface::class, CriterionRepository::class);
