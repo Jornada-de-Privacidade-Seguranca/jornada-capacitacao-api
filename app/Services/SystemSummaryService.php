@@ -2,24 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\Usuario;
 use App\Repositories\Contracts\SystemSummaryRepositoryInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class SystemSummaryService
 {
-    private const ADMIN_USER_TYPE = 1;
-
     public function __construct(private readonly SystemSummaryRepositoryInterface $systemSummaryRepository) {}
 
     /**
      * @param  array{include_database_status?: bool, tag?: string|null}  $options
      * @return array<string, mixed>
      */
-    public function getSummary(Usuario $authenticatedUser, array $options = []): array
+    public function getSummary(array $options = []): array
     {
-        $this->authorizeAdministrator($authenticatedUser);
-
         $includeDatabaseStatus = (bool) ($options['include_database_status'] ?? true);
         /** @var string|null $tag */
         $tag = $options['tag'] ?? null;
@@ -41,12 +35,5 @@ class SystemSummaryService
             'tag' => $tag,
             'database' => $databaseInfo,
         ];
-    }
-
-    private function authorizeAdministrator(Usuario $authenticatedUser): void
-    {
-        if ((int) $authenticatedUser->FK_TIPO_USUARIO !== self::ADMIN_USER_TYPE) {
-            throw new AccessDeniedHttpException;
-        }
     }
 }

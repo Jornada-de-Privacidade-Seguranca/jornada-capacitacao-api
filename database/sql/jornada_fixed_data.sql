@@ -517,6 +517,7 @@ INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_
 INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('users.manage', 'Editar e excluir usuários', 'Edit and delete users');
 INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('users.change_profile', 'Alterar o perfil de acesso de usuários', 'Change users'' access profile');
 INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('catalog.manage', 'Gerenciar o catálogo', 'Manage the catalog');
+INSERT INTO "TB_PERMISSOES"("NO_PERMISSOES", "DS_PERMISSOES_PT", "DS_PERMISSOES_EN") VALUES ('system.view', 'Ver o resumo do sistema', 'View the system summary');
 
 -- Insert RL_PERMISSOES_PERFIS
 -- Administrador (1): todas as permissões

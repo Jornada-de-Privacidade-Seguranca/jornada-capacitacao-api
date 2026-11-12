@@ -42,7 +42,8 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
     Route::post('/auth/login', LoginController::class)->middleware('throttle:login');
 
     Route::middleware(AuthenticateSessionUser::class)->group(function (): void {
-        Route::get('/system-summary', SystemSummaryController::class);
+        Route::get('/system-summary', SystemSummaryController::class)
+            ->middleware('permission:system.view');
         Route::get('/me', AuthenticatedUserController::class);
         Route::patch('/me', [AuthenticatedUserController::class, 'update']);
         Route::get('/admin/users/pending-activation', [UserAccountAdministrationController::class, 'pending'])

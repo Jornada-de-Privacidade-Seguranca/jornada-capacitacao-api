@@ -62,7 +62,7 @@ class LegacyJornadaScriptsConsistencyTest extends TestCase
 
         $fixedPermissions = $this->extractPermissions($fixedData);
 
-        $this->assertCount(10, $fixedPermissions, 'Nao foi possivel extrair as permissoes de database/sql/jornada_fixed_data.sql.');
+        $this->assertCount(11, $fixedPermissions, 'Nao foi possivel extrair as permissoes de database/sql/jornada_fixed_data.sql.');
         $this->assertSame($fixedPermissions, $this->extractPermissions($legacyScript));
 
         $fixedProfilePermissions = $this->extractProfilePermissions($fixedData);
