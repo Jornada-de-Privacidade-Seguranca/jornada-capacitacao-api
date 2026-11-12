@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\FormatsAssignedBy;
 use App\Models\Journey;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -11,6 +12,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class DashboardJourneyResource extends JsonResource
 {
+    use FormatsAssignedBy;
+
     public function toArray(Request $request): array
     {
         return [
@@ -21,6 +24,7 @@ class DashboardJourneyResource extends JsonResource
             'started_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),
             'finished_at' => $this->DH_FIM?->format('Y-m-d H:i:s'),
             'origin' => $this->origin,
+            'assigned_by' => $this->assignedBySummary(),
             'journey_profile' => [
                 'id' => $this->journeyProfile?->PK_PERFIS_JORNADA,
                 'name_pt' => $this->journeyProfile?->NO_PERFIS_PT,

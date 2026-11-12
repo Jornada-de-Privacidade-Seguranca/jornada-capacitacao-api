@@ -18,6 +18,7 @@ class Journey extends JornadaModel
 
     protected $fillable = [
         'FK_USUARIO',
+        'FK_USUARIO_ATRIBUIU',
         'FK_PERFIS_JORNADA',
         'FK_EXPERIENCIA_PROFISSIONAL',
         'FK_ATUACAO_PERFIL',
@@ -51,6 +52,11 @@ class Journey extends JornadaModel
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'FK_USUARIO', 'PK_USUARIO');
+    }
+
+    public function assignedBy(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'FK_USUARIO_ATRIBUIU', 'PK_USUARIO');
     }
 
     public function journeyProfile(): BelongsTo
