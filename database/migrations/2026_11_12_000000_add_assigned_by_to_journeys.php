@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -29,7 +30,12 @@ return new class extends Migration
         }
 
         Schema::table('TB_JORNADA', function (Blueprint $table): void {
-            $table->dropForeign(['FK_USUARIO_ATRIBUIU']);
+            if (DB::getDriverName() === 'sqlite') {
+                $table->dropForeign(['FK_USUARIO_ATRIBUIU']);
+            } else {
+                $table->dropForeign('FK_JORNADA_USUARIO_ATRIBUIU');
+            }
+
             $table->dropColumn('FK_USUARIO_ATRIBUIU');
         });
     }

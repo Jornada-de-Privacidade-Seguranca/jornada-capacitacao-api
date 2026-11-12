@@ -2145,7 +2145,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: Usuario sem permissao para cancelar esta jornada (ex. outro usuario, outro gestor/admin que nao foi o autor da atribuicao, ou autor sem permissao journeys.assign)
+          description: Usuario sem permissao para cancelar esta jornada (ex. outro usuario, outro gestor/admin que nao foi o autor da atribuicao, autor sem permissao journeys.assign, ou solicitante sem journeys.assign ao tentar cancelar jornada atribuida legada)
           content:
             application/json:
               schema:
@@ -2171,7 +2171,7 @@ paths:
                     errors: []
                     code: JOURNEY_NOT_FOUND
         "409":
-          description: Jornada concluida, ja cancelada, atribuida sem registro de quem atribuiu (legada), tentativa pelo titular em jornada atribuida ou sem origem conhecida
+          description: Jornada concluida, ja cancelada, atribuida sem registro de quem atribuiu (legada para solicitante com permissao journeys.assign), tentativa pelo titular em jornada atribuida ou sem origem conhecida
           content:
             application/json:
               schema:

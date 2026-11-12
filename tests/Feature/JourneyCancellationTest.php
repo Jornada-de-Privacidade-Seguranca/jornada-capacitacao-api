@@ -367,9 +367,19 @@ class JourneyCancellationTest extends TestCase
         $migration->down();
         $this->assertFalse(Schema::hasColumn('TB_JORNADA', 'FK_USUARIO_ATRIBUIU'));
 
-        $migration->up();
+        // Idempotent down
+        $migration->down();
+        $this->assertFalse(Schema::hasColumn('TB_JORNADA', 'FK_USUARIO_ATRIBUIU'));
 
+        $migration->up();
         $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'FK_USUARIO_ATRIBUIU'));
+
+        // Idempotent up
+        $migration->up();
+        $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'FK_USUARIO_ATRIBUIU'));
+
+        $migration->down();
+        $this->assertFalse(Schema::hasColumn('TB_JORNADA', 'FK_USUARIO_ATRIBUIU'));
 
         $migration->up();
         $this->assertTrue(Schema::hasColumn('TB_JORNADA', 'FK_USUARIO_ATRIBUIU'));
