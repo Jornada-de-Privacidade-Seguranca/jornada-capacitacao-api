@@ -2123,9 +2123,9 @@ paths:
     post:
       tags:
         - Journeys
-      summary: Cancela uma jornada propria em andamento
-      description: Cancela somente uma jornada em andamento do usuario autenticado com origem TP_JORNADA_ATRIBUIDA igual a 2. Jornadas atribuídas por administrador, com origem desconhecida, concluídas, já canceladas ou pertencentes a outra pessoa são recusadas. O cancelamento fica registrado em cancelled_at e não preenche finished_at. Requer sessão autenticada e token CSRF.
-      operationId: cancelOwnJourney
+      summary: Cancela uma jornada em andamento
+      description: Cancela uma jornada em andamento criada pelo proprio titular (origem self_started) ou uma jornada atribuida (origem assigned) quando solicitada pelo mesmo usuario que a atribuiu e que ainda possua a permissao journeys.assign. O titular nao pode cancelar jornada atribuida; outros administradores/gestores que nao realizaram a atribuicao recebem 403; jornadas atribuidas legadas sem registro de autor recebem 409 JOURNEY_CANCELLATION_NOT_ALLOWED. O cancelamento fica registrado em cancelled_at e nao preenche finished_at. Requer sessao autenticada e token CSRF.
+      operationId: cancelJourney
       security:
         - sessionAuth: []
       parameters:
@@ -2151,7 +2151,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: A jornada pertence a outra pessoa
+          description: Usuario sem permissao para cancelar esta jornada (ex. outro usuario, outro gestor/admin que nao foi o autor da atribuicao, autor sem permissao journeys.assign, ou solicitante sem journeys.assign ao tentar cancelar jornada atribuida legada)
           content:
             application/json:
               schema:
@@ -2177,7 +2177,7 @@ paths:
                     errors: []
                     code: JOURNEY_NOT_FOUND
         "409":
-          description: Jornada concluida, já cancelada, atribuida por administrador ou sem origem conhecida
+          description: Jornada concluida, ja cancelada, atribuida sem registro de quem atribuiu (legada para solicitante com permissao journeys.assign), tentativa pelo titular em jornada atribuida ou sem origem conhecida
           content:
             application/json:
               schema:
@@ -4791,6 +4791,20 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserKnowledgeDomainMetric"
+    JourneyAssignedBy:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type:
+            - string
+            - "null"
+          example: Admin Sistema
     UserJourneyListItem:
       type: object
       required:
@@ -4802,6 +4816,7 @@ components:
         - finished_at
         - cancelled_at
         - origin
+        - assigned_by
         - status
         - is_completed
         - is_cancelled
@@ -4850,6 +4865,11 @@ components:
             - self_started
             - assigned
             - null
+        assigned_by:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyAssignedBy"
+            - type: "null"
+          description: Usuario que atribuiu a jornada (quando origin = assigned); null para jornadas iniciadas pelo proprio usuario ou registros legados.
         status:
           type: string
           enum:
@@ -5072,6 +5092,7 @@ components:
         - finished_at
         - cancelled_at
         - origin
+        - assigned_by
         - status
         - is_completed
         - is_cancelled
@@ -5118,6 +5139,11 @@ components:
             - self_started
             - assigned
             - null
+        assigned_by:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyAssignedBy"
+            - type: "null"
+          description: Usuario que atribuiu a jornada (quando origin = assigned); null para jornadas iniciadas pelo proprio usuario ou registros legados.
         status:
           type: string
           enum:
@@ -5605,6 +5631,7 @@ components:
         - started_at
         - finished_at
         - origin
+        - assigned_by
         - journey_profile
         - professional_experience
         - profile_experience
@@ -5653,6 +5680,11 @@ components:
             - self_started
             - assigned
             - null
+        assigned_by:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyAssignedBy"
+            - type: "null"
+          description: Usuario que atribuiu a jornada (quando origin = assigned); null para jornadas iniciadas pelo proprio usuario ou registros legados.
         journey_profile:
           type: object
           required:

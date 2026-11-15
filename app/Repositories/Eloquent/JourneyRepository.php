@@ -18,6 +18,7 @@ class JourneyRepository implements JourneyRepositoryInterface
 
     private const DETAILED_RELATIONS = [
         'usuario.profileType',
+        'assignedBy',
         'journeyProfile.knowledgeDomain',
         'journeyProfile.competencies.knowledgeDomain',
         'journeyProfile.competencies.knowledgeArea',
@@ -116,6 +117,7 @@ class JourneyRepository implements JourneyRepositoryInterface
         $query = Journey::query()
             ->with([
                 'usuario',
+                'assignedBy',
                 'journeyProfile.knowledgeDomain',
             ])
             ->withCount([
@@ -218,7 +220,7 @@ class JourneyRepository implements JourneyRepositoryInterface
     {
         $journey = Journey::query()->create($data);
 
-        return $journey->load(['usuario', 'journeyProfile.knowledgeDomain']);
+        return $journey->load(['usuario', 'assignedBy', 'journeyProfile.knowledgeDomain']);
     }
 
     public function update(Journey $journey, array $data): void
