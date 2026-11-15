@@ -45,6 +45,7 @@ class DashboardRepository implements DashboardRepositoryInterface
     {
         return Journey::query()
             ->with([
+                'assignedBy',
                 'journeyProfile.knowledgeDomain',
                 'professionalExperience',
                 'profileExperience',

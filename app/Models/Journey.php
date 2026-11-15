@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Journey extends JornadaModel
 {
@@ -18,6 +19,7 @@ class Journey extends JornadaModel
 
     protected $fillable = [
         'FK_USUARIO',
+        'FK_USUARIO_ATRIBUIU',
         'FK_PERFIS_JORNADA',
         'FK_EXPERIENCIA_PROFISSIONAL',
         'FK_ATUACAO_PERFIL',
@@ -50,7 +52,24 @@ class Journey extends JornadaModel
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(Usuario::class, 'FK_USUARIO', 'PK_USUARIO');
+        $relation = $this->belongsTo(Usuario::class, 'FK_USUARIO', 'PK_USUARIO');
+
+        if (in_array(SoftDeletes::class, class_uses_recursive(Usuario::class), true)) {
+            $relation->withTrashed();
+        }
+
+        return $relation;
+    }
+
+    public function assignedBy(): BelongsTo
+    {
+        $relation = $this->belongsTo(Usuario::class, 'FK_USUARIO_ATRIBUIU', 'PK_USUARIO');
+
+        if (in_array(SoftDeletes::class, class_uses_recursive(Usuario::class), true)) {
+            $relation->withTrashed();
+        }
+
+        return $relation;
     }
 
     public function journeyProfile(): BelongsTo

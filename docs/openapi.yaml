@@ -15,11 +15,172 @@ tags:
     description: Consulta de tipos de jornada usando MVC, Services e Repositories
   - name: Template
     description: Endpoint de exemplo para demonstrar o contrato padrao da API no Swagger
+  - name: System
+    description: Endpoints de status e resumo do sistema
   # - name: Users
   #   description: Endpoints de cadastro e gestao de usuarios
   - name: Journeys
     description: Endpoints de consulta das jornadas dos usuarios
 paths:
+  /admin/user-invitations:
+    post:
+      tags:
+        - Auth
+      summary: Convida usuario por e-mail para definir a senha inicial
+      description: Exige sessao autenticada, permissao users.register e CSRF. O perfil de acesso e Usuário (id 3) por padrao; para escolher outro perfil, o solicitante tambem precisa da permissao users.change_profile. Se ja houver convite pendente, um novo token substitui o anterior e atualiza o perfil de acesso. A conta e criada como usuario comum inativo, com TP_ATIVACAO igual a 2. O e-mail contem link para a tela do frontend, fora do escopo desta API. Aceita no maximo 10 requisicoes por minuto por usuario autenticado.
+      operationId: inviteUserByEmail
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInvitationPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  profile_type_id: 2
+      responses:
+        "201":
+          description: Convite enviado com conta pendente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInvitationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem users.register ou, ao escolher perfil diferente do padrao, sem users.change_profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "409":
+          description: Ja existe uma conta que nao e um convite pendente para este e-mail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: E-mail ausente ou invalido, ou perfil de acesso inexistente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Limite de convites excedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: O convite ou o e-mail nao pode ser preparado ou enviado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /auth/invitations/validate:
+    post:
+      tags:
+        - Auth
+      summary: Valida o token de um convite de usuario
+      description: Verifica o token sem consumi-lo. Tokens sao aleatorios, armazenados apenas como hash, expiram conforme auth.passwords.users.expire (60 minutos por padrao) e novas emissoes invalidam os anteriores. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta para evitar enumeracao de convites. Limite de 5 tentativas por minuto por IP e e-mail.
+      operationId: validateUserInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInvitationTokenPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  token: exemplo-de-codigo-unico
+      responses:
+        "200":
+          description: Token valido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInvitationValidationResponse"
+        "422":
+          description: Token invalido, expirado ou ja utilizado, ou dados invalidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/StandardError"
+                  - $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Limite de tentativas excedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: Falha ao validar o convite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /auth/invitations/complete:
+    post:
+      tags:
+        - Auth
+      summary: Define a senha inicial e ativa a conta convidada
+      description: Exige token valido, senha confirmada, nome completo, orgao ou empresa, setor e matricula, usando as mesmas regras do cadastro. A conta passa a ativa (ST_ATIVO=1), continua como usuario comum (FK_TIPO_USUARIO=2), e TP_ATIVACAO permanece 2 para registrar que foi criada pelo administrador. O token e consumido uma unica vez e DH_ATIVACAO e preenchido na ativacao. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta. Limite de 5 tentativas por minuto por IP e e-mail.
+      operationId: completeUserInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteUserInvitationPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  token: exemplo-de-codigo-unico
+                  password: SenhaSegura123
+                  password_confirmation: SenhaSegura123
+                  name: Maria Silva
+                  organization: Orgao de Exemplo
+                  department: Tecnologia
+                  registration_number: MAT-123
+      responses:
+        "200":
+          description: Senha definida e conta ativada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInvitationResponse"
+        "422":
+          description: Token invalido, expirado ou ja utilizado, ou dados invalidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/StandardError"
+                  - $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Limite de tentativas excedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: Falha ao definir a senha inicial
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
   /template-example:
     get:
       tags:
@@ -92,6 +253,95 @@ paths:
                       include_steps:
                         - The include steps field must be true or false.
                     code: VALIDATION_ERROR
+  /system-summary:
+    get:
+      tags:
+        - System
+      summary: Retorna estatisticas e resumo do sistema
+      description: Endpoint administrativo autenticado para consulta de resumo operacional do sistema e banco de dados. Exige a permissao system.view.
+      operationId: getSystemSummary
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: include_database_status
+          in: query
+          required: false
+          description: Quando true, retorna status de conexao e driver do banco de dados.
+          schema:
+            type: boolean
+            default: true
+          example: true
+        - name: tag
+          in: query
+          required: false
+          description: Tag ou identificador opcional para rastreamento ou filtragem.
+          schema:
+            type: string
+            maxLength: 50
+          example: monitoring
+      responses:
+        "200":
+          description: Resumo do sistema retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSummarySuccessResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: System summary retrieved successfully.
+                    data:
+                      app_name: Jornada de Capacitacao API
+                      environment: local
+                      tag: monitoring
+                      database:
+                        competencies_count: 5
+                        connected: true
+                        driver: pgsql
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario autenticado sem permissao system.view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para executar esta acao.
+                    errors: []
+                    code: PERMISSION_DENIED
+        "422":
+          description: Erro de validacao no contrato padrao
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+              examples:
+                invalidBoolean:
+                  value:
+                    success: false
+                    message: Validation error.
+                    errors:
+                      include_database_status:
+                        - The include database status field must be true or false.
+                    code: VALIDATION_ERROR
+        "500":
+          description: Erro interno ao buscar resumo do sistema
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar o resumo do sistema no momento.
+                    errors: []
+                    code: SYSTEM_SUMMARY_FAILED
   /auth/register:
     post:
       tags:
@@ -324,45 +574,174 @@ paths:
                 $ref: "#/components/schemas/StandardError"
         "419":
           $ref: "#/components/responses/CsrfTokenMismatch"
-  /admin/user-invitations:
-    post:
+  /access-profiles:
+    get:
       tags:
         - Auth
-      summary: Convida usuario por e-mail para definir a senha inicial
-      description: Exige sessao autenticada, permissao users.register e CSRF. O perfil de acesso e Usuário (id 3) por padrao; para escolher outro perfil, o solicitante tambem precisa da permissao users.change_profile. Se ja houver convite pendente, um novo token substitui o anterior e atualiza o perfil de acesso. A conta e criada como usuario comum inativo, com TP_ATIVACAO igual a 2. O e-mail contem link para a tela do frontend, fora do escopo desta API. Aceita no maximo 10 requisicoes por minuto por usuario autenticado.
-      operationId: inviteUserByEmail
+      summary: Lista perfis de acesso e suas permissoes
+      description: Retorna os perfis de acesso cadastrados com as permissoes de cada um (codigo e descricoes em PT/EN). Exige permissao users.view.
+      operationId: listAccessProfiles
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Perfis de acesso retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessProfileListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao users.view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /users:
+    get:
+      tags:
+        - Auth
+      summary: Lista usuarios cadastrados com paginacao e filtros
+      description: Lista usuarios nao excluidos com busca por nome, e-mail ou codigo de funcionario, e filtros por perfil de acesso, setor e situacao. Exige permissao users.view.
+      operationId: listUsers
       security:
         - sessionAuth: []
       parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: profile_type_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - active
+              - pending_activation
+              - inactive
+      responses:
+        "200":
+          description: Usuarios retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserManagementListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao users.view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Parametros de filtro ou paginacao invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+  /users/{user}:
+    get:
+      tags:
+        - Auth
+      summary: Exibe os detalhes de um usuario
+      description: Retorna dados completos do usuario incluindo codigo de funcionario. Exige permissao users.view.
+      operationId: showUser
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Usuario retornado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserManagementDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao users.view
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Usuario nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+    patch:
+      tags:
+        - Auth
+      summary: Atualiza dados cadastrais de um usuario
+      description: Edita nome, e-mail, orgao/empresa, setor e codigo de funcionario com validacao de e-mail unico. Exige permissao users.manage e CSRF.
+      operationId: updateUser
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
         - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserInvitationPayload"
-            examples:
-              valid:
-                value:
-                  email: maria.silva@example.com
-                  profile_type_id: 2
+              $ref: "#/components/schemas/UpdateUserPayload"
       responses:
-        "201":
-          description: Convite enviado com conta pendente
+        "200":
+          description: Usuario atualizado com sucesso
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserInvitationResponse"
+                $ref: "#/components/schemas/UserManagementDetailResponse"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: Usuario sem users.register ou, ao escolher perfil diferente do padrao, sem users.change_profile
+          description: Usuario sem permissao users.manage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Usuario nao encontrado
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardError"
         "409":
-          description: Ja existe uma conta que nao e um convite pendente para este e-mail
+          description: E-mail ja em uso por outro usuario
           content:
             application/json:
               schema:
@@ -370,115 +749,350 @@ paths:
         "419":
           $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
-          description: E-mail ausente ou invalido, ou perfil de acesso inexistente
+          description: Dados invalidos
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
-        "429":
-          description: Limite de convites excedido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardError"
-        "500":
-          description: O convite ou o e-mail nao pode ser preparado ou enviado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardError"
-  /auth/invitations/validate:
-    post:
+    delete:
       tags:
         - Auth
-      summary: Valida o token de um convite de usuario
-      description: Verifica o token sem consumi-lo. Tokens sao aleatorios, armazenados apenas como hash, expiram conforme auth.passwords.users.expire (60 minutos por padrao) e novas emissoes invalidam os anteriores. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta para evitar enumeracao de convites. Limite de 5 tentativas por minuto por IP e e-mail.
-      operationId: validateUserInvitation
+      summary: Exclui logicamente um usuario
+      description: Marca o usuario como excluido (preservando jornadas e historico). Nao permite excluir a propria conta nem o ultimo Administrador ativo (LAST_ADMIN_REQUIRED). Exige permissao users.manage e CSRF.
+      operationId: deleteUser
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/CsrfToken"
+      responses:
+        "200":
+          description: Usuario excluido com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDeletionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao users.manage ou tentativa de excluir a propria conta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Usuario nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "409":
+          description: Tentativa de excluir o ultimo Administrador ativo (LAST_ADMIN_REQUIRED)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+  /users/{user}/access-profile:
+    put:
+      tags:
+        - Auth
+      summary: Altera o perfil de acesso de um usuario
+      description: Altera o perfil de acesso e registra a mudanca em TH_ALTERACAO_PERFIS. Nao permite alterar o proprio perfil nem remover o ultimo Administrador ativo (LAST_ADMIN_REQUIRED). Exige permissao users.change_profile e CSRF.
+      operationId: changeUserAccessProfile
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+        - $ref: "#/components/parameters/CsrfToken"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserInvitationTokenPayload"
-            examples:
-              valid:
-                value:
-                  email: maria.silva@example.com
-                  token: exemplo-de-codigo-unico
+              $ref: "#/components/schemas/ChangeUserAccessProfilePayload"
       responses:
         "200":
-          description: Token valido
+          description: Perfil de acesso alterado com sucesso
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserInvitationValidationResponse"
+                $ref: "#/components/schemas/UserManagementDetailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao users.change_profile ou tentativa de alterar o proprio perfil
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "404":
+          description: Usuario nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "409":
+          description: Tentativa de remover o ultimo Administrador ativo (LAST_ADMIN_REQUIRED)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
-          description: Token invalido, expirado ou ja utilizado, ou dados invalidos
+          description: Perfil de acesso invalido
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: "#/components/schemas/StandardError"
-                  - $ref: "#/components/schemas/StandardValidationError"
-        "429":
-          description: Limite de tentativas excedido
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardError"
-        "500":
-          description: Falha ao validar o convite
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StandardError"
-  /auth/invitations/complete:
-    post:
+                $ref: "#/components/schemas/StandardValidationError"
+  /users/{user}/access-profile-history:
+    get:
       tags:
         - Auth
-      summary: Define a senha inicial e ativa a conta convidada
-      description: Exige token valido, senha confirmada, nome completo, orgao ou empresa, setor e matricula, usando as mesmas regras do cadastro. A conta passa a ativa (ST_ATIVO=1), continua como usuario comum (FK_TIPO_USUARIO=2), e TP_ATIVACAO permanece 2 para registrar que foi criada pelo administrador. O token e consumido uma unica vez e DH_ATIVACAO e preenchido na ativacao. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta. Limite de 5 tentativas por minuto por IP e e-mail.
-      operationId: completeUserInvitation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CompleteUserInvitationPayload"
-            examples:
-              valid:
-                value:
-                  email: maria.silva@example.com
-                  token: exemplo-de-codigo-unico
-                  password: SenhaSegura123
-                  password_confirmation: SenhaSegura123
-                  name: Maria Silva
-                  organization: Orgao de Exemplo
-                  department: Tecnologia
-                  registration_number: MAT-123
+      summary: Lista historico de alteracoes de perfil de acesso do usuario
+      description: Lista as mudancas de perfil da mais recente para a mais antiga. Exige permissao users.view.
+      operationId: listUserAccessProfileHistory
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
       responses:
         "200":
-          description: Senha definida e conta ativada
+          description: Historico retornado com sucesso
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserInvitationResponse"
-        "422":
-          description: Token invalido, expirado ou ja utilizado, ou dados invalidos
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: "#/components/schemas/StandardError"
-                  - $ref: "#/components/schemas/StandardValidationError"
-        "429":
-          description: Limite de tentativas excedido
+                $ref: "#/components/schemas/AccessProfileHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao users.view
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/StandardError"
-        "500":
-          description: Falha ao definir a senha inicial
+        "404":
+          description: Usuario nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /admin/results:
+    get:
+      tags:
+        - Journeys
+      summary: Lista jornadas concluidas de todos os usuarios
+      description: Retorna apenas as jornadas concluidas (nao canceladas) de todos os usuarios ordenadas da mais recente para a mais antiga, com paginacao e filtros combinados. Exige permissao results.view_all.
+      operationId: listAdminResults
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: search
+          in: query
+          required: false
+          description: Busca por nome ou e-mail do usuario, ou nome do perfil de jornada (PT/EN), sem diferenciar acentos ou maiusculas.
+          schema:
+            type: string
+            maxLength: 255
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: domains[]
+          in: query
+          required: false
+          description: Filtra por um ou mais IDs de dominio de conhecimento.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: journey_profile_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: ended_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2026-07-01"
+        - name: ended_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2026-07-31"
+      responses:
+        "200":
+          description: Resultados retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminResultListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para executar esta acao.
+                    errors: []
+                    code: PERMISSION_DENIED
+        "422":
+          description: Parametros de filtro ou paginacao invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+  /admin/results/metrics:
+    get:
+      tags:
+        - Journeys
+      summary: Retorna metricas agregadas dos resultados concluidos
+      description: Retorna total de jornadas concluidas, usuarios distintos e media das notas por dominio aplicando os mesmos filtros de GET /admin/results. Nao retorna media geral. Exige permissao results.view_all.
+      operationId: getAdminResultsMetrics
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: domains[]
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: journey_profile_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: ended_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: ended_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Metricas dos resultados retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminResultMetricsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Parametros de filtro invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+  /users/departments:
+    get:
+      tags:
+        - Journeys
+      summary: Lista os setores cadastrados dos usuarios
+      description: Retorna lista distinta de setores nao vazios cadastrados em TB_USUARIO para preenchimento de filtro. Exige permissao results.view_all.
+      operationId: listUserDepartments
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Setores retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentsListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /users/with-results:
+    get:
+      tags:
+        - Journeys
+      summary: Lista usuarios com ao menos uma jornada concluida
+      description: Retorna id, nome e e-mail dos usuarios que possuem ao menos uma jornada concluida nao cancelada para preenchimento de filtro. Exige permissao results.view_all.
+      operationId: listUsersWithResults
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Usuarios com resultados retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersWithResultsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
           content:
             application/json:
               schema:
@@ -1226,6 +1840,31 @@ paths:
             type: string
             format: date
           example: "2026-07-31"
+        - name: search
+          in: query
+          required: false
+          description: Termo de busca textual por nome ou descricao do perfil de jornada ou ID da jornada.
+          schema:
+            type: string
+            maxLength: 255
+          example: Privacidade
+        - name: knowledge_domain_id
+          in: query
+          required: false
+          description: Filtra pelo identificador de dominio de conhecimento do perfil da jornada.
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: domains
+          in: query
+          required: false
+          description: Filtra por um ou mais identificadores de dominio de conhecimento.
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1, 2]
       responses:
         "200":
           description: Jornadas retornadas com sucesso
@@ -1244,11 +1883,14 @@ paths:
                         user_name: Maria Silva
                         journey_profile:
                           id: 1
-                          name: Encarregado pelo Tratamento de Dados Pessoais
-                          description: Privacidade e Seguranca
+                          name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                          name_en: Data Protection Officer
+                          description_pt: Privacidade e Seguranca
+                          description_en: Privacy and Security
                           knowledge_domain:
                             id: 1
-                            name: Privacidade
+                            name_pt: Privacidade
+                            name_en: Privacy
                         started_at: "2026-07-23 16:30:00"
                         finished_at: null
                         cancelled_at: null
@@ -1270,6 +1912,26 @@ paths:
                         total: 1
                         last_page: 1
                         has_next_page: false
+                      metrics_summary:
+                        total_journeys: 1
+                        completed_journeys: 0
+                        ongoing_journeys: 1
+                        average_score: null
+                        highest_score: null
+                        latest_score: null
+                      domain_metrics:
+                        - domain_id: 1
+                          domain_name_pt: Privacidade
+                          domain_name_en: Privacy
+                          total_journeys: 1
+                          completed_journeys: 0
+                          ongoing_journeys: 1
+                          average_score: null
+                          highest_score: null
+                          latest_score: null
+                          acquired_competencies_count: 8
+                          total_competencies_evaluated: 10
+                          competency_acquisition_rate: 80.0
         "401":
           description: Usuario nao autenticado
           content:
@@ -1386,11 +2048,14 @@ paths:
                       user_name: Maria Silva
                       journey_profile:
                         id: 1
-                        name: Encarregado pelo Tratamento de Dados Pessoais
-                        description: Privacidade e Seguranca
+                        name_pt: Encarregado pelo Tratamento de Dados Pessoais
+                        name_en: Data Protection Officer
+                        description_pt: Privacidade e Seguranca
+                        description_en: Privacy and Security
                         knowledge_domain:
                           id: 1
-                          name: Privacidade
+                          name_pt: Privacidade
+                          name_en: Privacy
                       started_at: "2026-07-23 16:30:00"
                       finished_at: null
                       cancelled_at: null
@@ -1513,6 +2178,104 @@ paths:
                     message: Nao foi possivel iniciar a jornada no momento.
                     errors: []
                     code: JOURNEY_CREATION_FAILED
+
+  /users/{user}/journeys/metrics:
+    get:
+      tags:
+        - Journeys
+      summary: Retorna metricas agregadas por dominio de conhecimento do usuario
+      description: Retorna estatisticas de desempenho, pontuacoes e taxas de aquisicao de competencias divididas por dominio de conhecimento para o usuario avaliado.
+      operationId: getUserJourneyMetrics
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: Metricas por dominio retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDomainMetricsResponse"
+              examples:
+                ok:
+                  value:
+                    success: true
+                    message: Metricas por dominio recuperadas com sucesso.
+                    data:
+                      user_id: 2
+                      summary:
+                        total_journeys: 2
+                        completed_journeys: 1
+                        ongoing_journeys: 1
+                        average_score: 85.0
+                        highest_score: 85.0
+                        latest_score: 85.0
+                      domains:
+                        - domain_id: 1
+                          domain_name_pt: Privacidade
+                          domain_name_en: Privacy
+                          total_journeys: 1
+                          completed_journeys: 1
+                          ongoing_journeys: 0
+                          average_score: 85.0
+                          highest_score: 85.0
+                          latest_score: 85.0
+                          acquired_competencies_count: 1
+                          total_competencies_evaluated: 2
+                          competency_acquisition_rate: 50.0
+        "401":
+          description: Usuario nao autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                unauthenticated:
+                  value:
+                    success: false
+                    message: Usuario nao autenticado.
+                    errors: []
+                    code: UNAUTHENTICATED
+        "403":
+          description: Usuario sem permissao para visualizar metricas do usuario informado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para visualizar as metricas deste usuario.
+                    errors: []
+                    code: PERMISSION_DENIED
+        "404":
+          description: Usuario informado nao encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                userNotFound:
+                  value:
+                    success: false
+                    message: Usuario nao encontrado.
+                    errors: []
+                    code: USER_NOT_FOUND
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                internalServerError:
+                  value:
+                    success: false
+                    message: Nao foi possivel buscar as metricas no momento.
+                    errors: []
+                    code: METRICS_SEARCH_FAILED
 
   /journeys/{journey}/answers:
     patch:
@@ -2042,9 +2805,9 @@ paths:
     post:
       tags:
         - Journeys
-      summary: Cancela uma jornada propria em andamento
-      description: Cancela somente uma jornada em andamento do usuario autenticado com origem TP_JORNADA_ATRIBUIDA igual a 2. Jornadas atribuídas por administrador, com origem desconhecida, concluídas, já canceladas ou pertencentes a outra pessoa são recusadas. O cancelamento fica registrado em cancelled_at e não preenche finished_at. Requer sessão autenticada e token CSRF.
-      operationId: cancelOwnJourney
+      summary: Cancela uma jornada em andamento
+      description: Cancela uma jornada em andamento criada pelo proprio titular (origem self_started) ou uma jornada atribuida (origem assigned) quando solicitada pelo mesmo usuario que a atribuiu e que ainda possua a permissao journeys.assign. O titular nao pode cancelar jornada atribuida; outros administradores/gestores que nao realizaram a atribuicao recebem 403; jornadas atribuidas legadas sem registro de autor recebem 409 JOURNEY_CANCELLATION_NOT_ALLOWED. O cancelamento fica registrado em cancelled_at e nao preenche finished_at. Requer sessao autenticada e token CSRF.
+      operationId: cancelJourney
       security:
         - sessionAuth: []
       parameters:
@@ -2070,7 +2833,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: A jornada pertence a outra pessoa
+          description: Usuario sem permissao para cancelar esta jornada (ex. outro usuario, outro gestor/admin que nao foi o autor da atribuicao, autor sem permissao journeys.assign, ou solicitante sem journeys.assign ao tentar cancelar jornada atribuida legada)
           content:
             application/json:
               schema:
@@ -2096,7 +2859,7 @@ paths:
                     errors: []
                     code: JOURNEY_NOT_FOUND
         "409":
-          description: Jornada concluida, já cancelada, atribuida por administrador ou sem origem conhecida
+          description: Jornada concluida, ja cancelada, atribuida sem registro de quem atribuiu (legada para solicitante com permissao journeys.assign), tentativa pelo titular em jornada atribuida ou sem origem conhecida
           content:
             application/json:
               schema:
@@ -3729,6 +4492,55 @@ components:
         put_here:
           type: string
           example: Fluxos, validacoes de dominio, decisoes e chamadas para repositories.
+    SystemSummarySuccessResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: System summary retrieved successfully.
+        data:
+          $ref: "#/components/schemas/SystemSummary"
+    SystemSummary:
+      type: object
+      required:
+        - app_name
+        - environment
+        - database
+      properties:
+        app_name:
+          type: string
+          example: Jornada de Capacitacao API
+        environment:
+          type: string
+          example: local
+        tag:
+          type:
+            - string
+            - "null"
+          example: monitoring
+        database:
+          $ref: "#/components/schemas/SystemSummaryDatabase"
+    SystemSummaryDatabase:
+      type: object
+      required:
+        - competencies_count
+      properties:
+        competencies_count:
+          type: integer
+          example: 5
+        connected:
+          type: boolean
+          example: true
+        driver:
+          type: string
+          example: pgsql
     PaginationMeta:
       type: object
       required:
@@ -3931,72 +4743,6 @@ components:
             active_status:
               type: integer
               enum: [0, 1, 2]
-            user_type_id:
-              type: integer
-              enum: [2]
-    UserInvitationResponse:
-      type: object
-      required:
-        - success
-        - message
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: Convite enviado com sucesso.
-        data:
-          type: object
-          required:
-            - id
-            - email
-            - user_type_id
-            - active_status
-            - account_status
-          properties:
-            id:
-              type: integer
-            email:
-              type: string
-              format: email
-            user_type_id:
-              type: integer
-              enum: [2]
-            active_status:
-              type: integer
-              enum: [1, 2]
-            account_status:
-              type: string
-              enum:
-                - active
-                - pending_initial_password
-    UserInvitationValidationResponse:
-      type: object
-      required:
-        - success
-        - message
-        - data
-      properties:
-        success:
-          type: boolean
-          example: true
-        message:
-          type: string
-          example: Convite valido.
-        data:
-          type: object
-          required:
-            - email
-            - is_valid
-          properties:
-            email:
-              type: string
-              format: email
-            is_valid:
-              type: boolean
-              const: true
     UserRegistrationResponse:
       type: object
       required:
@@ -4139,6 +4885,69 @@ components:
           type: integer
           description: Perfil de jornada escolhido opcionalmente durante o cadastro. Se omitido, pode ser selecionado depois em PUT /me/journey-profile.
           example: 1
+    UserInvitationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Convite enviado com sucesso.
+        data:
+          type: object
+          required:
+            - id
+            - email
+            - user_type_id
+            - active_status
+            - account_status
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+              format: email
+            user_type_id:
+              type: integer
+              enum: [2]
+            active_status:
+              type: integer
+              enum: [1, 2]
+            account_status:
+              type: string
+              enum:
+                - active
+                - pending_initial_password
+    UserInvitationValidationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Convite valido.
+        data:
+          type: object
+          required:
+            - email
+            - is_valid
+          properties:
+            email:
+              type: string
+              format: email
+            is_valid:
+              type: boolean
+              const: true
     UserInvitationPayload:
       type: object
       required:
@@ -4662,6 +5471,154 @@ components:
           properties:
             pagination:
               $ref: "#/components/schemas/PaginationMeta"
+            metrics_summary:
+              $ref: "#/components/schemas/UserJourneyMetricsSummary"
+            domain_metrics:
+              type: array
+              items:
+                $ref: "#/components/schemas/UserKnowledgeDomainMetric"
+    UserJourneyMetricsSummary:
+      type: object
+      required:
+        - total_journeys
+        - completed_journeys
+        - ongoing_journeys
+      properties:
+        total_journeys:
+          type: integer
+          example: 2
+        completed_journeys:
+          type: integer
+          example: 1
+        ongoing_journeys:
+          type: integer
+          example: 1
+        average_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        highest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        latest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+    UserKnowledgeDomainMetric:
+      type: object
+      required:
+        - domain_id
+        - domain_name_pt
+        - total_journeys
+        - completed_journeys
+        - ongoing_journeys
+        - acquired_competencies_count
+        - total_competencies_evaluated
+      properties:
+        domain_id:
+          type: integer
+          example: 1
+        domain_name_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade
+        domain_name_en:
+          type:
+            - string
+            - "null"
+          example: Privacy
+        total_journeys:
+          type: integer
+          example: 1
+        completed_journeys:
+          type: integer
+          example: 1
+        ongoing_journeys:
+          type: integer
+          example: 0
+        average_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        highest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        latest_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.0
+        acquired_competencies_count:
+          type: integer
+          example: 8
+        total_competencies_evaluated:
+          type: integer
+          example: 10
+        competency_acquisition_rate:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 80.0
+    UserDomainMetricsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Metricas por dominio recuperadas com sucesso.
+        data:
+          $ref: "#/components/schemas/UserDomainMetricsData"
+    UserDomainMetricsData:
+      type: object
+      required:
+        - user_id
+        - summary
+        - domains
+      properties:
+        user_id:
+          type: integer
+          example: 2
+        summary:
+          $ref: "#/components/schemas/UserJourneyMetricsSummary"
+        domains:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserKnowledgeDomainMetric"
+    JourneyAssignedBy:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type:
+            - string
+            - "null"
+          example: Admin Sistema
     UserJourneyListItem:
       type: object
       required:
@@ -4673,6 +5630,7 @@ components:
         - finished_at
         - cancelled_at
         - origin
+        - assigned_by
         - status
         - is_completed
         - is_cancelled
@@ -4721,6 +5679,11 @@ components:
             - self_started
             - assigned
             - null
+        assigned_by:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyAssignedBy"
+            - type: "null"
+          description: Usuario que atribuiu a jornada (quando origin = assigned); null para jornadas iniciadas pelo proprio usuario ou registros legados.
         status:
           type: string
           enum:
@@ -4753,8 +5716,10 @@ components:
       type: object
       required:
         - id
-        - name
-        - description
+        - name_pt
+        - name_en
+        - description_pt
+        - description_en
         - knowledge_domain
       properties:
         id:
@@ -4762,32 +5727,48 @@ components:
             - integer
             - "null"
           example: 1
-        name:
+        name_pt:
           type:
             - string
             - "null"
           example: Encarregado pelo Tratamento de Dados Pessoais
-        description:
+        name_en:
+          type:
+            - string
+            - "null"
+          example: Data Protection Officer
+        description_pt:
           type:
             - string
             - "null"
           example: Privacidade e Seguranca
+        description_en:
+          type:
+            - string
+            - "null"
+          example: Privacy and Security
         knowledge_domain:
           type: object
           required:
             - id
-            - name
+            - name_pt
+            - name_en
           properties:
             id:
               type:
                 - integer
                 - "null"
               example: 1
-            name:
+            name_pt:
               type:
                 - string
                 - "null"
               example: Privacidade
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
     UserJourneySummary:
       type: object
       required:
@@ -4925,6 +5906,7 @@ components:
         - finished_at
         - cancelled_at
         - origin
+        - assigned_by
         - status
         - is_completed
         - is_cancelled
@@ -4971,6 +5953,11 @@ components:
             - self_started
             - assigned
             - null
+        assigned_by:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyAssignedBy"
+            - type: "null"
+          description: Usuario que atribuiu a jornada (quando origin = assigned); null para jornadas iniciadas pelo proprio usuario ou registros legados.
         status:
           type: string
           enum:
@@ -5458,6 +6445,7 @@ components:
         - started_at
         - finished_at
         - origin
+        - assigned_by
         - journey_profile
         - professional_experience
         - profile_experience
@@ -5506,6 +6494,11 @@ components:
             - self_started
             - assigned
             - null
+        assigned_by:
+          oneOf:
+            - $ref: "#/components/schemas/JourneyAssignedBy"
+            - type: "null"
+          description: Usuario que atribuiu a jornada (quando origin = assigned); null para jornadas iniciadas pelo proprio usuario ou registros legados.
         journey_profile:
           type: object
           required:
@@ -6117,3 +7110,523 @@ components:
             - string
             - "null"
           example: Bachelor Degree
+    AdminResultListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Resultados retornados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminResultItem"
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: "#/components/schemas/PaginationMeta"
+    AdminResultItem:
+      type: object
+      required:
+        - id
+        - user
+        - journey_profile
+        - knowledge_domain
+        - finished_at
+        - score
+      properties:
+        id:
+          type: integer
+          example: 10
+        user:
+          type: object
+          required:
+            - id
+            - name
+            - email
+            - department
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 2
+            name:
+              type:
+                - string
+                - "null"
+              example: Maria Silva
+            email:
+              type:
+                - string
+                - "null"
+              example: maria.silva@example.com
+            department:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+        journey_profile:
+          type: object
+          required:
+            - id
+            - name_pt
+            - name_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Encarregado de Dados
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Data Protection Officer
+        knowledge_domain:
+          type: object
+          required:
+            - id
+            - name_pt
+            - name_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
+        finished_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 14:30:00"
+        score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.5
+    AdminResultMetricsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Metricas dos resultados retornadas com sucesso.
+        data:
+          type: object
+          required:
+            - total_completed_journeys
+            - distinct_users_count
+            - domains
+          properties:
+            total_completed_journeys:
+              type: integer
+              example: 5
+            distinct_users_count:
+              type: integer
+              example: 3
+            domains:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminResultDomainMetric"
+    AdminResultDomainMetric:
+      type: object
+      required:
+        - domain_id
+        - domain_name_pt
+        - domain_name_en
+        - completed_journeys
+        - average_score
+      properties:
+        domain_id:
+          type: integer
+          example: 1
+        domain_name_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade
+        domain_name_en:
+          type:
+            - string
+            - "null"
+          example: Privacy
+        completed_journeys:
+          type: integer
+          example: 3
+        average_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 82.5
+    DepartmentsListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Setores retornados com sucesso.
+        data:
+          type: array
+          items:
+            type: string
+          example:
+            - Privacidade
+            - Seguranca
+    UsersWithResultsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Usuarios com resultados retornados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserWithResultsItem"
+    UserWithResultsItem:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type:
+            - string
+            - "null"
+          example: Maria Silva
+        email:
+          type:
+            - string
+            - "null"
+          example: maria.silva@example.com
+    AccessProfileListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Perfis de acesso retornados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessProfileDetail"
+    AccessProfileDetail:
+      type: object
+      required:
+        - id
+        - name
+        - permissions
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Administrador
+        permissions:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - code
+              - description_pt
+              - description_en
+            properties:
+              id:
+                type: integer
+                example: 1
+              code:
+                type: string
+                example: users.view
+              description_pt:
+                type:
+                  - string
+                  - "null"
+              description_en:
+                type:
+                  - string
+                  - "null"
+    UserManagementListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Usuarios retornados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserManagementListItem"
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: "#/components/schemas/PaginationMeta"
+    UserManagementListItem:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - organization
+        - department
+        - access_profile
+        - status
+        - active_status
+        - created_at
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type:
+            - string
+            - "null"
+          example: Maria Silva
+        email:
+          type:
+            - string
+            - "null"
+          example: maria.silva@example.com
+        organization:
+          type:
+            - string
+            - "null"
+        department:
+          type:
+            - string
+            - "null"
+        access_profile:
+          oneOf:
+            - type: object
+              required:
+                - id
+                - name
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+            - type: "null"
+        status:
+          type: string
+          enum:
+            - active
+            - pending_activation
+            - inactive
+        active_status:
+          type: integer
+          example: 1
+        created_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 16:30:00"
+    UserManagementDetailResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Usuario retornado com sucesso.
+        data:
+          $ref: "#/components/schemas/UserManagementDetail"
+    UserManagementDetail:
+      allOf:
+        - $ref: "#/components/schemas/UserManagementListItem"
+        - type: object
+          required:
+            - registration_number
+            - journey_profile_id
+          properties:
+            registration_number:
+              type:
+                - string
+                - "null"
+              example: MAT-123
+            journey_profile_id:
+              type:
+                - integer
+                - "null"
+              example: 1
+    UpdateUserPayload:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        organization:
+          type: string
+          maxLength: 100
+        department:
+          type: string
+          maxLength: 100
+        registration_number:
+          type: string
+          maxLength: 50
+    ChangeUserAccessProfilePayload:
+      type: object
+      required:
+        - profile_type_id
+      properties:
+        profile_type_id:
+          type: integer
+          example: 2
+    AccessProfileHistoryResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Historico de alteracoes de perfil retornado com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AccessProfileHistoryItem"
+    AccessProfileHistoryItem:
+      type: object
+      required:
+        - id
+        - previous_profile
+        - new_profile
+        - changed_by
+        - changed_at
+      properties:
+        id:
+          type: integer
+          example: 1
+        previous_profile:
+          oneOf:
+            - type: object
+              required:
+                - id
+                - name
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+            - type: "null"
+        new_profile:
+          oneOf:
+            - type: object
+              required:
+                - id
+                - name
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+            - type: "null"
+        changed_by:
+          oneOf:
+            - type: object
+              required:
+                - id
+                - name
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+            - type: "null"
+        changed_at:
+          type:
+            - string
+            - "null"
+          example: "2026-11-12 09:00:00"
+    UserDeletionResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Usuario excluido com sucesso.
+        data:
+          type: "null"
+          example: null

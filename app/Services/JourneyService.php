@@ -59,6 +59,24 @@ class JourneyService
         );
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDomainMetricsForUser(Usuario $authenticatedUser, int $userId): array
+    {
+        $requestedUser = $this->userRepository->findById($userId);
+
+        if ($requestedUser === null) {
+            throw new ModelNotFoundException;
+        }
+
+        if (! $this->canViewUserJourneys($authenticatedUser, $requestedUser)) {
+            throw new AccessDeniedHttpException;
+        }
+
+        return $this->journeyRepository->getDomainMetricsForUser((int) $requestedUser->PK_USUARIO);
+    }
+
     public function startForUser(Usuario $authenticatedUser, int $userId, array $data): Journey
     {
         $requestedUser = $this->userRepository->findById($userId);
@@ -80,11 +98,12 @@ class JourneyService
             throw new JourneyProfileNotFoundException;
         }
 
-        $attributionType = (int) $authenticatedUser->PK_USUARIO === (int) $requestedUser->PK_USUARIO
+        $attributionType = $isOwnJourney
             ? Journey::ATTRIBUTION_SELF
             : Journey::ATTRIBUTION_ADMIN;
+        $assignedByUserId = $isOwnJourney ? null : (int) $authenticatedUser->PK_USUARIO;
 
-        return DB::transaction(function () use ($requestedUser, $data, $attributionType) {
+        return DB::transaction(function () use ($requestedUser, $data, $attributionType, $assignedByUserId) {
             $this->userRepository->lockForUpdate((int) $requestedUser->PK_USUARIO);
 
             $user = $this->userRepository->findById((int) $requestedUser->PK_USUARIO);
@@ -109,6 +128,7 @@ class JourneyService
 
             return $this->journeyRepository->create([
                 'FK_USUARIO' => $requestedUser->PK_USUARIO,
+                'FK_USUARIO_ATRIBUIU' => $assignedByUserId,
                 'FK_PERFIS_JORNADA' => $journeyProfileId,
                 'TP_JORNADA_ATRIBUIDA' => $attributionType,
                 'DH_CRIADO_EM' => now(),
@@ -256,22 +276,60 @@ class JourneyService
                 throw new ModelNotFoundException;
             }
 
-            if ((int) $authenticatedUser->PK_USUARIO !== (int) $journey->FK_USUARIO) {
-                throw new AccessDeniedHttpException;
-            }
-
-            if (
-                $journey->DH_FIM !== null
-                || $journey->DH_CANCELADA_EM !== null
-                || (int) $journey->TP_JORNADA_ATRIBUIDA !== Journey::ATTRIBUTION_SELF
-            ) {
-                throw new JourneyCancellationNotAllowedException;
-            }
+            $this->ensureCanCancelJourney($authenticatedUser, $journey);
 
             $this->journeyRepository->update($journey, ['DH_CANCELADA_EM' => now()]);
 
             return $journey->refresh();
         });
+    }
+
+    private function ensureCanCancelJourney(Usuario $authenticatedUser, Journey $journey): void
+    {
+        $isOwner = (int) $authenticatedUser->PK_USUARIO === (int) $journey->FK_USUARIO;
+        $attributionType = (int) $journey->TP_JORNADA_ATRIBUIDA;
+
+        if ($attributionType === Journey::ATTRIBUTION_ADMIN) {
+            $this->ensureCanCancelAssignedJourney($authenticatedUser, $journey, $isOwner);
+
+            return;
+        }
+
+        if (! $isOwner) {
+            throw new AccessDeniedHttpException;
+        }
+
+        if ($attributionType !== Journey::ATTRIBUTION_SELF
+            || $journey->DH_FIM !== null
+            || $journey->DH_CANCELADA_EM !== null) {
+            throw new JourneyCancellationNotAllowedException;
+        }
+    }
+
+    private function ensureCanCancelAssignedJourney(Usuario $authenticatedUser, Journey $journey, bool $isOwner): void
+    {
+        if ($isOwner) {
+            throw new JourneyCancellationNotAllowedException;
+        }
+
+        $assignedById = $journey->FK_USUARIO_ATRIBUIU !== null ? (int) $journey->FK_USUARIO_ATRIBUIU : null;
+
+        if ($assignedById === null) {
+            if (! $authenticatedUser->hasPermission('journeys.assign')) {
+                throw new AccessDeniedHttpException;
+            }
+
+            throw new JourneyCancellationNotAllowedException;
+        }
+
+        if ((int) $authenticatedUser->PK_USUARIO !== $assignedById
+            || ! $authenticatedUser->hasPermission('journeys.assign')) {
+            throw new AccessDeniedHttpException;
+        }
+
+        if ($journey->DH_FIM !== null || $journey->DH_CANCELADA_EM !== null) {
+            throw new JourneyCancellationNotAllowedException;
+        }
     }
 
     public function getCurrentGeneralDataOptions(Usuario $authenticatedUser): array

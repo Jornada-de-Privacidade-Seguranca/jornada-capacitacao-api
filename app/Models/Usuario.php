@@ -6,11 +6,15 @@ use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
 class Usuario extends JornadaModel implements AuthenticatableContract
 {
     use Authenticatable;
+    use SoftDeletes;
+
+    public const DELETED_AT = 'DH_EXCLUIDO_EM';
 
     protected $table = 'TB_USUARIO';
 
@@ -27,6 +31,7 @@ class Usuario extends JornadaModel implements AuthenticatableContract
         'DS_EMAIL',
         'DS_SENHA',
         'DH_CRIADO_EM',
+        'DH_EXCLUIDO_EM',
         'ST_ATIVO',
         'TP_ATIVACAO',
         'DH_ATIVACAO',
@@ -39,6 +44,7 @@ class Usuario extends JornadaModel implements AuthenticatableContract
     protected $casts = [
         'DH_CRIADO_EM' => 'datetime',
         'DH_ATIVACAO' => 'datetime',
+        'DH_EXCLUIDO_EM' => 'datetime',
         'ST_ATIVO' => 'integer',
     ];
 
