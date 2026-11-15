@@ -329,7 +329,7 @@ paths:
       tags:
         - Auth
       summary: Convida usuario por e-mail para definir a senha inicial
-      description: Exige sessao autenticada, permissao users.register e CSRF. A conta e criada como usuario comum inativo, com TP_ATIVACAO igual a 2. Se ja houver convite pendente, um novo token substitui o anterior. O e-mail contem link para a tela do frontend, fora do escopo desta API. Aceita no maximo 10 requisicoes por minuto por usuario autenticado.
+      description: Exige sessao autenticada, permissao users.register e CSRF. O perfil de acesso e Usuário (id 3) por padrao; para escolher outro perfil, o solicitante tambem precisa da permissao users.change_profile. Se ja houver convite pendente, um novo token substitui o anterior e atualiza o perfil de acesso. A conta e criada como usuario comum inativo, com TP_ATIVACAO igual a 2. O e-mail contem link para a tela do frontend, fora do escopo desta API. Aceita no maximo 10 requisicoes por minuto por usuario autenticado.
       operationId: inviteUserByEmail
       security:
         - sessionAuth: []
@@ -345,6 +345,7 @@ paths:
               valid:
                 value:
                   email: maria.silva@example.com
+                  profile_type_id: 2
       responses:
         "201":
           description: Convite enviado com conta pendente
@@ -355,7 +356,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: Usuario autenticado sem permissao users.register
+          description: Usuario sem users.register ou, ao escolher perfil diferente do padrao, sem users.change_profile
           content:
             application/json:
               schema:
@@ -369,7 +370,7 @@ paths:
         "419":
           $ref: "#/components/responses/CsrfTokenMismatch"
         "422":
-          description: E-mail ausente ou invalido
+          description: E-mail ausente ou invalido, ou perfil de acesso inexistente
           content:
             application/json:
               schema:
@@ -436,7 +437,7 @@ paths:
       tags:
         - Auth
       summary: Define a senha inicial e ativa a conta convidada
-      description: Exige token valido e senha confirmada. A conta passa a ativa (ST_ATIVO=1), continua como usuario comum (FK_TIPO_USUARIO=2), e TP_ATIVACAO permanece 2 para registrar que foi criada pelo administrador. O token e consumido uma unica vez e DH_ATIVACAO e preenchido na ativacao. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta. Limite de 5 tentativas por minuto por IP e e-mail.
+      description: Exige token valido, senha confirmada, nome completo, orgao ou empresa, setor e matricula, usando as mesmas regras do cadastro. A conta passa a ativa (ST_ATIVO=1), continua como usuario comum (FK_TIPO_USUARIO=2), e TP_ATIVACAO permanece 2 para registrar que foi criada pelo administrador. O token e consumido uma unica vez e DH_ATIVACAO e preenchido na ativacao. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta. Limite de 5 tentativas por minuto por IP e e-mail.
       operationId: completeUserInvitation
       requestBody:
         required: true
@@ -451,6 +452,10 @@ paths:
                   token: exemplo-de-codigo-unico
                   password: SenhaSegura123
                   password_confirmation: SenhaSegura123
+                  name: Maria Silva
+                  organization: Orgao de Exemplo
+                  department: Tecnologia
+                  registration_number: MAT-123
       responses:
         "200":
           description: Senha definida e conta ativada
@@ -4144,6 +4149,11 @@ components:
           format: email
           maxLength: 100
           example: maria.silva@example.com
+        profile_type_id:
+          type: integer
+          description: Perfil de acesso desejado. O padrao e 3 (Usuario). Exige users.change_profile quando diferente do padrao.
+          default: 3
+          example: 2
     UserInvitationTokenPayload:
       type: object
       required:
@@ -4164,7 +4174,32 @@ components:
           required:
             - password
             - password_confirmation
+            - name
+            - organization
+            - department
+            - registration_number
           properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Nome completo com nome e sobrenome.
+              example: Maria Silva
+            organization:
+              type: string
+              minLength: 1
+              maxLength: 100
+              example: Orgao de Exemplo
+            department:
+              type: string
+              minLength: 1
+              maxLength: 100
+              example: Tecnologia
+            registration_number:
+              type: string
+              minLength: 1
+              maxLength: 50
+              example: MAT-123
             password:
               type: string
               minLength: 8

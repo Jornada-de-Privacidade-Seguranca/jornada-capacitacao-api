@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class UserInvitationService
 {
@@ -32,8 +33,12 @@ class UserInvitationService
         private readonly PasswordResetTokenRepositoryInterface $tokenRepository,
     ) {}
 
-    public function invite(string $email): Usuario
+    public function invite(Usuario $inviter, string $email, int $profileTypeId = ProfileType::USER_ID): Usuario
     {
+        if ($profileTypeId !== ProfileType::USER_ID && ! $inviter->hasPermission('users.change_profile')) {
+            throw new AccessDeniedHttpException;
+        }
+
         $mailer = (string) config('mail.default');
         if (config("mail.mailers.{$mailer}.transport") === 'log') {
             throw new RuntimeException('Invitation links cannot be sent through the log mailer.');
@@ -43,15 +48,19 @@ class UserInvitationService
         $token = Str::random(64);
 
         try {
-            $user = DB::transaction(function () use ($email, $token): Usuario {
+            $user = DB::transaction(function () use ($email, $token, $profileTypeId): Usuario {
                 $existing = $this->userRepository->findByEmailForUpdate($email);
 
                 if ($existing !== null && ! $this->isPendingInvitation($existing)) {
                     throw new AccountAlreadyExistsException;
                 }
 
+                if ($existing !== null) {
+                    $this->userRepository->update($existing, ['FK_TIPO_PERFIL' => $profileTypeId]);
+                }
+
                 $user = $existing ?? $this->userRepository->create([
-                    'FK_TIPO_PERFIL' => ProfileType::USER_ID,
+                    'FK_TIPO_PERFIL' => $profileTypeId,
                     'FK_TIPO_USUARIO' => self::COMMON_USER_TYPE,
                     'NO_USUARIO' => null,
                     'NO_ORGAO_EMPRESA' => null,
@@ -101,11 +110,11 @@ class UserInvitationService
         return $tokenRecord !== null && $this->isValidTokenRecord($tokenRecord, $token);
     }
 
-    public function complete(string $email, string $token, string $password): Usuario
+    public function complete(string $email, string $token, string $password, array $profileData): Usuario
     {
         $email = mb_strtolower(trim($email));
 
-        return DB::transaction(function () use ($email, $token, $password): Usuario {
+        return DB::transaction(function () use ($email, $token, $password, $profileData): Usuario {
             $user = $this->userRepository->findByEmailForUpdate($email);
             $tokenRecord = $this->tokenRepository->findForUpdate($email);
 
@@ -119,6 +128,10 @@ class UserInvitationService
             $this->tokenRepository->delete($email);
 
             return $this->userRepository->update($user, [
+                'NO_USUARIO' => $profileData['name'],
+                'NO_ORGAO_EMPRESA' => $profileData['organization'],
+                'NO_SETOR' => $profileData['department'],
+                'NU_MATRICULA' => $profileData['registration_number'],
                 'DS_SENHA' => Hash::make($password),
                 'ST_ATIVO' => self::ACTIVE_STATUS,
                 'DH_ATIVACAO' => now(),

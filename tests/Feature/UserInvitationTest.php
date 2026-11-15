@@ -96,6 +96,81 @@ class UserInvitationTest extends TestCase
         $this->assertDatabaseMissing('TB_USUARIO', ['DS_EMAIL' => 'another.user@example.com']);
     }
 
+    public function test_invitation_accepts_an_access_profile_only_with_change_profile_permission(): void
+    {
+        $admin = $this->user('Administrator', 'admin@example.com', 1, 1);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf('/api/admin/user-invitations', [
+                'email' => 'manager@example.com',
+                'profile_type_id' => 2,
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'DS_EMAIL' => 'manager@example.com',
+            'FK_TIPO_PERFIL' => 2,
+        ]);
+
+        $registerOnly = $this->user('Register Only', 'register-only@example.com', 1, 2, 1);
+        $changeProfilePermissionId = DB::table('TB_PERMISSOES')
+            ->where('NO_PERMISSOES', 'users.change_profile')
+            ->value('PK_PERMISSOES');
+        DB::table('RL_PERMISSOES_PERFIS')
+            ->where('FK_TIPO_PERFIL', 1)
+            ->where('FK_PERMISSOES', $changeProfilePermissionId)
+            ->delete();
+
+        $this->actingAs($registerOnly)
+            ->postJsonWithCsrf('/api/admin/user-invitations', [
+                'email' => 'forbidden-manager@example.com',
+                'profile_type_id' => 2,
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+
+        $this->assertDatabaseMissing('TB_USUARIO', ['DS_EMAIL' => 'forbidden-manager@example.com']);
+    }
+
+    public function test_invitation_defaults_to_user_profile_and_reissue_updates_the_profile(): void
+    {
+        $admin = $this->user('Administrator', 'admin@example.com', 1, 1);
+        $this->invite($admin, 'new.user@example.com');
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'DS_EMAIL' => 'new.user@example.com',
+            'FK_TIPO_PERFIL' => 3,
+        ]);
+
+        Mail::fake();
+        $this->actingAs($admin)
+            ->postJsonWithCsrf('/api/admin/user-invitations', [
+                'email' => 'new.user@example.com',
+                'profile_type_id' => 2,
+            ])
+            ->assertCreated();
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'DS_EMAIL' => 'new.user@example.com',
+            'FK_TIPO_PERFIL' => 2,
+        ]);
+    }
+
+    public function test_invitation_rejects_unknown_access_profile(): void
+    {
+        $admin = $this->user('Administrator', 'admin@example.com', 1, 1);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf('/api/admin/user-invitations', [
+                'email' => 'new.user@example.com',
+                'profile_type_id' => 999,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonStructure(['errors' => ['profile_type_id']]);
+
+        $this->assertDatabaseMissing('TB_USUARIO', ['DS_EMAIL' => 'new.user@example.com']);
+    }
+
     public function test_activation_columns_migration_adds_missing_columns_and_is_idempotent(): void
     {
         Schema::table('TB_USUARIO', function (Blueprint $table): void {
@@ -207,6 +282,10 @@ class UserInvitationTest extends TestCase
         $user = Usuario::query()->where('DS_EMAIL', 'new.user@example.com')->firstOrFail();
         $this->assertTrue(Hash::check('SenhaSegura123', $user->DS_SENHA));
         $this->assertSame(2, (int) $user->FK_TIPO_USUARIO);
+        $this->assertSame('Maria Silva', $user->NO_USUARIO);
+        $this->assertSame('Orgão de Exemplo', $user->NO_ORGAO_EMPRESA);
+        $this->assertSame('Tecnologia', $user->NO_SETOR);
+        $this->assertSame('MAT-123', $user->NU_MATRICULA);
         $this->assertSame(2, (int) $user->TP_ATIVACAO);
         $this->assertSame(1, (int) $user->ST_ATIVO);
         $this->assertNotNull($user->DH_ATIVACAO);
@@ -241,6 +320,40 @@ class UserInvitationTest extends TestCase
             'TP_ATIVACAO' => 2,
             'DS_SENHA' => null,
         ]);
+    }
+
+    public function test_completion_requires_valid_registration_details_and_keeps_token_valid(): void
+    {
+        $admin = $this->user('Administrator', 'admin@example.com', 1, 1);
+        $this->invite($admin, 'new.user@example.com');
+        $token = $this->sentInvitationToken();
+
+        $this->postJson('/api/auth/invitations/complete', $this->completionPayload($token, [
+            'name' => 'Maria',
+            'organization' => '',
+            'department' => '',
+            'registration_number' => '',
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonStructure(['errors' => ['name', 'organization', 'department', 'registration_number']]);
+
+        $this->postJson('/api/auth/invitations/complete', $this->completionPayload($token, ['name' => str_repeat('a', 51).' Silva']))
+            ->assertUnprocessable()
+            ->assertJsonPath('code', 'VALIDATION_ERROR')
+            ->assertJsonStructure(['errors' => ['name']]);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'DS_EMAIL' => 'new.user@example.com',
+            'ST_ATIVO' => 2,
+            'DS_SENHA' => null,
+        ]);
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => 'new.user@example.com']);
+
+        $this->postJson('/api/auth/invitations/validate', [
+            'email' => 'new.user@example.com',
+            'token' => $token,
+        ])->assertOk()->assertJsonPath('data.is_valid', true);
     }
 
     public function test_invitation_validation_is_rate_limited(): void
@@ -343,6 +456,10 @@ class UserInvitationTest extends TestCase
             'token' => $token,
             'password' => 'SenhaSegura123',
             'password_confirmation' => 'SenhaSegura123',
+            'name' => 'Maria Silva',
+            'organization' => 'Orgão de Exemplo',
+            'department' => 'Tecnologia',
+            'registration_number' => 'MAT-123',
         ], $overrides);
     }
 

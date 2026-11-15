@@ -12,6 +12,7 @@ use App\Services\UserInvitationService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Throwable;
 
 class UserInvitationController
@@ -21,7 +22,17 @@ class UserInvitationController
     public function store(CreateUserInvitationRequest $request): JsonResponse
     {
         try {
-            $user = $this->service->invite($request->validated('email'));
+            $user = $this->service->invite(
+                $request->user(),
+                $request->validated('email'),
+                (int) $request->validated('profile_type_id'),
+            );
+        } catch (AccessDeniedHttpException) {
+            return ApiResponse::error(
+                message: 'Voce nao possui permissao para executar esta acao.',
+                status: Response::HTTP_FORBIDDEN,
+                code: 'PERMISSION_DENIED',
+            );
         } catch (AccountAlreadyExistsException) {
             return ApiResponse::error(
                 message: 'Ja existe uma conta cadastrada com este e-mail.',
@@ -76,6 +87,7 @@ class UserInvitationController
                 $request->validated('email'),
                 $request->validated('token'),
                 $request->validated('password'),
+                $request->safe()->only(['name', 'organization', 'department', 'registration_number']),
             );
         } catch (InvalidInvitationTokenException) {
             return $this->invalidTokenResponse();
