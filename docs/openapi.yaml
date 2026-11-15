@@ -415,6 +415,224 @@ paths:
                 $ref: "#/components/schemas/StandardError"
         "419":
           $ref: "#/components/responses/CsrfTokenMismatch"
+  /admin/results:
+    get:
+      tags:
+        - Journeys
+      summary: Lista jornadas concluidas de todos os usuarios
+      description: Retorna apenas as jornadas concluidas (nao canceladas) de todos os usuarios ordenadas da mais recente para a mais antiga, com paginacao e filtros combinados. Exige permissao results.view_all.
+      operationId: listAdminResults
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: search
+          in: query
+          required: false
+          description: Busca por nome ou e-mail do usuario, ou nome do perfil de jornada (PT/EN), sem diferenciar acentos ou maiusculas.
+          schema:
+            type: string
+            maxLength: 255
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: domains[]
+          in: query
+          required: false
+          description: Filtra por um ou mais IDs de dominio de conhecimento.
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: journey_profile_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: ended_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2026-07-01"
+        - name: ended_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+            example: "2026-07-31"
+      responses:
+        "200":
+          description: Resultados retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminResultListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+              examples:
+                forbidden:
+                  value:
+                    success: false
+                    message: Voce nao possui permissao para executar esta acao.
+                    errors: []
+                    code: PERMISSION_DENIED
+        "422":
+          description: Parametros de filtro ou paginacao invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+  /admin/results/metrics:
+    get:
+      tags:
+        - Journeys
+      summary: Retorna metricas agregadas dos resultados concluidos
+      description: Retorna total de jornadas concluidas, usuarios distintos e media das notas por dominio aplicando os mesmos filtros de GET /admin/results. Nao retorna media geral. Exige permissao results.view_all.
+      operationId: getAdminResultsMetrics
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: department
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+        - name: domains[]
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: journey_profile_id
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: ended_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: ended_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Metricas dos resultados retornadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminResultMetricsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "422":
+          description: Parametros de filtro invalidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+  /users/departments:
+    get:
+      tags:
+        - Journeys
+      summary: Lista os setores cadastrados dos usuarios
+      description: Retorna lista distinta de setores nao vazios cadastrados em TB_USUARIO para preenchimento de filtro. Exige permissao results.view_all.
+      operationId: listUserDepartments
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Setores retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepartmentsListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /users/with-results:
+    get:
+      tags:
+        - Journeys
+      summary: Lista usuarios com ao menos uma jornada concluida
+      description: Retorna id, nome e e-mail dos usuarios que possuem ao menos uma jornada concluida nao cancelada para preenchimento de filtro. Exige permissao results.view_all.
+      operationId: listUsersWithResults
+      security:
+        - sessionAuth: []
+      responses:
+        "200":
+          description: Usuarios com resultados retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersWithResultsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem permissao results.view_all
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
   /auth/csrf-token:
     get:
       tags:
@@ -6296,3 +6514,240 @@ components:
             - string
             - "null"
           example: Bachelor Degree
+    AdminResultListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+        - meta
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Resultados retornados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminResultItem"
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: "#/components/schemas/PaginationMeta"
+    AdminResultItem:
+      type: object
+      required:
+        - id
+        - user
+        - journey_profile
+        - knowledge_domain
+        - finished_at
+        - score
+      properties:
+        id:
+          type: integer
+          example: 10
+        user:
+          type: object
+          required:
+            - id
+            - name
+            - email
+            - department
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 2
+            name:
+              type:
+                - string
+                - "null"
+              example: Maria Silva
+            email:
+              type:
+                - string
+                - "null"
+              example: maria.silva@example.com
+            department:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+        journey_profile:
+          type: object
+          required:
+            - id
+            - name_pt
+            - name_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Encarregado de Dados
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Data Protection Officer
+        knowledge_domain:
+          type: object
+          required:
+            - id
+            - name_pt
+            - name_en
+          properties:
+            id:
+              type:
+                - integer
+                - "null"
+              example: 1
+            name_pt:
+              type:
+                - string
+                - "null"
+              example: Privacidade
+            name_en:
+              type:
+                - string
+                - "null"
+              example: Privacy
+        finished_at:
+          type:
+            - string
+            - "null"
+          example: "2026-07-23 14:30:00"
+        score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 85.5
+    AdminResultMetricsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Metricas dos resultados retornadas com sucesso.
+        data:
+          type: object
+          required:
+            - total_completed_journeys
+            - distinct_users_count
+            - domains
+          properties:
+            total_completed_journeys:
+              type: integer
+              example: 5
+            distinct_users_count:
+              type: integer
+              example: 3
+            domains:
+              type: array
+              items:
+                $ref: "#/components/schemas/AdminResultDomainMetric"
+    AdminResultDomainMetric:
+      type: object
+      required:
+        - domain_id
+        - domain_name_pt
+        - domain_name_en
+        - completed_journeys
+        - average_score
+      properties:
+        domain_id:
+          type: integer
+          example: 1
+        domain_name_pt:
+          type:
+            - string
+            - "null"
+          example: Privacidade
+        domain_name_en:
+          type:
+            - string
+            - "null"
+          example: Privacy
+        completed_journeys:
+          type: integer
+          example: 3
+        average_score:
+          type:
+            - number
+            - "null"
+          format: float
+          example: 82.5
+    DepartmentsListResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Setores retornados com sucesso.
+        data:
+          type: array
+          items:
+            type: string
+          example:
+            - Privacidade
+            - Seguranca
+    UsersWithResultsResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Usuarios com resultados retornados com sucesso.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserWithResultsItem"
+    UserWithResultsItem:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type:
+            - string
+            - "null"
+          example: Maria Silva
+        email:
+          type:
+            - string
+            - "null"
+          example: maria.silva@example.com

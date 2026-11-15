@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminResultController;
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CertificationOptionController;
 use App\Http\Controllers\Api\CsrfTokenController;
@@ -52,6 +53,14 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
             ->middleware('permission:users.deactivate');
         Route::post('/admin/users/{user}/deactivate', [UserAccountAdministrationController::class, 'deactivate'])
             ->middleware('permission:users.deactivate');
+        Route::get('/admin/results', [AdminResultController::class, 'index'])
+            ->middleware('permission:results.view_all');
+        Route::get('/admin/results/metrics', [AdminResultController::class, 'metrics'])
+            ->middleware('permission:results.view_all');
+        Route::get('/users/departments', [AdminResultController::class, 'departments'])
+            ->middleware('permission:results.view_all');
+        Route::get('/users/with-results', [AdminResultController::class, 'usersWithResults'])
+            ->middleware('permission:results.view_all');
         Route::put('/me/journey-profile', [JourneyProfileSelectionController::class, 'update']);
         Route::get('/dashboard', DashboardController::class);
         Route::apiResource('journey-profiles', JourneyProfileController::class)
