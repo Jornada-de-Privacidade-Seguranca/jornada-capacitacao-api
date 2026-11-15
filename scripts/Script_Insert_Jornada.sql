@@ -525,6 +525,7 @@ insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_
 insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('users.manage', 'Editar e excluir usuários', 'Edit and delete users');
 insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('users.change_profile', 'Alterar o perfil de acesso de usuários', 'Change users'' access profile');
 insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('catalog.manage', 'Gerenciar o catálogo', 'Manage the catalog');
+insert into public.tb_permissoes(no_permissoes, ds_permissoes_pt, ds_permissoes_en) values ('system.view', 'Ver o resumo do sistema', 'View the system summary');
 
 --Insert RL_PERMISSOES_PERFIS
 -- Administrador (1): todas as permissões

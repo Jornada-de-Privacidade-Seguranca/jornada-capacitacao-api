@@ -118,17 +118,44 @@ class SystemSummaryTest extends TestCase
 
     public function test_system_summary_rejects_common_user(): void
     {
-        $commonUser = $this->createUser('Common User', 1, 2);
+        $commonUser = $this->createUser('Common User', 1, 2, 3);
 
         $this->actingAs($commonUser)
             ->getJson('/api/system-summary')
             ->assertForbidden()
-            ->assertJsonPath('code', 'SYSTEM_SUMMARY_FORBIDDEN');
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
     }
 
-    private function createUser(string $name, int $status, ?int $userType): Usuario
+    public function test_system_summary_allows_administrator_profile_even_with_null_user_type(): void
+    {
+        $admin = $this->createUser('Profile Admin', 1, null, 1);
+
+        $this->actingAs($admin)
+            ->getJson('/api/system-summary')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+    }
+
+    public function test_system_summary_rejects_legacy_admin_user_type_with_manager_or_user_profile(): void
+    {
+        $legacyTypeWithManagerProfile = $this->createUser('Legacy Manager', 1, 1, 2);
+        $legacyTypeWithUserProfile = $this->createUser('Legacy User', 1, 1, 3);
+
+        $this->actingAs($legacyTypeWithManagerProfile)
+            ->getJson('/api/system-summary')
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+
+        $this->actingAs($legacyTypeWithUserProfile)
+            ->getJson('/api/system-summary')
+            ->assertForbidden()
+            ->assertJsonPath('code', 'PERMISSION_DENIED');
+    }
+
+    private function createUser(string $name, int $status, ?int $userType, ?int $profileType = null): Usuario
     {
         return Usuario::query()->create([
+            'FK_TIPO_PERFIL' => $profileType ?? ($userType === 1 ? 1 : 3),
             'FK_TIPO_USUARIO' => $userType,
             'NO_USUARIO' => $name,
             'NO_ORGAO_EMPRESA' => 'Secretaria',

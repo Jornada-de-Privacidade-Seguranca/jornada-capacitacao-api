@@ -99,7 +99,7 @@ paths:
       tags:
         - System
       summary: Retorna estatisticas e resumo do sistema
-      description: Endpoint administrativo autenticado para consulta de resumo operacional do sistema e banco de dados. Somente administradores ativos podem consultar.
+      description: Endpoint administrativo autenticado para consulta de resumo operacional do sistema e banco de dados. Exige a permissao system.view.
       operationId: getSystemSummary
       security:
         - sessionAuth: []
@@ -143,7 +143,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          description: Usuario autenticado sem permissao de administrador
+          description: Usuario autenticado sem permissao system.view
           content:
             application/json:
               schema:
@@ -152,9 +152,9 @@ paths:
                 forbidden:
                   value:
                     success: false
-                    message: Voce nao possui permissao para visualizar o resumo do sistema.
+                    message: Voce nao possui permissao para executar esta acao.
                     errors: []
-                    code: SYSTEM_SUMMARY_FORBIDDEN
+                    code: PERMISSION_DENIED
         "422":
           description: Erro de validacao no contrato padrao
           content:

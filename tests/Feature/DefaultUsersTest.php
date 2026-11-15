@@ -37,6 +37,7 @@ class DefaultUsersTest extends TestCase
                 'journeys.take',
                 'results.view_all',
                 'results.view_own',
+                'system.view',
                 'users.change_profile',
                 'users.deactivate',
                 'users.manage',

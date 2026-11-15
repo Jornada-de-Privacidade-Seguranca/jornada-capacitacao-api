@@ -33,6 +33,7 @@ class AccessProfilePermissionsTest extends TestCase
         'users.manage',
         'users.change_profile',
         'catalog.manage',
+        'system.view',
     ];
 
     public function test_it_creates_permission_and_profile_change_history_tables(): void
@@ -232,7 +233,12 @@ class AccessProfilePermissionsTest extends TestCase
         $this->assertDatabaseHas('TB_USUARIO', ['DS_EMAIL' => 'admin@jornada.local', 'FK_TIPO_PERFIL' => self::ADMIN_PROFILE]);
         $this->assertDatabaseHas('TB_USUARIO', ['DS_EMAIL' => 'user@jornada.local', 'FK_TIPO_PERFIL' => self::USER_PROFILE]);
         $this->assertDatabaseCount('TB_PERMISSOES', count(self::ALL_PERMISSIONS));
-        $this->assertDatabaseCount('RL_PERMISSOES_PERFIS', 17);
+        $this->assertDatabaseCount('RL_PERMISSOES_PERFIS', 18);
+
+        $systemViewMigration = require database_path('migrations/2026_11_12_000002_add_system_view_permission.php');
+        $systemViewMigration->up();
+        $this->assertDatabaseCount('TB_PERMISSOES', count(self::ALL_PERMISSIONS));
+        $this->assertDatabaseCount('RL_PERMISSOES_PERFIS', 18);
     }
 
     /**
