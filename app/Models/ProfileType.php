@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProfileType extends JornadaModel
 {
+    public const ADMIN_ID = 1;
+
     /**
      * Perfil "Usuario", atribuido a toda conta criada pelo cadastro publico.
      */

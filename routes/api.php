@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccessProfileController;
 use App\Http\Controllers\Api\AdminResultController;
 use App\Http\Controllers\Api\AuthenticatedUserController;
 use App\Http\Controllers\Api\CertificationOptionController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\Api\SystemSummaryController;
 use App\Http\Controllers\Api\TemplateExampleController;
 use App\Http\Controllers\Api\UserAccountAdministrationController;
 use App\Http\Controllers\Api\UserJourneyController;
+use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\UserRegistrationController;
 use App\Http\Middleware\AuthenticateSessionUser;
 use App\Http\Middleware\ValidateSessionCsrfToken;
@@ -61,6 +63,25 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
             ->middleware('permission:results.view_all');
         Route::get('/users/with-results', [AdminResultController::class, 'usersWithResults'])
             ->middleware('permission:results.view_all');
+        Route::get('/access-profiles', [AccessProfileController::class, 'index'])
+            ->middleware('permission:users.view');
+        Route::get('/users', [UserManagementController::class, 'index'])
+            ->middleware('permission:users.view');
+        Route::get('/users/{user}', [UserManagementController::class, 'show'])
+            ->whereNumber('user')
+            ->middleware('permission:users.view');
+        Route::patch('/users/{user}', [UserManagementController::class, 'update'])
+            ->whereNumber('user')
+            ->middleware('permission:users.manage');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])
+            ->whereNumber('user')
+            ->middleware('permission:users.manage');
+        Route::put('/users/{user}/access-profile', [AccessProfileController::class, 'changeProfile'])
+            ->whereNumber('user')
+            ->middleware('permission:users.change_profile');
+        Route::get('/users/{user}/access-profile-history', [AccessProfileController::class, 'history'])
+            ->whereNumber('user')
+            ->middleware('permission:users.view');
         Route::put('/me/journey-profile', [JourneyProfileSelectionController::class, 'update']);
         Route::get('/dashboard', DashboardController::class);
         Route::apiResource('journey-profiles', JourneyProfileController::class)
