@@ -7,7 +7,9 @@ Status: ready-for-human
 ## Critérios de aceite
 
 - Somente usuários com a permissão `users.register` podem criar convites; a conta convidada é sempre usuário comum (`FK_TIPO_USUARIO = 2`) e registra `TP_ATIVACAO = 2`.
+- O convite aceita `profile_type_id` opcional, usando o perfil Usuário (`3`) por padrão; escolher outro perfil exige também `users.change_profile`, e reemitir convite atualiza o perfil pendente.
 - A conta fica inativa até o titular usar um convite único e expirável para definir a senha inicial.
+- A conclusão recebe nome completo, órgão/empresa, setor e matrícula com as mesmas validações do cadastro público, e grava esses dados ao ativar a conta.
 - O token é armazenado somente como hash, não aparece em logs ou na resposta de criação, tentativas são limitadas e uma nova emissão invalida a anterior.
 - Após a definição da senha, a conta é ativada como usuário comum sem aprovação administrativa adicional.
 - A API trata e documenta e-mail já registrado e token inválido, expirado ou consumido; OpenAPI e testes cobrem os endpoints.
@@ -22,4 +24,6 @@ Status: ready-for-human
 - Integração com a `main` atual: preservadas as permissões `users.view` e `users.deactivate` nas rotas administrativas e aplicado `users.register` ao convite; testes cobrem o acesso para perfil com essa permissão e o bloqueio para quem não a possui.
 - Verificação desta correção já sincronizada com a `main`: `APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan test --filter=UserInvitationTest` — exit 0, 116 assertions e 12 warnings de `.env` ausente; `php artisan test` — exit 0, 2513 assertions e 391 warnings de `.env` ausente. Nenhum teste falhou. `composer quality` — Pint, PHPStan e PHPMD passaram; PHPMD emitiu aviso de depreciação do formato de CLI. `git diff --check` passou.
 - Verificação manual HTTP não executada: o daemon Docker e um servidor SMTP/Mailpit não estavam disponíveis. A criação, reemissão, validação, expiração, consumo único, ativação, autorização, CSRF e limites foram cobertos por testes de feature com SQLite em memória e `Mail::fake()`.
+- Última revisão aplicada: `POST /admin/user-invitations` aceita e valida `profile_type_id`, mantém o padrão Usuário e exige `users.change_profile` para outro perfil; uma reemissão atualiza o perfil da conta pendente. `POST /auth/invitations/complete` valida e persiste nome, órgão/empresa, setor e matrícula junto com a senha e a ativação. OpenAPI e testes cobrem os dois fluxos.
+- Sincronização final: conflito com os seis commits mais recentes da `main` resolvido em `Usuario.php`, `routes/api.php` e `docs/openapi.yaml`; `origin/main` é ancestral do branch publicado. Verificação após o merge: `php artisan test` — exit 0, 3.010 assertions, sem falhas; 439 warnings pelo `.env` ausente. `composer quality` (Pint, PHPStan e PHPMD) e `git diff --check` passaram. PR #78 atualizado e revisão solicitada a Gabriel Cesário (`Cezari0o`); aguarda nova revisão.
 - Aguardando revisão humana; não mesclar até a revisão.
