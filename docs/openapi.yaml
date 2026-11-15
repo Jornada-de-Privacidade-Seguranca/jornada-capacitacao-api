@@ -22,6 +22,165 @@ tags:
   - name: Journeys
     description: Endpoints de consulta das jornadas dos usuarios
 paths:
+  /admin/user-invitations:
+    post:
+      tags:
+        - Auth
+      summary: Convida usuario por e-mail para definir a senha inicial
+      description: Exige sessao autenticada, permissao users.register e CSRF. O perfil de acesso e Usuário (id 3) por padrao; para escolher outro perfil, o solicitante tambem precisa da permissao users.change_profile. Se ja houver convite pendente, um novo token substitui o anterior e atualiza o perfil de acesso. A conta e criada como usuario comum inativo, com TP_ATIVACAO igual a 2. O e-mail contem link para a tela do frontend, fora do escopo desta API. Aceita no maximo 10 requisicoes por minuto por usuario autenticado.
+      operationId: inviteUserByEmail
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInvitationPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  profile_type_id: 2
+      responses:
+        "201":
+          description: Convite enviado com conta pendente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInvitationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          description: Usuario sem users.register ou, ao escolher perfil diferente do padrao, sem users.change_profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "409":
+          description: Ja existe uma conta que nao e um convite pendente para este e-mail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "419":
+          $ref: "#/components/responses/CsrfTokenMismatch"
+        "422":
+          description: E-mail ausente ou invalido, ou perfil de acesso inexistente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Limite de convites excedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: O convite ou o e-mail nao pode ser preparado ou enviado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /auth/invitations/validate:
+    post:
+      tags:
+        - Auth
+      summary: Valida o token de um convite de usuario
+      description: Verifica o token sem consumi-lo. Tokens sao aleatorios, armazenados apenas como hash, expiram conforme auth.passwords.users.expire (60 minutos por padrao) e novas emissoes invalidam os anteriores. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta para evitar enumeracao de convites. Limite de 5 tentativas por minuto por IP e e-mail.
+      operationId: validateUserInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInvitationTokenPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  token: exemplo-de-codigo-unico
+      responses:
+        "200":
+          description: Token valido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInvitationValidationResponse"
+        "422":
+          description: Token invalido, expirado ou ja utilizado, ou dados invalidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/StandardError"
+                  - $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Limite de tentativas excedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: Falha ao validar o convite
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+  /auth/invitations/complete:
+    post:
+      tags:
+        - Auth
+      summary: Define a senha inicial e ativa a conta convidada
+      description: Exige token valido, senha confirmada, nome completo, orgao ou empresa, setor e matricula, usando as mesmas regras do cadastro. A conta passa a ativa (ST_ATIVO=1), continua como usuario comum (FK_TIPO_USUARIO=2), e TP_ATIVACAO permanece 2 para registrar que foi criada pelo administrador. O token e consumido uma unica vez e DH_ATIVACAO e preenchido na ativacao. Tokens invalidos, expirados ou ja utilizados recebem a mesma resposta. Limite de 5 tentativas por minuto por IP e e-mail.
+      operationId: completeUserInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteUserInvitationPayload"
+            examples:
+              valid:
+                value:
+                  email: maria.silva@example.com
+                  token: exemplo-de-codigo-unico
+                  password: SenhaSegura123
+                  password_confirmation: SenhaSegura123
+                  name: Maria Silva
+                  organization: Orgao de Exemplo
+                  department: Tecnologia
+                  registration_number: MAT-123
+      responses:
+        "200":
+          description: Senha definida e conta ativada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInvitationResponse"
+        "422":
+          description: Token invalido, expirado ou ja utilizado, ou dados invalidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/StandardError"
+                  - $ref: "#/components/schemas/StandardValidationError"
+        "429":
+          description: Limite de tentativas excedido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
+        "500":
+          description: Falha ao definir a senha inicial
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StandardError"
   /template-example:
     get:
       tags:
@@ -4726,6 +4885,143 @@ components:
           type: integer
           description: Perfil de jornada escolhido opcionalmente durante o cadastro. Se omitido, pode ser selecionado depois em PUT /me/journey-profile.
           example: 1
+    UserInvitationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Convite enviado com sucesso.
+        data:
+          type: object
+          required:
+            - id
+            - email
+            - user_type_id
+            - profile_type_id
+            - active_status
+            - account_status
+          properties:
+            id:
+              type: integer
+            email:
+              type: string
+              format: email
+            user_type_id:
+              type: integer
+              enum: [2]
+            profile_type_id:
+              type: integer
+              description: Perfil de acesso atribuido no convite (padrao Usuario).
+              example: 3
+            active_status:
+              type: integer
+              enum: [1, 2]
+            account_status:
+              type: string
+              enum:
+                - active
+                - pending_initial_password
+    UserInvitationValidationResponse:
+      type: object
+      required:
+        - success
+        - message
+        - data
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Convite valido.
+        data:
+          type: object
+          required:
+            - email
+            - is_valid
+          properties:
+            email:
+              type: string
+              format: email
+            is_valid:
+              type: boolean
+              const: true
+    UserInvitationPayload:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          example: maria.silva@example.com
+        profile_type_id:
+          type: integer
+          description: Perfil de acesso desejado. O padrao e 3 (Usuario). Exige users.change_profile quando diferente do padrao.
+          default: 3
+          example: 2
+    UserInvitationTokenPayload:
+      type: object
+      required:
+        - email
+        - token
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        token:
+          type: string
+          maxLength: 128
+    CompleteUserInvitationPayload:
+      allOf:
+        - $ref: "#/components/schemas/UserInvitationTokenPayload"
+        - type: object
+          required:
+            - password
+            - password_confirmation
+            - name
+            - organization
+            - department
+            - registration_number
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Nome completo com nome e sobrenome.
+              example: Maria Silva
+            organization:
+              type: string
+              minLength: 1
+              maxLength: 100
+              example: Orgao de Exemplo
+            department:
+              type: string
+              minLength: 1
+              maxLength: 100
+              example: Tecnologia
+            registration_number:
+              type: string
+              minLength: 1
+              maxLength: 50
+              example: MAT-123
+            password:
+              type: string
+              minLength: 8
+              maxLength: 100
+              format: password
+            password_confirmation:
+              type: string
+              format: password
     LoginResponse:
       type: object
       required:

@@ -10,6 +10,7 @@ services:
       - vendor:/var/www/html/vendor
     depends_on:
       - db
+      - mailpit
     environment:
       APP_ENV: local
       APP_URL: http://localhost:8030
@@ -19,6 +20,11 @@ services:
       DB_DATABASE: jornada
       DB_USERNAME: jornada
       DB_PASSWORD: secret
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM_ADDRESS: noreply@jornada.local
+      MAIL_FROM_NAME: Jornada Capacitacao
     networks:
       - jornada
 
@@ -48,6 +54,15 @@ services:
       POSTGRES_PASSWORD: secret
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    networks:
+      - jornada
+
+  mailpit:
+    image: axllent/mailpit:v1.33.1
+    container_name: jornada-api-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
     networks:
       - jornada
 

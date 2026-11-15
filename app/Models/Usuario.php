@@ -33,6 +33,8 @@ class Usuario extends JornadaModel implements AuthenticatableContract
         'DH_CRIADO_EM',
         'DH_EXCLUIDO_EM',
         'ST_ATIVO',
+        'TP_ATIVACAO',
+        'DH_ATIVACAO',
     ];
 
     protected $hidden = [
@@ -41,6 +43,7 @@ class Usuario extends JornadaModel implements AuthenticatableContract
 
     protected $casts = [
         'DH_CRIADO_EM' => 'datetime',
+        'DH_ATIVACAO' => 'datetime',
         'DH_EXCLUIDO_EM' => 'datetime',
         'ST_ATIVO' => 'integer',
     ];

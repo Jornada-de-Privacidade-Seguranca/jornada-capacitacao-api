@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\LogoutController;
 use App\Http\Controllers\Api\SystemSummaryController;
 use App\Http\Controllers\Api\TemplateExampleController;
 use App\Http\Controllers\Api\UserAccountAdministrationController;
+use App\Http\Controllers\Api\UserInvitationController;
 use App\Http\Controllers\Api\UserJourneyController;
 use App\Http\Controllers\Api\UserManagementController;
 use App\Http\Controllers\Api\UserRegistrationController;
@@ -34,6 +35,10 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/register', UserRegistrationController::class)->middleware('throttle:registration');
+Route::post('/auth/invitations/validate', [UserInvitationController::class, 'validate'])
+    ->middleware('throttle:invitation-token');
+Route::post('/auth/invitations/complete', [UserInvitationController::class, 'complete'])
+    ->middleware('throttle:invitation-completion');
 
 // Rota temporaria de teste/scaffold do projeto.
 // Quando o projeto nao precisar mais demonstrar o contrato padrao, remova este exemplo.
@@ -55,6 +60,9 @@ Route::middleware([StartSession::class, ValidateSessionCsrfToken::class])->group
             ->middleware('permission:users.deactivate');
         Route::post('/admin/users/{user}/deactivate', [UserAccountAdministrationController::class, 'deactivate'])
             ->middleware('permission:users.deactivate');
+        Route::post('/admin/user-invitations', [UserInvitationController::class, 'store'])
+            ->middleware('permission:users.register')
+            ->middleware('throttle:user-invitation');
         Route::get('/admin/results', [AdminResultController::class, 'index'])
             ->middleware('permission:results.view_all');
         Route::get('/admin/results/metrics', [AdminResultController::class, 'metrics'])
