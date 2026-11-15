@@ -17,6 +17,7 @@ class InvitedUserResource extends JsonResource
             'id' => $this->PK_USUARIO,
             'email' => $this->DS_EMAIL,
             'user_type_id' => $this->FK_TIPO_USUARIO,
+            'profile_type_id' => $this->FK_TIPO_PERFIL,
             'active_status' => $this->ST_ATIVO,
             'account_status' => (int) $this->ST_ATIVO === 1 ? 'active' : 'pending_initial_password',
         ];

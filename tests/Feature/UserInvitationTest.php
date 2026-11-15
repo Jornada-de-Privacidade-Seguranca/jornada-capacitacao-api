@@ -32,6 +32,7 @@ class UserInvitationTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.email', 'new.user@example.com')
             ->assertJsonPath('data.user_type_id', 2)
+            ->assertJsonPath('data.profile_type_id', 3)
             ->assertJsonPath('data.active_status', 2)
             ->assertJsonPath('data.account_status', 'pending_initial_password')
             ->assertJsonMissingPath('data.token');
@@ -105,7 +106,8 @@ class UserInvitationTest extends TestCase
                 'email' => 'manager@example.com',
                 'profile_type_id' => 2,
             ])
-            ->assertCreated();
+            ->assertCreated()
+            ->assertJsonPath('data.profile_type_id', 2);
 
         $this->assertDatabaseHas('TB_USUARIO', [
             'DS_EMAIL' => 'manager@example.com',
@@ -147,7 +149,8 @@ class UserInvitationTest extends TestCase
                 'email' => 'new.user@example.com',
                 'profile_type_id' => 2,
             ])
-            ->assertCreated();
+            ->assertCreated()
+            ->assertJsonPath('data.profile_type_id', 2);
 
         $this->assertDatabaseHas('TB_USUARIO', [
             'DS_EMAIL' => 'new.user@example.com',

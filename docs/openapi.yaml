@@ -4904,6 +4904,7 @@ components:
             - id
             - email
             - user_type_id
+            - profile_type_id
             - active_status
             - account_status
           properties:
@@ -4915,6 +4916,10 @@ components:
             user_type_id:
               type: integer
               enum: [2]
+            profile_type_id:
+              type: integer
+              description: Perfil de acesso atribuido no convite (padrao Usuario).
+              example: 3
             active_status:
               type: integer
               enum: [1, 2]
