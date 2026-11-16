@@ -71,6 +71,65 @@ class UserAccessProfileManagementTest extends TestCase
             ->assertJsonPath('data.0.id', $target->PK_USUARIO);
     }
 
+    public function test_users_listing_and_detail_expose_registration_number_and_completed_journeys_count(): void
+    {
+        $admin = $this->createUser('Admin Sistema', 'admin.contagem@example.com', ProfileType::ADMIN_ID, 'TI', 1, 'MAT-010');
+        $user = $this->createUser('Bruno Contagem', 'bruno.contagem@example.com', ProfileType::USER_ID, 'RH', 1, 'MAT-011');
+
+        $domain = KnowledgeDomain::create(['NO_DOMINIO_CONHECIMENTO_PT' => 'Privacidade']);
+        $profile = JourneyProfile::create([
+            'FK_DOMINIO_CONHECIMENTO' => $domain->PK_DOMINIO_CONHECIMENTO,
+            'NO_PERFIS_PT' => 'DPO',
+        ]);
+
+        // Duas finalizadas, uma em andamento e uma cancelada: so as finalizadas contam
+        foreach ([
+            ['DH_FIM' => '2026-11-02 10:00:00', 'DH_CANCELADA_EM' => null],
+            ['DH_FIM' => '2026-11-03 10:00:00', 'DH_CANCELADA_EM' => null],
+            ['DH_FIM' => null, 'DH_CANCELADA_EM' => null],
+            ['DH_FIM' => null, 'DH_CANCELADA_EM' => '2026-11-04 10:00:00'],
+        ] as $dates) {
+            Journey::create([
+                'FK_USUARIO' => $user->PK_USUARIO,
+                'FK_PERFIS_JORNADA' => $profile->PK_PERFIS_JORNADA,
+                'DH_CRIADO_EM' => '2026-11-01 10:00:00',
+                ...$dates,
+            ]);
+        }
+
+        $this->actingAs($admin)
+            ->getJson('/api/users?search=bruno')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.registration_number', 'MAT-011')
+            ->assertJsonPath('data.0.completed_journeys_count', 2);
+
+        $this->actingAs($admin)
+            ->getJson('/api/users?search=admin.contagem')
+            ->assertOk()
+            ->assertJsonPath('data.0.completed_journeys_count', 0);
+
+        $this->actingAs($admin)
+            ->getJson("/api/users/{$user->PK_USUARIO}")
+            ->assertOk()
+            ->assertJsonPath('data.registration_number', 'MAT-011')
+            ->assertJsonPath('data.completed_journeys_count', 2);
+
+        $this->actingAs($admin)
+            ->withCsrfToken()
+            ->patchJson("/api/users/{$user->PK_USUARIO}", ['department' => 'Juridico'])
+            ->assertOk()
+            ->assertJsonPath('data.department', 'Juridico')
+            ->assertJsonPath('data.completed_journeys_count', 2);
+
+        $this->actingAs($admin)
+            ->withCsrfToken()
+            ->putJson("/api/users/{$user->PK_USUARIO}/access-profile", ['profile_type_id' => 2])
+            ->assertOk()
+            ->assertJsonPath('data.access_profile.id', 2)
+            ->assertJsonPath('data.completed_journeys_count', 2);
+    }
+
     public function test_show_and_update_user_details_with_unique_email_validation(): void
     {
         $admin = $this->createUser('Admin Sistema', 'admin.edit@example.com', ProfileType::ADMIN_ID, 'TI', 1, 'MAT-100');
