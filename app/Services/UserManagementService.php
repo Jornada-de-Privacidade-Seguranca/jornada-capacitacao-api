@@ -53,6 +53,12 @@ class UserManagementService
         return $user;
     }
 
+    /** Usuario com a contagem de jornadas finalizadas, para o detalhe da gestao. */
+    public function userDetail(int $userId): Usuario
+    {
+        return $this->findUser($userId)->loadCount('completedJourneys');
+    }
+
     /**
      * @param  array<string, mixed>  $data
      */

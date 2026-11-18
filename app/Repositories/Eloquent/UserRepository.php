@@ -53,7 +53,6 @@ class UserRepository implements UserRepositoryInterface
     {
         return Usuario::query()
             ->with(['profileType', 'selectedJourneyProfile'])
-            ->withCount('completedJourneys')
             ->find($id);
     }
 

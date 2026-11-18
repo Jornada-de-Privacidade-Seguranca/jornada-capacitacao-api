@@ -56,7 +56,7 @@ class UserManagementController
         }
 
         try {
-            $foundUser = $this->userManagementService->findUser($userId);
+            $foundUser = $this->userManagementService->userDetail($userId);
         } catch (ModelNotFoundException) {
             return $this->userNotFoundResponse();
         } catch (Throwable) {

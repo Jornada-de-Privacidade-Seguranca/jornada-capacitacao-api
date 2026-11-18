@@ -63,6 +63,25 @@ class UserAccountAdministrationTest extends TestCase
         ]);
     }
 
+    public function test_activation_assigns_user_profile_to_account_without_access_profile(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+        $pending = $this->user('Legacy Pending User', 2, null);
+        $pending->update(['FK_TIPO_PERFIL' => null]);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$pending->PK_USUARIO}/activate")
+            ->assertOk()
+            ->assertJsonPath('data.id', $pending->PK_USUARIO)
+            ->assertJsonPath('data.active_status', 1);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $pending->PK_USUARIO,
+            'ST_ATIVO' => 1,
+            'FK_TIPO_PERFIL' => ProfileType::USER_ID,
+        ]);
+    }
+
     public function test_administrator_reactivates_inactive_account_keeping_its_access_profile(): void
     {
         $admin = $this->user('Administrator', 1, 1);

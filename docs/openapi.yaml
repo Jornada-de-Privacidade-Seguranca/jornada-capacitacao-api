@@ -485,8 +485,8 @@ paths:
       tags:
         - Auth
       summary: Ativa uma conta pendente ou reativa uma conta inativa
-      description: Exige a permissao users.deactivate e CSRF. A conta deve ter ST_ATIVO igual a 2 (pendente) ou 0 (inativa); a ativacao define ST_ATIVO igual a 1 e mantem o perfil de acesso da conta. Um convite que ainda aguarda a senha inicial nao pode ser ativado por aqui, porque a conta e ativada quando a pessoa define a senha.
-      operationId: activatePendingUser
+      description: Exige a permissao users.deactivate e CSRF. A conta deve ter ST_ATIVO igual a 2 (pendente) ou 0 (inativa); a ativacao define ST_ATIVO igual a 1 e mantem o perfil de acesso da conta (uma conta sem perfil recebe o perfil Usuario). Um convite que ainda aguarda a senha inicial nao pode ser ativado por aqui, porque a conta e ativada quando a pessoa define a senha.
+      operationId: activateUser
       security:
         - sessionAuth: []
       parameters:
@@ -533,7 +533,7 @@ paths:
         - Auth
       summary: Desativa uma conta ativa
       description: Exige users.deactivate e CSRF. A conta deve estar ativa, de qualquer perfil de acesso; a desativacao define ST_ATIVO igual a 0 e mantem o perfil. Nao e possivel desativar a propria conta, e o sistema mantem ao menos um administrador ativo.
-      operationId: deactivateCommonUser
+      operationId: deactivateUser
       security:
         - sessionAuth: []
       parameters:

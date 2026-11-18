@@ -32,7 +32,7 @@ class UserAccountAdministrationService
 
     /**
      * Ativa uma conta pendente (cadastro aguardando aprovacao) ou reativa uma conta inativa.
-     * O perfil de acesso da conta e mantido. Convites que ainda aguardam a senha inicial
+     * O perfil de acesso da conta e mantido (conta sem perfil recebe o perfil Usuario). Convites que ainda aguardam a senha inicial
      * so sao ativados pela propria pessoa, ao definir a senha.
      */
     public function activate(int $userId): Usuario
@@ -46,8 +46,10 @@ class UserAccountAdministrationService
                 throw new InvalidAccountStateException;
             }
 
+            // Conta antiga sem perfil de acesso fica com o perfil Usuario
             return $this->userRepository->update($user, [
                 'ST_ATIVO' => self::ACTIVE_STATUS,
+                'FK_TIPO_PERFIL' => $user->FK_TIPO_PERFIL ?? ProfileType::USER_ID,
             ]);
         });
     }
