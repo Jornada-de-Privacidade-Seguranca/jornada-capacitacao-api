@@ -22,12 +22,14 @@ class UserManagementListResource extends JsonResource
             'email' => $this->DS_EMAIL,
             'organization' => $this->NO_ORGAO_EMPRESA,
             'department' => $this->NO_SETOR,
+            'registration_number' => $this->NU_MATRICULA,
             'access_profile' => $this->profileType !== null ? [
                 'id' => $this->profileType->PK_TIPO_PERFIL,
                 'name' => $this->profileType->NO_TIPO_PERFIL,
             ] : null,
             'status' => $this->statusLabel(),
             'active_status' => (int) $this->ST_ATIVO,
+            'completed_journeys_count' => $this->whenCounted('completedJourneys', fn ($count): int => (int) $count),
             'created_at' => $this->DH_CRIADO_EM?->format('Y-m-d H:i:s'),
         ];
     }

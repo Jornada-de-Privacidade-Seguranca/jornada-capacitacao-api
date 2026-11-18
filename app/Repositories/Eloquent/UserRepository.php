@@ -86,7 +86,8 @@ class UserRepository implements UserRepositoryInterface
     public function paginatedUsers(array $filters, int $page, int $perPage): LengthAwarePaginator
     {
         $query = Usuario::query()
-            ->with(['profileType']);
+            ->with(['profileType'])
+            ->withCount('completedJourneys');
 
         if (isset($filters['profile_type_id'])) {
             $query->where('FK_TIPO_PERFIL', (int) $filters['profile_type_id']);

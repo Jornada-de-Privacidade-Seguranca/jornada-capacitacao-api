@@ -89,6 +89,14 @@ class Usuario extends JornadaModel implements AuthenticatableContract
         return $this->hasMany(Journey::class, 'FK_USUARIO', 'PK_USUARIO');
     }
 
+    /** Jornadas finalizadas e nao canceladas. */
+    public function completedJourneys(): HasMany
+    {
+        return $this->journeys()
+            ->whereNotNull('DH_FIM')
+            ->whereNull('DH_CANCELADA_EM');
+    }
+
     public function profileTypeChanges(): HasMany
     {
         return $this->hasMany(ProfileTypeChange::class, 'FK_USUARIO_ALTERADO', 'PK_USUARIO');

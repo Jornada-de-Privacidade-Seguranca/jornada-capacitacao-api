@@ -53,6 +53,12 @@ class UserManagementService
         return $user;
     }
 
+    /** Usuario com a contagem de jornadas finalizadas, para o detalhe da gestao. */
+    public function userDetail(int $userId): Usuario
+    {
+        return $this->findUser($userId)->loadCount('completedJourneys');
+    }
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -73,7 +79,7 @@ class UserManagementService
         }
 
         try {
-            return $this->userRepository->update($user, $attributes);
+            return $this->userRepository->update($user, $attributes)->loadCount('completedJourneys');
         } catch (QueryException $exception) {
             if ($email !== null && $this->isUniqueEmailViolation($exception)) {
                 throw new EmailAlreadyInUseException(previous: $exception);
@@ -102,7 +108,7 @@ class UserManagementService
             $previousProfileTypeId = $user->FK_TIPO_PERFIL !== null ? (int) $user->FK_TIPO_PERFIL : null;
 
             if ($previousProfileTypeId === $newProfileTypeId) {
-                return $user->load('profileType');
+                return $user->load('profileType')->loadCount('completedJourneys');
             }
 
             if ($previousProfileTypeId === ProfileType::ADMIN_ID
@@ -124,7 +130,7 @@ class UserManagementService
                 'DH_REGISTRO' => now(),
             ]);
 
-            return $updatedUser;
+            return $updatedUser->loadCount('completedJourneys');
         });
     }
 

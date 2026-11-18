@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Permission;
+use App\Models\ProfileType;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -40,11 +42,11 @@ class UserAccountAdministrationTest extends TestCase
             ->assertJsonFragment(['id' => $pendingWithLegacyUserType->PK_USUARIO]);
     }
 
-    public function test_administrator_activates_pending_account_as_common_user(): void
+    public function test_administrator_activates_pending_account_keeping_its_access_profile(): void
     {
         $admin = $this->user('Administrator', 1, 1);
         $pending = $this->user('Pending User', 2, null);
-        $pending->update(['FK_TIPO_PERFIL' => 1]);
+        $pending->update(['FK_TIPO_PERFIL' => 2]);
 
         $this->actingAs($admin)
             ->postJsonWithCsrf("/api/admin/users/{$pending->PK_USUARIO}/activate")
@@ -57,7 +59,122 @@ class UserAccountAdministrationTest extends TestCase
         $this->assertDatabaseHas('TB_USUARIO', [
             'PK_USUARIO' => $pending->PK_USUARIO,
             'ST_ATIVO' => 1,
-            'FK_TIPO_PERFIL' => 3,
+            'FK_TIPO_PERFIL' => 2,
+        ]);
+    }
+
+    public function test_activation_assigns_user_profile_to_account_without_access_profile(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+        $pending = $this->user('Legacy Pending User', 2, null);
+        $pending->update(['FK_TIPO_PERFIL' => null]);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$pending->PK_USUARIO}/activate")
+            ->assertOk()
+            ->assertJsonPath('data.id', $pending->PK_USUARIO)
+            ->assertJsonPath('data.active_status', 1);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $pending->PK_USUARIO,
+            'ST_ATIVO' => 1,
+            'FK_TIPO_PERFIL' => ProfileType::USER_ID,
+        ]);
+    }
+
+    public function test_administrator_reactivates_inactive_account_keeping_its_access_profile(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+        $inactive = $this->user('Inactive User', 0, 2);
+        $inactive->update(['FK_TIPO_PERFIL' => 2]);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$inactive->PK_USUARIO}/activate")
+            ->assertOk()
+            ->assertJsonPath('data.id', $inactive->PK_USUARIO)
+            ->assertJsonPath('data.active_status', 1);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $inactive->PK_USUARIO,
+            'ST_ATIVO' => 1,
+            'FK_TIPO_PERFIL' => 2,
+        ]);
+    }
+
+    public function test_invitation_awaiting_initial_password_cannot_be_activated_by_administrator(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+        $invited = $this->user('Invited User', 2, 2);
+        $invited->update(['TP_ATIVACAO' => 2, 'DS_SENHA' => null]);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$invited->PK_USUARIO}/activate")
+            ->assertConflict()
+            ->assertJsonPath('code', 'INVALID_USER_ACCOUNT_STATE');
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $invited->PK_USUARIO,
+            'ST_ATIVO' => 2,
+        ]);
+    }
+
+    public function test_administrator_deactivates_active_manager_and_administrator_while_another_admin_remains(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+        $otherAdmin = $this->user('Other Administrator', 1, 1);
+        $manager = $this->user('Manager', 1, 2);
+        $manager->update(['FK_TIPO_PERFIL' => 2]);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$manager->PK_USUARIO}/deactivate")
+            ->assertOk()
+            ->assertJsonPath('data.active_status', 0);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$otherAdmin->PK_USUARIO}/deactivate")
+            ->assertOk()
+            ->assertJsonPath('data.active_status', 0);
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $manager->PK_USUARIO,
+            'ST_ATIVO' => 0,
+            'FK_TIPO_PERFIL' => 2,
+        ]);
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $otherAdmin->PK_USUARIO,
+            'ST_ATIVO' => 0,
+            'FK_TIPO_PERFIL' => 1,
+        ]);
+    }
+
+    public function test_deactivation_rejects_own_account_and_last_active_administrator(): void
+    {
+        $admin = $this->user('Administrator', 1, 1);
+
+        $this->actingAs($admin)
+            ->postJsonWithCsrf("/api/admin/users/{$admin->PK_USUARIO}/deactivate")
+            ->assertForbidden()
+            ->assertJsonPath('code', 'SELF_DEACTIVATION_FORBIDDEN');
+
+        // Um perfil customizado com users.deactivate tenta desativar o unico admin ativo
+        Usuario::query()
+            ->where('FK_TIPO_PERFIL', ProfileType::ADMIN_ID)
+            ->whereKeyNot($admin->PK_USUARIO)
+            ->update(['ST_ATIVO' => 0]);
+        $customProfile = ProfileType::create(['NO_TIPO_PERFIL' => 'Gestor de Contas']);
+        $permissionId = Permission::query()->where('NO_PERMISSOES', 'users.deactivate')->value('PK_PERMISSOES');
+        $customProfile->permissions()->attach($permissionId);
+        $accountManager = $this->user('Account Manager', 1, 2);
+        $accountManager->update(['FK_TIPO_PERFIL' => $customProfile->PK_TIPO_PERFIL]);
+
+        $this->actingAs($accountManager)
+            ->postJsonWithCsrf("/api/admin/users/{$admin->PK_USUARIO}/deactivate")
+            ->assertConflict()
+            ->assertJsonPath('code', 'LAST_ADMIN_REQUIRED');
+
+        $this->assertDatabaseHas('TB_USUARIO', [
+            'PK_USUARIO' => $admin->PK_USUARIO,
+            'ST_ATIVO' => 1,
         ]);
     }
 
