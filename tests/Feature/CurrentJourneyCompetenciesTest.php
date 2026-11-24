@@ -20,6 +20,23 @@ class CurrentJourneyCompetenciesTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_it_loads_fixed_competencies_for_profiles_created_by_the_migrations(): void
+    {
+        $user = $this->activeUser();
+        $profile = JourneyProfile::query()->findOrFail(1);
+        $this->createJourney($user, $profile, finishedAt: null);
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/journeys/current/competencies/options')
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertNotEmpty(
+            $response->json('data'),
+            'The fixed jornada SQL scripts must load competency options for migrated profiles.',
+        );
+    }
+
     public function test_it_lists_competency_options_for_the_current_journey_profile(): void
     {
         $user = $this->activeUser();

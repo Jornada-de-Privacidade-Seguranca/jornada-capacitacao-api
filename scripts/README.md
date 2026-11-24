@@ -9,4 +9,6 @@ Os arquivos `V1__` a `V6__` formam um pacote PostgreSQL, na ordem indicada pelo 
 5. `V5__Inserts_rl_perfis_competencias_privacidade.sql` relaciona perfis e competências de Privacidade.
 6. `V6__Inserts_rl_perfis_competencias_seguranca_informacao.sql` relaciona perfis e competências de Segurança da Informação.
 
-Execute-os uma única vez e na ordem acima em um banco PostgreSQL preparado para receber um schema novo. A V1 cria objetos sem `IF NOT EXISTS`, e os scripts de carga não são idempotentes. O Laravel não executa esses arquivos: as migrations da aplicação ficam em `database/migrations`.
+Execute os seis arquivos uma única vez e na ordem acima somente ao criar um banco fora do fluxo do Laravel. A V1 cria objetos sem IF NOT EXISTS, e os scripts de carga não são idempotentes.
+
+No fluxo do Laravel, as migrations criam o schema e os dados de referência. A migration 2026_11_24_000000_populate_fixed_jornada_competencies.php também carrega as competências e os vínculos dos arquivos V3 a V6. Não execute V1 a V6 manualmente em um banco gerenciado por migrations.
