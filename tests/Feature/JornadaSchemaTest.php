@@ -83,7 +83,7 @@ class JornadaSchemaTest extends TestCase
     {
         $this->assertDatabaseCount('TB_DOMINIO_CONHECIMENTO', 3);
         $this->assertDatabaseCount('TB_PERFIS_JORNADA', 21);
-        $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 17);
+        $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 19);
         $this->assertDatabaseCount('TB_DIFICULDADE', 5);
         $this->assertDatabaseCount('TB_CRITERIOS', 6);
         $this->assertDatabaseCount('TB_SUBCRITERIOS', 10);
@@ -104,8 +104,16 @@ class JornadaSchemaTest extends TestCase
         ]);
         $this->assertDatabaseHas('TB_AREA_CONHECIMENTO', [
             'PK_AREA_CONHECIMENTO' => 17,
+            'NO_AREA_CONHECIMENTO_PT' => 'Security By Design',
+            'DS_AREA_CONHECIMENTO_PT' => 'Conhecimentos relacionados aos conceitos e aplicações de security by design.',
+        ]);
+        $this->assertDatabaseHas('TB_AREA_CONHECIMENTO', [
+            'PK_AREA_CONHECIMENTO' => 18,
+            'NO_AREA_CONHECIMENTO_PT' => 'Gestão de Mudança',
+        ]);
+        $this->assertDatabaseHas('TB_AREA_CONHECIMENTO', [
+            'PK_AREA_CONHECIMENTO' => 19,
             'NO_AREA_CONHECIMENTO_PT' => 'Gestão de Conformidade',
-            'DS_AREA_CONHECIMENTO_PT' => 'Conhecimentos relacionados ao processo de avaliação de conformidade nos aspectos da segurança da informação.',
         ]);
         $this->assertDatabaseHas('TB_DIFICULDADE', [
             'PK_DIFICULDADE' => 5,
@@ -154,6 +162,27 @@ class JornadaSchemaTest extends TestCase
             'PK_TIPO_PERFIL' => 3,
             'NO_TIPO_PERFIL' => 'Usuário',
         ]);
+    }
+
+    public function test_it_can_load_fixed_competencies_on_an_existing_installation(): void
+    {
+        DB::table('RL_PERFIS_COMPETENCIAS')->delete();
+        DB::table('TB_COMPETENCIAS')->delete();
+        DB::table('TB_AREA_CONHECIMENTO')->whereIn('PK_AREA_CONHECIMENTO', [18, 19])->delete();
+        DB::table('TB_AREA_CONHECIMENTO')
+            ->where('PK_AREA_CONHECIMENTO', 3)
+            ->update(['NO_AREA_CONHECIMENTO_PT' => 'Documentos Orientativos']);
+
+        $migration = require database_path('migrations/2026_11_24_000000_populate_fixed_jornada_competencies.php');
+        $migration->up();
+
+        $this->assertDatabaseCount('TB_AREA_CONHECIMENTO', 19);
+        $this->assertDatabaseHas('TB_AREA_CONHECIMENTO', [
+            'PK_AREA_CONHECIMENTO' => 3,
+            'NO_AREA_CONHECIMENTO_PT' => 'Documentos Orientativos - Privacidade',
+        ]);
+        $this->assertDatabaseCount('TB_COMPETENCIAS', 256);
+        $this->assertDatabaseCount('RL_PERFIS_COMPETENCIAS', 2556);
     }
 
     public function test_manual_swagger_dashboard_seeder_uses_latest_jornada_schema(): void

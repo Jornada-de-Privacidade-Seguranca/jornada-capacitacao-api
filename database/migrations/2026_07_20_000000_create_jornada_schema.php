@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\JourneyCompetencyScriptLoader;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -149,6 +150,7 @@ return new class extends Migration
         $fixedData = file_get_contents(database_path('sql/jornada_fixed_data.sql'));
         $permissionsStart = strpos($fixedData, '-- Insert TB_PERMISSOES');
         DB::unprepared($permissionsStart === false ? $fixedData : substr($fixedData, 0, $permissionsStart));
+        JourneyCompetencyScriptLoader::load();
 
         $driver = DB::connection()->getDriverName();
 

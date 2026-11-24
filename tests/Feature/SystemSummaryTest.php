@@ -28,23 +28,25 @@ class SystemSummaryTest extends TestCase
     {
         $admin = $this->createUser('Administrator', 1, 1);
         Competency::factory()->count(3)->create();
+        $expectedCount = Competency::query()->count();
 
         $this->actingAs($admin)
             ->getJson('/api/system-summary')
             ->assertOk()
-            ->assertJsonPath('data.database.competencies_count', 3);
+            ->assertJsonPath('data.database.competencies_count', $expectedCount);
     }
 
     public function test_system_summary_handles_include_database_status_parameter(): void
     {
         $admin = $this->createUser('Administrator', 1, 1);
+        $expectedCount = Competency::query()->count();
 
         $this->actingAs($admin)
             ->getJson('/api/system-summary?include_database_status=false')
             ->assertOk()
             ->assertJsonMissingPath('data.database.connected')
             ->assertJsonMissingPath('data.database.driver')
-            ->assertJsonPath('data.database.competencies_count', 0);
+            ->assertJsonPath('data.database.competencies_count', $expectedCount);
     }
 
     public function test_system_summary_supports_custom_tag(): void

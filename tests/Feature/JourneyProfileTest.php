@@ -23,6 +23,10 @@ class JourneyProfileTest extends TestCase
             'DS_PERFIS_PT' => 'Mock antigo',
             'DS_PERFIS_EN' => 'Old mock',
         ]);
+        $firstProfile = JourneyProfile::query()
+            ->where('NO_PERFIS_PT', 'Encarregado pelo Tratamento de Dados Pessoais')
+            ->firstOrFail();
+        $firstProfileCompetenciesCount = $firstProfile->competencies()->count();
 
         $this->actingAs($user)
             ->getJson('/api/journey-profiles')
@@ -52,7 +56,7 @@ class JourneyProfileTest extends TestCase
             ])
             ->assertJsonPath('data.0.user_status', 'not_done')
             ->assertJsonPath('data.0.last_score', null)
-            ->assertJsonPath('data.0.competencies_count', 0)
+            ->assertJsonPath('data.0.competencies_count', $firstProfileCompetenciesCount)
             ->assertJsonMissingPath('data.0.knowledge_areas_count');
     }
 
