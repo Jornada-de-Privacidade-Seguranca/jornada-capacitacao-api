@@ -12,7 +12,6 @@ class UserManagementDetailResource extends UserManagementListResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
-            'registration_number' => $this->NU_MATRICULA,
             'journey_profile_id' => $this->FK_PERFIL_JORNADA !== null ? (int) $this->FK_PERFIL_JORNADA : null,
         ]);
     }
