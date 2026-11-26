@@ -485,7 +485,7 @@ paths:
       tags:
         - Auth
       summary: Ativa uma conta pendente ou reativa uma conta inativa
-      description: Exige a permissao users.deactivate e CSRF. A conta deve ter ST_ATIVO igual a 2 (pendente) ou 0 (inativa); a ativacao define ST_ATIVO igual a 1 e mantem o perfil de acesso da conta (uma conta sem perfil recebe o perfil Usuario). Um convite que ainda aguarda a senha inicial nao pode ser ativado por aqui, porque a conta e ativada quando a pessoa define a senha.
+      description: Exige a permissao users.deactivate e CSRF. A conta deve ter ST_ATIVO igual a 2 (pendente) ou 0 (inativa); a ativacao define ST_ATIVO igual a 1. Uma conta pendente e ativada com o perfil de acesso Usuario; uma conta inativa e reativada com o perfil que tinha (ou Usuario, se nao tiver perfil). Um convite que ainda aguarda a senha inicial nao pode ser ativado por aqui, porque a conta e ativada quando a pessoa define a senha.
       operationId: activateUser
       security:
         - sessionAuth: []
@@ -531,8 +531,8 @@ paths:
     post:
       tags:
         - Auth
-      summary: Desativa uma conta ativa
-      description: Exige users.deactivate e CSRF. A conta deve estar ativa, de qualquer perfil de acesso; a desativacao define ST_ATIVO igual a 0 e mantem o perfil. Nao e possivel desativar a propria conta, e o sistema mantem ao menos um administrador ativo.
+      summary: Desativa um usuario comum ativo
+      description: Exige users.deactivate e CSRF. A conta deve estar ativa e ter perfil de acesso Usuario; a desativacao define ST_ATIVO igual a 0 e mantem o perfil.
       operationId: deactivateUser
       security:
         - sessionAuth: []
@@ -541,7 +541,7 @@ paths:
         - $ref: "#/components/parameters/CsrfToken"
       responses:
         "200":
-          description: Conta desativada
+          description: Usuario comum desativado
           content:
             application/json:
               schema:
@@ -555,7 +555,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardValidationError"
         "403":
-          description: Usuario autenticado sem a permissao users.deactivate (code PERMISSION_DENIED) ou tentativa de desativar a propria conta (code SELF_DEACTIVATION_FORBIDDEN)
+          description: Usuario autenticado sem a permissao users.deactivate (code PERMISSION_DENIED)
           content:
             application/json:
               schema:
@@ -567,7 +567,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/StandardError"
         "409":
-          description: Conta nao esta ativa (code INVALID_USER_ACCOUNT_STATE) ou e o ultimo administrador ativo (code LAST_ADMIN_REQUIRED)
+          description: Conta nao e de usuario comum ativo (code INVALID_USER_ACCOUNT_STATE)
           content:
             application/json:
               schema:

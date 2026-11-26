@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Exceptions\InvalidAccountStateException;
-use App\Exceptions\LastAdministratorRequiredException;
-use App\Exceptions\SelfAccountOperationNotAllowedException;
 use App\Models\ProfileType;
 use App\Models\Usuario;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -31,9 +29,9 @@ class UserAccountAdministrationService
     }
 
     /**
-     * Ativa uma conta pendente (cadastro aguardando aprovacao) ou reativa uma conta inativa.
-     * O perfil de acesso da conta e mantido (conta sem perfil recebe o perfil Usuario). Convites que ainda aguardam a senha inicial
-     * so sao ativados pela propria pessoa, ao definir a senha.
+     * Ativa uma conta pendente (cadastro aguardando aprovacao) como usuario comum, ou reativa uma conta inativa
+     * mantendo o perfil de acesso que ela tinha (conta inativa sem perfil recebe o perfil Usuario). Convites que
+     * ainda aguardam a senha inicial so sao ativados pela propria pessoa, ao definir a senha.
      */
     public function activate(int $userId): Usuario
     {
@@ -46,36 +44,29 @@ class UserAccountAdministrationService
                 throw new InvalidAccountStateException;
             }
 
-            // Conta antiga sem perfil de acesso fica com o perfil Usuario
+            // Cadastro pendente nunca ganha perfil privilegiado na aprovacao
+            $profileTypeId = $status === self::PENDING_STATUS
+                ? ProfileType::USER_ID
+                : ($user->FK_TIPO_PERFIL ?? ProfileType::USER_ID);
+
             return $this->userRepository->update($user, [
                 'ST_ATIVO' => self::ACTIVE_STATUS,
-                'FK_TIPO_PERFIL' => $user->FK_TIPO_PERFIL ?? ProfileType::USER_ID,
+                'FK_TIPO_PERFIL' => $profileTypeId,
             ]);
         });
     }
 
     /**
-     * Desativa uma conta ativa de qualquer perfil, sem alterar o perfil de acesso.
-     * Ninguem desativa a propria conta, e o sistema mantem ao menos um administrador ativo.
+     * Desativa um usuario comum ativo (perfil Usuario), sem alterar o perfil de acesso.
      */
-    public function deactivate(Usuario $authenticatedUser, int $userId): Usuario
+    public function deactivate(int $userId): Usuario
     {
-        if ((int) $authenticatedUser->PK_USUARIO === $userId) {
-            throw new SelfAccountOperationNotAllowedException;
-        }
-
         return DB::transaction(function () use ($userId): Usuario {
-            $this->userRepository->lockActiveAdministrators();
-
             $user = $this->findUserForUpdate($userId);
 
-            if ((int) $user->ST_ATIVO !== self::ACTIVE_STATUS) {
+            if ((int) $user->ST_ATIVO !== self::ACTIVE_STATUS
+                || (int) $user->FK_TIPO_PERFIL !== ProfileType::USER_ID) {
                 throw new InvalidAccountStateException;
-            }
-
-            if ((int) $user->FK_TIPO_PERFIL === ProfileType::ADMIN_ID
-                && $this->userRepository->countActiveAdministratorsExcept($userId) === 0) {
-                throw new LastAdministratorRequiredException;
             }
 
             return $this->userRepository->update($user, [

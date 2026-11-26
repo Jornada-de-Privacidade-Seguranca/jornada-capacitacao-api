@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exceptions\InvalidAccountStateException;
-use App\Exceptions\LastAdministratorRequiredException;
-use App\Exceptions\SelfAccountOperationNotAllowedException;
 use App\Http\Requests\ListPendingUsersRequest;
 use App\Http\Resources\AdministeredUserResource;
 use App\Http\Resources\PendingUserActivationResource;
@@ -84,25 +82,13 @@ class UserAccountAdministrationController
         }
 
         try {
-            $account = $this->service->deactivate($request->user(), $userId);
+            $account = $this->service->deactivate($userId);
         } catch (AccessDeniedHttpException) {
             return $this->forbiddenResponse();
-        } catch (SelfAccountOperationNotAllowedException) {
-            return ApiResponse::error(
-                message: 'Voce nao pode desativar a propria conta.',
-                status: Response::HTTP_FORBIDDEN,
-                code: 'SELF_DEACTIVATION_FORBIDDEN',
-            );
         } catch (ModelNotFoundException) {
             return $this->notFoundResponse();
         } catch (InvalidAccountStateException) {
             return $this->invalidStateResponse();
-        } catch (LastAdministratorRequiredException) {
-            return ApiResponse::error(
-                message: 'O sistema deve manter ao menos um administrador ativo.',
-                status: Response::HTTP_CONFLICT,
-                code: 'LAST_ADMIN_REQUIRED',
-            );
         } catch (Throwable) {
             return ApiResponse::error(
                 message: 'Nao foi possivel desativar a conta no momento.',
